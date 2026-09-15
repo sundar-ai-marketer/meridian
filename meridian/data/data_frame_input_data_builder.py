@@ -332,9 +332,13 @@ class DataFrameInputDataBuilder(input_data_builder.InputDataBuilder):
       time_col: The name of the column containing the time coordinates for media
         spend and media time coordinates for media. If not provided,
         `self.default_time_column` is used. Media time coordinates are inferred
-        from the same `time_col` and are potentially shorter than time
-        coordinates if media spend values are missing (NaN) for some t in
-        `time`. Media time must be equal or a subset of time.
+        from the same `time_col` and are potentially LONGER than
+        time coordinates: a row whose spend is missing (NaN) contributes media
+        execution but no spend, and so extends `media_time` without extending
+        `time`. That is how burn-in is expressed. `media_time` must be equal
+        to, or a superset of, `time`, and should extend `max_lag` periods
+        before it. If every column is populated for every row then
+        `n_media_times == n_times` and the model runs with NO burn-in.
       geo_col: (Optional) The name of the column containing the geo coordinates.
         If not provided, `self.default_geo_column` is used. If the DataFrame
         provided has no geo column, a national model data is assumed and a geo
@@ -413,9 +417,13 @@ class DataFrameInputDataBuilder(input_data_builder.InputDataBuilder):
       time_col: The name of the column containing the time coordinates for rf
         spend and media time coordinates for reach and frequency. If not
         provided, `self.default_time_column` is used. Media time coordinates are
-        inferred from the same `time_col` and are potentially shorter than time
-        coordinates if media spend values are missing (NaN) for some t in
-        `time`. Media time must be equal or a subset of time.
+        inferred from the same `time_col` and are potentially LONGER than
+        time coordinates: a row whose spend is missing (NaN) contributes media
+        execution but no spend, and so extends `media_time` without extending
+        `time`. That is how burn-in is expressed. `media_time` must be equal
+        to, or a superset of, `time`, and should extend `max_lag` periods
+        before it. If every column is populated for every row then
+        `n_media_times == n_times` and the model runs with NO burn-in.
       geo_col: (Optional) The name of the column containing the geo coordinates.
         If not provided, `self.default_geo_column` is used. If the DataFrame
         provided has no geo column, a national model data is assumed and a geo
@@ -714,17 +722,24 @@ class DataFrameInputDataBuilder(input_data_builder.InputDataBuilder):
       self, df: pd.DataFrame, required_cols: list[str], optional_cols: list[str]
   ):
     """Validates that the DataFrame has all the expected columns and there are no duplicates."""
-    if len(required_cols + optional_cols) != len(
-        set(required_cols + optional_cols)
-    ):
+    all_cols = required_cols + optional_cols
+    if len(all_cols) != len(set(all_cols)):
+      duplicates = sorted({c for c in all_cols if all_cols.count(c) > 1})
       raise ValueError(
-          'DataFrame has duplicate columns from'
-          f' {required_cols + optional_cols}'
+          f'DataFrame has duplicate columns from {all_cols}. Duplicated:'
+          f' {duplicates}.'
       )
 
-    if not all(column in df.columns for column in required_cols):
+    missing = [column for column in required_cols if column not in df.columns]
+    if missing:
+      # Name the columns that are actually absent. The generic form of this
+      # message sends users hunting for a column that is present while the real
+      # offender -- usually an unset `time_col` defaulting to 'time' -- goes
+      # unnoticed. See google/meridian#1596.
       raise ValueError(
-          f'DataFrame is missing one or more columns from {required_cols}'
+          f'DataFrame is missing required column(s): {missing}. Required:'
+          f' {required_cols}. Present in DataFrame:'
+          f' {sorted(map(str, df.columns))}.'
       )
 
   def _validate_coords(
