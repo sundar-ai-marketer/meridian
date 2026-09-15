@@ -65,7 +65,10 @@ def banner(step: str, started: float) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-  parser = argparse.ArgumentParser(description=__doc__)
+  parser = argparse.ArgumentParser(
+      prog='python examples/quickstart.py',
+      description='A complete Meridian run on the bundled sample data.',
+  )
   parser.add_argument(
       '--full',
       action='store_true',

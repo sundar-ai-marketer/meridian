@@ -439,7 +439,10 @@ def run_recovery(config: RecoveryConfig | None = None) -> RecoveryResult:
 
 
 def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
-  parser = argparse.ArgumentParser(description='Meridian ROI recovery check.')
+  parser = argparse.ArgumentParser(
+      prog='python -m meridian.validation',
+      description='Meridian ROI recovery check.',
+  )
   defaults = RecoveryConfig()
   parser.add_argument('--n-geos', type=int, default=defaults.n_geos)
   parser.add_argument('--n-times', type=int, default=defaults.n_times)
