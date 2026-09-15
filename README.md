@@ -71,6 +71,12 @@ pytest meridian -q -n 8           # full suite, about 6 minutes
     nothing. `verify_environment.py` checks which copy is live.
 *   **JAX is the default backend** from v2.0.0, at 64-bit precision. The
     TensorFlow backend still works but is deprecated upstream.
+*   **One harmless install warning.** pip prints `tfp-nightly
+    0.26.0.dev20260130 does not provide the extra 'substrates-jax'`. That extra
+    does not exist in this nightly build, so pip ignores it and installs the
+    package anyway. The JAX substrate is present regardless and the full suite
+    passes on it. The declaration comes from upstream's `pyproject.toml`; it is
+    left as-is rather than diverging for a cosmetic warning.
 *   **No GPU on Apple Silicon.** Fits run on CPU. For scale: 20 geos x 156
     weeks x 4 channels at the demo's MCMC settings takes about 35 minutes on an
     M4 Max. Use `python -m meridian.benchmark.benchmark` to measure your own
