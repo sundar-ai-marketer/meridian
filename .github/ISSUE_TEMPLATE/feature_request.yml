@@ -1,0 +1,30 @@
+# NOTICE: This file is new in this fork and does not exist in the
+# original google/meridian source.
+
+name: Feature request
+description: Suggest something this fork should do.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        TRIAGE.md records decisions on every feature request open upstream,
+        including several that were declined with reasons. Please check it
+        first — the answer may already be there.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that you currently cannot?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried
+      description: >
+        Existing APIs you attempted, and why they did not work. Several
+        requests turn out to be achievable with `xarray` conversions on data
+        Meridian already returns.
+    validations:
+      required: true
