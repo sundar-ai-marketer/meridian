@@ -63,6 +63,8 @@ Files added by this fork:
   scripts/verify_environment.py
   scripts/setup.sh
   examples/quickstart.py
+  meridian/benchmark/__main__.py
+  meridian/validation/__main__.py
 
 Summary of behavioural changes to existing code:
 

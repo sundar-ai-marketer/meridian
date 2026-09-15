@@ -322,7 +322,10 @@ def run_benchmark(config: BenchmarkConfig | None = None) -> BenchmarkResult:
 
 
 def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
-  parser = argparse.ArgumentParser(description=__doc__)
+  parser = argparse.ArgumentParser(
+      prog='python -m meridian.benchmark',
+      description='Meridian performance benchmark.',
+  )
   defaults = BenchmarkConfig()
   for field in dataclasses.fields(BenchmarkConfig):
     parser.add_argument(

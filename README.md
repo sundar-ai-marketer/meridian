@@ -116,7 +116,69 @@ MERIDIAN_BACKEND=tensorflow pytest meridian -q -n 8      # the other backend
     M4 Max. Use `python -m meridian.benchmark.benchmark` to measure your own
     hardware.
 
+## Shaping your own data
+
+`examples/quickstart.py` is the working reference — swap the one marked
+DataFrame for yours. The builder call is:
+
+```python
+from meridian import constants as c
+from meridian.data import data_frame_input_data_builder as dfb
+
+data = (
+    dfb.DataFrameInputDataBuilder(kpi_type=c.NON_REVENUE)
+    .with_kpi(df, kpi_col='conversions', time_col='date', geo_col='geo')
+    .with_revenue_per_kpi(df, revenue_per_kpi_col='revenue_per_conversion',
+                          time_col='date', geo_col='geo')
+    .with_population(df, population_col='population', geo_col='geo')
+    .with_controls(df, control_cols=['price_index'], time_col='date',
+                   geo_col='geo')
+    .with_media(
+        df,
+        media_cols=[f'{ch}_impressions' for ch in channels],
+        media_spend_cols=[f'{ch}_spend' for ch in channels],
+        media_channels=channels,
+        time_col='date',
+        geo_col='geo',
+    )
+    .build()
+)
+```
+
+### The one mistake that costs you accuracy silently
+
+If media comes from the same fully-populated DataFrame as your KPI, you get
+**zero adstock burn-in**. Meridian then adstocks the start of your modelling
+window against zero-padded history, understating carryover and the ROI of
+affected channels. Nothing errors.
+
+Burn-in is expressed by *rows where media exists but spend does not*:
+
+```python
+# Wrong: every column populated for every date -> n_media_times == n_times
+#        -> no burn-in, carryover understated
+
+# Right: media history extends `max_lag` periods earlier, with KPI, controls
+#        and spend left as NaN in those rows
+df.loc[df['date'] < window_start, ['conversions', 'price_index',
+                                   'Search_spend']] = pd.NA
+```
+
+Check it landed:
+
+```python
+print(len(data.media.coords[c.MEDIA_TIME]), len(data.kpi.coords[c.TIME]))
+# want the first to exceed the second by at least max_lag
+```
+
+This fork warns when the gap is too small — upstream does not. See
+[`TRIAGE.md`](TRIAGE.md) for the full story (google/meridian#1502).
+
 ## Install Meridian
+
+> Working from this checkout? Use [Quickstart](#quickstart-for-this-fork)
+> above instead. This section is upstream's plain PyPI path, and following it
+> installs the published package rather than your clone.
 
 Python 3.11-3.13 is required to use Meridian. We also recommend using a
 minimum of 1 GPU.
@@ -197,15 +259,30 @@ Behaviour changes to existing code:
 Added modules:
 
 *   `meridian.analysis.prior_predictive` — check priors against observed data
-    from `sample_prior()` alone, before committing to a full fit.
+    from `sample_prior()` alone, before committing to a full fit:
+
+    ```python
+    mmm.sample_prior(500)
+    check = prior_predictive.PriorPredictiveCheck(mmm)
+    print(check.summary().verdict)
+    check.plot_prior_predictive()
+    ```
+
 *   `meridian.analysis.geo_diagnostics` — measure whether per-geo estimates on
-    your model are precise enough to allocate budget on.
+    your model are precise enough to allocate budget on:
+
+    ```python
+    diag = geo_diagnostics.GeoAllocationReliability(mmm)   # needs a fitted model
+    print(diag.verdict)
+    diag.summary().head()
+    ```
+
 *   `meridian.benchmark` — record what actually governs runtime on your
-    hardware: `python -m meridian.benchmark.benchmark --help`.
+    hardware: `python -m meridian.benchmark --help`.
 *   `meridian.validation.recovery` — generate data whose true ROI is known by
     construction, fit it, and report whether the posterior recovers the truth.
     Run it at the shape of your own data before trusting a model built on it:
-    `python -m meridian.validation.recovery --help`.
+    `python -m meridian.validation --help`.
 
 Added test modules:
 

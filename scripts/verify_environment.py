@@ -231,7 +231,10 @@ def check_end_to_end(report: Report) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-  parser = argparse.ArgumentParser(description=__doc__)
+  parser = argparse.ArgumentParser(
+      prog='python scripts/verify_environment.py',
+      description='Check that a Meridian environment is usable.',
+  )
   parser.add_argument(
       '--skip-fit',
       action='store_true',
