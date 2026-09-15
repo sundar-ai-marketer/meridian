@@ -184,6 +184,37 @@ Added test modules:
     aggregate (4.5e-13), normalized adstock weights summing to 1, and the Hill
     closed form.
 
+## Maintaining this fork
+
+Upstream does not accept external pull requests, so these fixes live here
+permanently and the main long-term risk is drift. Upstream moves quickly —
+v1.4 to v2.0 inside nine months.
+
+Branch layout:
+
+*   `main` — this fork's line of development.
+*   `upstream-main` — a pristine mirror of `google/meridian`, tracking the
+    `upstream` remote. Never commit to it.
+
+To take upstream changes:
+
+```sh
+git fetch upstream
+git checkout upstream-main && git merge --ff-only upstream/main
+git checkout main && git rebase upstream-main
+pytest meridian -q -n 8                      # then the same on MERIDIAN_BACKEND=tensorflow
+```
+
+If `meridian/upstream_issues_test.py` fails after a rebase, that is the point
+of it. Each test there is named for the upstream issue it guards, so a failure
+tells you either that one of this fork's patches was dropped in the rebase, or
+that upstream regressed something this fork depends on. Read
+[`TRIAGE.md`](TRIAGE.md) for the reasoning behind that specific issue before
+changing the test.
+
+`meridian/math_invariants_test.py` failing after a rebase is more serious: it
+means the arithmetic behind reported ROI changed. Do not paper over it.
+
 ## Reading ROI intervals honestly
 
 Recovery testing on synthetic data found a limit worth knowing before any of
