@@ -65,6 +65,10 @@ Files added by this fork:
   examples/quickstart.py
   meridian/benchmark/__main__.py
   meridian/validation/__main__.py
+  SECURITY.md
+  .github/ISSUE_TEMPLATE/config.yml
+  .github/ISSUE_TEMPLATE/bug_report.yml
+  .github/ISSUE_TEMPLATE/feature_request.yml
 
 Summary of behavioural changes to existing code:
 

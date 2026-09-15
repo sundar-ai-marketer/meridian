@@ -1,0 +1,16 @@
+# NOTICE: This file is new in this fork and does not exist in the
+# original google/meridian source.
+
+blank_issues_enabled: true
+contact_links:
+  - name: Problem with Meridian itself (not this fork)
+    url: https://github.com/google/meridian/issues
+    about: >-
+      Most of this repository is Google's code, unchanged. If you can reproduce
+      the problem against a clean `pip install google-meridian`, report it
+      upstream so everyone benefits. Google does not support this fork.
+  - name: MMM methodology questions
+    url: https://developers.google.com/meridian/docs/basics/meridian-introduction
+    about: >-
+      Google's technical documentation covers the modelling approach and
+      applies to this fork unchanged.

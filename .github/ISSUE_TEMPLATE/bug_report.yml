@@ -1,0 +1,54 @@
+# NOTICE: This file is new in this fork and does not exist in the
+# original google/meridian source.
+
+name: Bug report
+description: Something in this fork behaves incorrectly.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Before filing: if you can reproduce this against a clean
+        `pip install google-meridian`, it is an upstream bug — please report it
+        at [google/meridian](https://github.com/google/meridian/issues)
+        instead, where a fix helps everyone.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: >
+        Paste the output of `python scripts/verify_environment.py`. It captures
+        Python, backend, dtype and every relevant package version, and often
+        identifies the problem on its own.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: >
+        The smallest script that shows the problem. Synthetic data is fine and
+        preferred — `meridian.data.test_utils` and the CSVs under
+        `meridian/data/simulated_data/` are available.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened
+      description: Include the full traceback if there is one.
+    validations:
+      required: true
+  - type: checkboxes
+    id: numbers
+    attributes:
+      label: If this is about model output being wrong
+      options:
+        - label: >
+            I have read "Reading ROI intervals honestly" in the README and this
+            is not saturation misspecification.
+        - label: >
+            `n_media_times` exceeds `n_times` by at least `max_lag`, so this is
+            not the zero-burn-in trap.
