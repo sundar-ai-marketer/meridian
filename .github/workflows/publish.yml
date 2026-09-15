@@ -1,3 +1,6 @@
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
 name: Publish  # For tagging and publishing releases.
 
 on:
@@ -65,9 +68,13 @@ jobs:
 
   create-tag:
     needs: check-version
-    # Only run if new_version was discovered, and do this only on the main branch.
+    # Only run if new_version was discovered, and do this only on the main
+    # branch of the upstream repository. Without the repository guard a fork
+    # auto-creates a release tag on its first push to main -- the sibling
+    # publish jobs are already guarded this way.
     if: >
-      github.ref == 'refs/heads/main'
+      github.repository == 'google/meridian'
+      && github.ref == 'refs/heads/main'
       && needs.check-version.outputs.new_version != ''
     runs-on: ubuntu-latest
     permissions:
