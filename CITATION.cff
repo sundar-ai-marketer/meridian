@@ -1,7 +1,12 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: >-
+  This is a fork of Google's Meridian. If you use this software, please cite
+  the original work below. The fork's own changes are recorded in TRIAGE.md
+  and NOTICE.
 title: "Meridian: Marketing Mix Modeling"
 authors:
   - name: "Google Meridian Marketing Mix Modeling Team"
 year: 2026
 url: "https://github.com/google/meridian"
+repository-code: "https://github.com/google/meridian"
+license: Apache-2.0
