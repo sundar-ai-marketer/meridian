@@ -27,6 +27,55 @@ If you are using LightweightMMM, see the
 [migration guide](https://developers.google.com/meridian/docs/migrate) to help
 you understand the differences between these MMM projects.
 
+## Quickstart for this fork
+
+The upstream instructions below install the published PyPI package. To work
+with *this* repository, install it from the checkout instead.
+
+Python 3.11, 3.12 or 3.13. Do not install into an environment that already has
+TensorFlow — see the note on `tensorflow-metal` below.
+
+```sh
+# 1. Clone
+git clone <your-repo-url> meridian && cd meridian
+
+# 2. A clean, isolated environment. Do not skip this.
+python3.11 -m venv ~/.venvs/meridian
+source ~/.venvs/meridian/bin/activate
+python -m pip install -U pip setuptools wheel
+
+# 3. Install the checkout, with every extra the test suite needs
+pip install -e ".[dev,colab,schema,mlflow,geox,scenarioplanner]"
+
+# 4. Prove the environment works before trusting anything
+python scripts/verify_environment.py
+```
+
+Step 4 should end with `RESULT: PASS`. If it does not, it names the fix. Then:
+
+```sh
+pytest meridian -q -n 8           # full suite, about 6 minutes
+```
+
+### Things that will bite you otherwise
+
+*   **`tensorflow-metal`.** If it is present and does not match the installed
+    TensorFlow, `import meridian` dies inside `libmetal_plugin.dylib` with a
+    symbol-not-found error that says nothing about the real cause. Remove it:
+    `pip uninstall -y tensorflow-metal`. `verify_environment.py` checks for it.
+*   **Install the extras.** Without `[schema,mlflow,geox,scenarioplanner]`,
+    about 20 tests fail on missing imports. They are not real failures, but
+    they look like them.
+*   **Editable install.** If a PyPI `google-meridian` is also present, Python
+    may import that instead of your checkout and your edits will appear to do
+    nothing. `verify_environment.py` checks which copy is live.
+*   **JAX is the default backend** from v2.0.0, at 64-bit precision. The
+    TensorFlow backend still works but is deprecated upstream.
+*   **No GPU on Apple Silicon.** Fits run on CPU. For scale: 20 geos x 156
+    weeks x 4 channels at the demo's MCMC settings takes about 35 minutes on an
+    M4 Max. Use `python -m meridian.benchmark.benchmark` to measure your own
+    hardware.
+
 ## Install Meridian
 
 Python 3.11-3.13 is required to use Meridian. We also recommend using a
