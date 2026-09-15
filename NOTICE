@@ -51,6 +51,7 @@ Files added by this fork:
   meridian/benchmark/__init__.py
   meridian/benchmark/benchmark.py
   meridian/benchmark/benchmark_test.py
+  meridian/upstream_issues_test.py
 
 Summary of behavioural changes to existing code:
 
