@@ -35,3 +35,6 @@ env/
 
 # Local environment overrides.
 .env
+
+# Output of examples/quickstart.py (default --output-dir).
+/quickstart_output/
