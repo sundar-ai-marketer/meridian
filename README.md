@@ -227,6 +227,18 @@ defined in [pyproject.toml](https://github.com/google/meridian/blob/main/pyproje
 
 ## How to use the Meridian library
 
+This checkout ships nine runnable notebooks in [`demo/`](demo/) — no Colab
+account needed:
+
+```sh
+jupyter notebook demo/Meridian_Getting_Started.ipynb
+```
+
+Note that the Getting Started notebook builds its `InputData` from a fully
+populated DataFrame, which produces **zero adstock burn-in**. Read
+[the one mistake that costs you accuracy silently](#the-one-mistake-that-costs-you-accuracy-silently)
+before adapting it to your own data.
+
 To get started with Meridian, you can run the code programmatically using sample
 data with the [Getting Started Colab][3].
 
@@ -352,6 +364,12 @@ while its interval looks reassuringly tight. Use
 `meridian.validation.recovery` with `--response linear` to size that effect at
 your own data shape, and treat the gap as a floor on the uncertainty you carry
 into a recommendation.
+
+Two things that tool does **not** do: it sizes the generic risk at your data's
+shape and scale, and it does not diagnose whether any particular channel's real
+response is linear — which often is not identifiable from observational spend
+data at all. To inspect a fitted channel's estimated response shape, see
+[`demo/ROI_mROI_Response_Curves.ipynb`](demo/ROI_mROI_Response_Curves.ipynb).
 
 ## Meridian Documentation & Tutorials
 
