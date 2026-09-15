@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 """Defines text string constants used in the model outputs."""
 
@@ -78,6 +82,22 @@ OUTCOME_CONTRIBUTION_CHART_ID = 'outcome-contribution-chart'
 CONTRIBUTION_CHART_TITLE = 'Contribution by baseline and marketing channels'
 OUTCOME_CONTRIBUTION_CHART_DESCRIPTION = """Note: This is a percentage breakdown
 of all your {outcome}."""
+
+# Shared uncertainty caveat, surfaced next to the ROI breakdown and the
+# response-curves content: credible intervals only quantify parameter
+# uncertainty given the assumed saturation shape, not the risk of that shape
+# being wrong. Kept as one constant so the report and the README/TRIAGE.md
+# discussion of this limitation cannot drift apart. Deliberately has no
+# specific percentage figures, since those are config-specific and would go
+# stale; points to TRIAGE.md/README and the validation module instead.
+UNCERTAINTY_CAVEAT = """Credible intervals shown on this page quantify
+parameter uncertainty conditional on the assumed saturation shape (for
+example, Hill curves for media response). They do not cover the risk that
+this shape itself is misspecified. See "Reading ROI intervals honestly" in
+the repository README and TRIAGE.md for evidence of this limitation, and
+consider running `python -m meridian.validation` on data resembling this
+model's configuration before treating these intervals as bounds on total
+error."""
 
 PERFORMANCE_BREAKDOWN_CARD_ID = 'performance-breakdown'
 PERFORMANCE_BREAKDOWN_CARD_TITLE = 'Return on investment'

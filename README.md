@@ -55,24 +55,42 @@ TensorFlow — see the note on `tensorflow-metal` below.
 
 ```sh
 git clone https://github.com/FORK_URL.git meridian && cd meridian
-./scripts/setup.sh
+make quickstart
 ```
 
-That finds a supported Python, builds an isolated environment, removes
-`tensorflow-metal` if present, installs this checkout with every extra, and
-verifies the result. It is safe to re-run and exits non-zero if the environment
-does not come out usable.
+One command: it finds a supported Python, builds an isolated environment,
+removes `tensorflow-metal` if present, installs this checkout with every
+extra, compiles the report stylesheet, verifies the result, then runs a real
+end-to-end analysis on the bundled sample data. About fifteen minutes on an M4
+Max, most of it the install. Safe to re-run, and it exits non-zero rather than
+leaving you with an environment that does not work.
 
-Then see it actually work, end to end, on the bundled sample data:
+`make help` lists everything:
 
-```sh
-.venv/bin/python examples/quickstart.py
-```
+| | |
+|---|---|
+| `make quickstart` | setup → stylesheet → verify → demo. The one-command path. |
+| `make setup` | environment only |
+| `make verify` | check an existing environment is usable |
+| `make test` / `make test-tf` | full suite, on either backend |
+| `make demo` | the end-to-end example |
+| `make build` | wheel + sdist |
+| `make clean` | build artifacts and generated output. Never touches your venv. |
 
-That runs a real analysis in about six minutes on an M4 Max — build input data, set an ROI
-prior, check the prior against the data *before* fitting, fit, check
+The demo alone takes about six minutes on an M4 Max — build input data, set an
+ROI prior, check the prior against the data *before* fitting, fit, check
 convergence, read ROI, optimize a budget, and save the model. Pass `--full` for
 the demo's proper MCMC settings (about 35 minutes on an M4 Max).
+
+### Without installing anything locally
+
+*   **GitHub Codespaces / VS Code Dev Containers.** `.devcontainer/` builds the
+    whole environment on container create. Open the repo in a Codespace, or
+    "Reopen in Container" locally, and run `make demo`.
+*   **Docker.** `docker build -t meridian . && docker run --rm meridian` runs
+    the demo in a container. The image is several GB — TensorFlow and JAX are
+    both in it. Note this image has not been built and smoke-tested yet; treat
+    it as unverified until you have run it once.
 
 <details>
 <summary>Manual setup, if you would rather not run a script</summary>
@@ -91,8 +109,8 @@ python scripts/verify_environment.py     # must end with RESULT: PASS
 To run the tests:
 
 ```sh
-pytest meridian -q -n 8                                  # ~7 min, 5536 tests
-MERIDIAN_BACKEND=tensorflow pytest meridian -q -n 8      # ~9 min, the other backend
+make test                                                # ~9 min, 5591 tests
+make test-tf                                             # the other backend
 ```
 
 ### Things that will bite you otherwise
@@ -253,7 +271,7 @@ before adapting it to your own data.
 To get started with Meridian, you can run the code programmatically using sample
 data with the [Getting Started Colab][3].
 
-The Meridian model uses a holistic MCMC sampling approach called
+The Meridian model uses an MCMC sampling approach called
 [No U Turn Sampler (NUTS)](https://www.tensorflow.org/probability/api_docs/python/tfp/experimental/mcmc/NoUTurnSampler)
 which can be compute intensive. To help with this, GPU support has been
 developed across the library (out-of-the-box) using tensors. We recommend
@@ -279,6 +297,26 @@ Behaviour changes to existing code:
 *   Non-finite variables are excluded from the VIF check instead of aborting it.
 *   Input validation errors name the offending column or coordinate.
 
+Changes to the generated HTML report:
+
+*   The response-curve chart shows its credible interval. Upstream passes
+    `include_ci=False` for that one chart, so the single place where
+    saturation-shape risk actually lives was the only point-estimate-only
+    chart in a report where ROI bars do show intervals. It is now faceted per
+    channel so seven bands stay readable.
+*   The report carries the interval caveat. It said nothing about the
+    limitation this README documents, which meant the artifact that reaches a
+    client contradicted the repository it came from.
+*   Multi-channel charts use an explicit colour-blind-safe categorical range.
+    Every chart needing more than two colours previously fell through to
+    Vega-Lite's default scheme, which fails both a chroma floor and an
+    adjacent-pair separation check, and degrades further as channels are added.
+*   Budget allocation is a labelled bar, not a pie. The old pie put its
+    percentages in hover tooltips only, in a file whose whole purpose is being
+    exported and sent to someone.
+*   Vega libraries load from pinned versions rather than unversioned URLs, so a
+    report archived today still renders the same way next year.
+
 Added modules:
 
 *   `meridian.analysis.prior_predictive` — check priors against observed data
@@ -291,6 +329,29 @@ Added modules:
     check.plot_prior_predictive()
     ```
 
+    The interval is a genuine *predictive* interval: Meridian's likelihood is
+    `y ~ Normal(y_pred, sigma)`, and the observation-noise term is drawn and
+    added per prior draw rather than comparing the observed data against an
+    interval for the conditional mean alone. Leaving `sigma` out makes the
+    interval too narrow, which biases the check toward reporting that a
+    perfectly reasonable prior disagrees with the data.
+
+*   `meridian.analysis.sampling_diagnostics` — the two MCMC trust signals the
+    library computes but never surfaces: **divergent transitions** (already in
+    `inference_data.sample_stats`, previously unread) and **effective sample
+    size**:
+
+    ```python
+    diag = sampling_diagnostics.SamplingDiagnostics(mmm)
+    print(diag.verdict)
+    diag.summary().head()          # per parameter: r-hat, bulk/tail ESS
+    ```
+
+    R-hat is reported against both upstream's 1.2 and the modern 1.01 bar
+    (Vehtari et al. 2021), side by side, rather than one silently overriding
+    the other. A converged r-hat with bulk ESS in the dozens does not support
+    a 90% interval, and nothing else in the library will tell you that.
+
 *   `meridian.analysis.geo_diagnostics` — measure whether per-geo estimates on
     your model are precise enough to allocate budget on:
 
@@ -298,7 +359,13 @@ Added modules:
     diag = geo_diagnostics.GeoAllocationReliability(mmm)   # needs a fitted model
     print(diag.verdict)
     diag.summary().head()
+    diag.plot_reliability()
     ```
+
+    Reports `prob_positive` and `ci_excludes_zero` alongside the coefficient of
+    variation, because CV alone cannot tell "this geo had no media execution"
+    from "this geo's effect might genuinely be zero" — both blow CV up, and
+    they mean entirely different things.
 
 *   `meridian.benchmark` — record what actually governs runtime on your
     hardware: `python -m meridian.benchmark --help`.
@@ -306,6 +373,14 @@ Added modules:
     construction, fit it, and report whether the posterior recovers the truth.
     Run it at the shape of your own data before trusting a model built on it:
     `python -m meridian.validation --help`.
+
+    A single fit sizes the error; it cannot tell a systematic bias from one
+    unlucky dataset. `--replications N` fits N independent datasets from seeds
+    derived from yours and reports **empirical coverage** — the fraction of
+    replications where the true ROI fell inside the nominal interval — with a
+    Wilson interval on that estimate, since coverage measured over 20 draws is
+    itself noisy. That is the number that turns "our interval looks wrong" into
+    a statement you can defend.
 
 Added test modules:
 

@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 """Summarization module that creates a 2-page HTML report."""
 
@@ -443,6 +447,7 @@ class Summarizer:
         lead_cpik_ratio=cpik_df[c.CPIK][0],
         currency=self._currency,
     )
+    insights = ' '.join([insights, summary_text.UNCERTAINTY_CAVEAT])
     return formatter.create_card_html(
         template_env,
         PERFORMANCE_BREAKDOWN_CARD_SPEC,
@@ -472,14 +477,17 @@ class Summarizer:
             description=summary_text.RESPONSE_CURVES_CHART_DESCRIPTION_FORMAT.format(
                 outcome=outcome
             ),
+            # `plot_separately=True` facets one subplot per channel instead
+            # of layering them, so the per-channel credible-interval bands
+            # (`include_ci=True`) stay readable instead of overlapping into
+            # an unreadable mess across up to 7 layered channels.
             chart_json=media_effects.plot_response_curves(
                 confidence_level=c.DEFAULT_CONFIDENCE_LEVEL,
                 selected_times=(
                     frozenset(selected_times) if selected_times else None
                 ),
-                plot_separately=False,
-                include_ci=False,
-                num_channels_displayed=7,
+                plot_separately=True,
+                include_ci=True,
             ).to_json(),
         )
     )
@@ -487,6 +495,7 @@ class Summarizer:
     insights = summary_text.RESPONSE_CURVES_INSIGHTS_FORMAT.format(
         outcome=outcome
     )
+    insights = ' '.join([insights, summary_text.UNCERTAINTY_CAVEAT])
     if reach_frequency is not None:
       assert self._meridian.n_rf_channels > 0
       optimal_rf = self._select_optimal_rf_data(media_summary, reach_frequency)

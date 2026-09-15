@@ -38,6 +38,27 @@ A prior that implies an outcome far from the observed scale will not be fixed
 by sampling; it needs different priors. See also
 `google/meridian#1469`, where a total-treatment-contribution prior probability
 of 1.0 was diagnosed only after a full fit.
+
+**This is a predictive check, not just a check of the conditional mean.**
+Meridian's likelihood is `y ~ Normal(y_pred, sigma)`, with `sigma` a free
+parameter carrying its own prior (`prior_distribution.py`,
+`posterior_sampler.py`'s `y ~ Normal(y_pred, sigma_gt)`). A correct prior
+predictive check draws `y_rep ~ p(y|theta)` with `theta ~ prior` -- mean *and*
+observation noise -- so this module adds sigma noise to
+`analyzer.expected_outcome`'s conditional mean before computing any interval
+or coverage figure below; see `_prior_predictive_noise_sd` for the derivation
+and `analysis/review/checks.py`'s `BayesianPPPCheck._calculate_total_sigma`,
+which this follows, for the upstream precedent. Skipping this step -- as an
+earlier version of this module did -- computes an interval for the *mean
+function*, which is systematically narrower than the true predictive
+interval and biases the check toward false "prior disagrees with data"
+verdicts.
+
+`coverage` and the verdict thresholds below are heuristics, not derived
+statistics: with roughly 100 time periods, empirical coverage has real
+binomial sampling spread (for a nominal 90% interval, a fifty-period series
+easily reads 84-96% by chance alone), so a near-miss against
+`_COVERAGE_FLOOR_FACTOR` is not on its own evidence of a miscalibrated prior.
 """
 
 from collections.abc import Sequence
@@ -46,6 +67,7 @@ import dataclasses
 import altair as alt
 from meridian import constants as c
 from meridian.analysis import analyzer as analyzer_module
+from meridian.analysis import geo_diagnostics
 from meridian.common import currency as currency_module
 from meridian.common import errors
 from meridian.model import model
@@ -68,6 +90,20 @@ _ACTUAL = 'actual'
 _SERIES = 'series'
 _VALUE = 'value'
 
+# Heuristic verdict thresholds (see module docstring): none of these are
+# derived from a formal test, and near-misses should be read with the
+# binomial sampling spread of `coverage` in mind.
+
+# An order-of-magnitude mismatch between the prior predictive total and the
+# observed total signals priors on the wrong scale -- sampling will not fix
+# it -- rather than a calibration nuance.
+_TOTAL_RATIO_HIGH = 10.0
+_TOTAL_RATIO_LOW = 0.1
+
+# Coverage below this fraction of the nominal confidence level flags a prior
+# that is too narrow or centred wrongly.
+_COVERAGE_FLOOR_FACTOR = 0.5
+
 # Grey band, amber prior mean, blue observed: distinguishable in
 # greyscale and for the common colour-vision deficiencies, and the two
 # lines also differ by dash pattern so colour is never the only cue.
@@ -80,8 +116,12 @@ class PriorPredictiveSummary:
 
   Attributes:
     coverage: Fraction of time periods whose observed outcome falls inside the
-      prior credible interval. A well-calibrated prior sits near
-      `confidence_level`; near 0 means the prior disagrees with the data.
+      prior *predictive* interval -- the mean prediction plus observation
+      noise (see module docstring), not just the interval of the mean
+      function. A well-calibrated prior sits near `confidence_level`; near 0
+      means the prior disagrees with the data. With ~100 time periods this
+      has real binomial sampling spread; see the module docstring before
+      reading a near-miss as evidence of miscalibration.
     total_actual: Observed outcome summed over geos and time.
     total_prior_median: Median prior predictive total outcome.
     total_ratio: `total_prior_median / total_actual`. A value of 10 means the
@@ -127,8 +167,16 @@ class PriorPredictiveSummary:
 
   @property
   def verdict(self) -> str:
-    """A short, human-readable reading of the diagnostics."""
-    if self.total_ratio > 10 or self.total_ratio < 0.1:
+    """A short, human-readable reading of the diagnostics.
+
+    The thresholds behind this reading (`_TOTAL_RATIO_HIGH`,
+    `_TOTAL_RATIO_LOW`, `_COVERAGE_FLOOR_FACTOR`) are heuristics, not derived
+    statistics -- see the module docstring.
+    """
+    if (
+        self.total_ratio > _TOTAL_RATIO_HIGH
+        or self.total_ratio < _TOTAL_RATIO_LOW
+    ):
       return (
           'The prior predictive total is off by more than an order of magnitude'
           f' ({self.total_ratio:.2g}x the observed total). Sampling will not'
@@ -139,7 +187,7 @@ class PriorPredictiveSummary:
           'The observed total falls outside the prior credible interval. The'
           ' priors disagree with the data before any fitting has happened.'
       )
-    if self.coverage < 0.5 * self.confidence_level:
+    if self.coverage < _COVERAGE_FLOOR_FACTOR * self.confidence_level:
       return (
           f'Only {self.coverage:.0%} of time periods fall inside the prior'
           ' credible interval. The prior is too narrow or centred wrongly.'
@@ -189,7 +237,7 @@ class PriorPredictiveCheck:
         model_context=meridian.model_context,
         inference_data=meridian.inference_data,
     )
-    self._use_kpi = self._analyzer._use_kpi(use_kpi)  # pylint: disable=protected-access
+    self._use_kpi = geo_diagnostics.resolve_use_kpi(self._analyzer, use_kpi)
     self._data = self._build_data()
 
   @property
@@ -207,10 +255,78 @@ class PriorPredictiveCheck:
       outcome = kpi * revenue_per_kpi
     return outcome.sum(dim=c.GEO)
 
+  def _prior_predictive_noise_sd(self, mean_draws: np.ndarray) -> np.ndarray:
+    """Standard deviation of the prior predictive noise, per draw and time.
+
+    Meridian's likelihood is `y_scaled ~ Normal(y_pred_scaled, sigma)` on the
+    population-scaled KPI, independent across geo and time (see the module
+    docstring and `posterior_sampler.py`'s `y ~ Normal(y_pred, sigma_gt)`).
+    `KpiTransformer.inverse` (`model/transformers.py`) converts a scaled cell
+    back to unscaled KPI as `tensor * population_scaled_stdev *
+    population_g + population_scaled_mean * population_g`, so a zero-mean
+    perturbation `eps_g ~ Normal(0, sigma_g)` in scaled space becomes, in
+    unscaled KPI, `eps_g * population_scaled_stdev * population_g`.
+    Multiplying by `revenue_per_kpi_{g,t}` when comparing revenue and summing
+    independent geos gives, per prior draw and time period:
+
+    `Var(sum_g Outcome_{g,t}) = sum_g sigma_g^2 * weight_{g,t}^2`
+
+    where `weight_{g,t} = population_scaled_stdev * population_g *
+    revenue_per_kpi_{g,t}` (`revenue_per_kpi` dropped when `use_kpi=True`).
+    This is the same weight `BayesianPPPCheck._calculate_total_sigma` derives
+    in `analysis/review/checks.py` for the fully-aggregated total; this
+    method keeps the geo sum separate per time period, instead of also
+    summing over time, and keeps sigma varying per prior draw rather than
+    per posterior draw.
+
+    Args:
+      mean_draws: The `(n_draws, n_times)` conditional-mean draws this noise
+        will be added to, used only to validate the time dimension matches.
+
+    Returns:
+      A `(n_draws, n_times)` array of standard deviations, aligned with
+      `mean_draws`.
+    """
+    model_context = self._meridian.model_context
+    input_data = self._meridian.input_data
+    stdev = float(model_context.kpi_transformer.population_scaled_stdev)
+    pop = np.asarray(model_context.population)  # (n_geos,)
+    kpi = np.asarray(input_data.kpi)  # (n_geos, n_times)
+    revenue_per_kpi = input_data.revenue_per_kpi
+
+    if self._use_kpi or revenue_per_kpi is None:
+      weight = stdev * pop[:, np.newaxis] * np.ones_like(kpi)
+    else:
+      weight = stdev * pop[:, np.newaxis] * np.asarray(revenue_per_kpi)
+
+    sigma_da = self._meridian.inference_data.prior[c.SIGMA]
+    if c.GEO in sigma_da.dims:
+      sigma = sigma_da.transpose(c.CHAIN, c.DRAW, c.GEO).values
+      sigma_flat = sigma.reshape(-1, sigma.shape[-1])  # (n_draws, n_geos)
+    else:
+      # `unique_sigma_for_each_geo=False`, or a single-geo model: one sigma
+      # shared by every geo.
+      sigma = sigma_da.transpose(c.CHAIN, c.DRAW).values
+      sigma_flat = np.broadcast_to(
+          sigma.reshape(-1, 1), (sigma.size, weight.shape[0])
+      )
+
+    if sigma_flat.shape[0] != mean_draws.shape[0]:
+      raise ValueError(
+          'Prior sigma draws'
+          f' ({sigma_flat.shape[0]}) do not align with the conditional-mean'
+          f' draws ({mean_draws.shape[0]}). This should not happen for a'
+          ' prior group, which always has a single chain.'
+      )
+
+    # sum_g sigma_{d,g}^2 * weight_{g,t}^2, per prior draw d and time t.
+    variance = np.einsum('dg,gt->dt', sigma_flat**2, weight**2)
+    return np.sqrt(variance)
+
   def _build_data(self) -> xr.Dataset:
     """Builds the prior predictive dataset."""
     # Shape: (chain, draw, time). The prior group always has a single chain.
-    prior_outcome = np.asarray(
+    prior_mean = np.asarray(
         self._analyzer.expected_outcome(
             use_posterior=False,
             aggregate_geos=True,
@@ -218,15 +334,28 @@ class PriorPredictiveCheck:
             use_kpi=self._use_kpi,
         )
     )
-    draws = prior_outcome.reshape(-1, prior_outcome.shape[-1])
+    mean_draws = prior_mean.reshape(-1, prior_mean.shape[-1])
+
+    # A true prior *predictive* draw adds observation noise to the
+    # conditional mean -- see module docstring. A fixed seed keeps
+    # `summary()` and `plot_prior_predictive()` deterministic across repeated
+    # calls on the same fitted model, rather than resampling (and therefore
+    # changing) the coverage figure on every call.
+    noise_sd = self._prior_predictive_noise_sd(mean_draws)
+    rng = np.random.default_rng(0)
+    predictive_draws = (
+        mean_draws + rng.normal(size=mean_draws.shape) * noise_sd
+    )
 
     lo_q = (1.0 - self._confidence_level) / 2.0
     hi_q = 1.0 - lo_q
     expected = np.stack(
         [
-            np.mean(draws, axis=0),
-            np.quantile(draws, lo_q, axis=0),
-            np.quantile(draws, hi_q, axis=0),
+            # The `mean` line is the low-noise conditional mean; only the
+            # interval widens to reflect predictive, not just mean, coverage.
+            np.mean(mean_draws, axis=0),
+            np.quantile(predictive_draws, lo_q, axis=0),
+            np.quantile(predictive_draws, hi_q, axis=0),
         ],
         axis=-1,
     )
@@ -235,8 +364,10 @@ class PriorPredictiveCheck:
     times = [str(t) for t in actual.coords[c.TIME].values]
 
     # Totals are computed per draw, then summarized -- summing the per-period
-    # quantiles would understate the interval.
-    totals = draws.sum(axis=-1)
+    # quantiles would understate the interval. The median total uses the
+    # low-noise mean draws; the total interval uses the predictive draws.
+    mean_totals = mean_draws.sum(axis=-1)
+    predictive_totals = predictive_draws.sum(axis=-1)
 
     return xr.Dataset(
         data_vars={
@@ -249,8 +380,9 @@ class PriorPredictiveCheck:
         },
         attrs={
             'confidence_level': self._confidence_level,
-            'n_draws': int(draws.shape[0]),
-            'total_draws': totals,
+            'n_draws': int(mean_draws.shape[0]),
+            'total_draws': mean_totals,
+            'total_predictive_draws': predictive_totals,
             'use_kpi': self._use_kpi,
         },
     )
@@ -261,6 +393,12 @@ class PriorPredictiveCheck:
 
     - **Coordinates:** `time`, `metric` (`mean`, `ci_lo`, `ci_hi`)
     - **Data variables:** `expected` (prior predictive), `actual` (observed)
+
+    `expected`'s `mean` is the deterministic conditional mean,
+    `E(Outcome|theta)`; `ci_lo`/`ci_hi` are the prior *predictive* interval,
+    which also accounts for the observation-noise parameter `sigma` and is
+    therefore wider than an interval built from `mean` alone -- see the
+    module docstring.
     """
     return self._data
 
@@ -272,12 +410,13 @@ class PriorPredictiveCheck:
     hi = data[_EXPECTED].sel({c.METRIC: _CI_HI}).values
     coverage = float(np.mean((actual >= lo) & (actual <= hi)))
 
-    totals = data.attrs['total_draws']
+    mean_totals = data.attrs['total_draws']
+    predictive_totals = data.attrs['total_predictive_draws']
     total_actual = float(actual.sum())
-    total_median = float(np.median(totals))
+    total_median = float(np.median(mean_totals))
     lo_q = (1.0 - self._confidence_level) / 2.0
-    total_lo = float(np.quantile(totals, lo_q))
-    total_hi = float(np.quantile(totals, 1.0 - lo_q))
+    total_lo = float(np.quantile(predictive_totals, lo_q))
+    total_hi = float(np.quantile(predictive_totals, 1.0 - lo_q))
 
     # Guard against a degenerate observed total.
     ratio = total_median / total_actual if total_actual else float('inf')

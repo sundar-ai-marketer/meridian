@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 """Module to output budget optimization scenarios based on the model."""
 
@@ -764,36 +768,96 @@ class OptimizationResults:
     )
 
   def plot_budget_allocation(self, optimized: bool = True) -> alt.Chart:
-    """Plots a pie chart showing the spend allocated for each channel.
+    """Plots a bar chart showing the spend allocated for each channel.
+
+    This was previously a pie chart, whose slice percentages were only
+    reachable via hover tooltip. A sorted, directly-labeled bar reads as a
+    static image (no hover needed) and scales to any number of channels,
+    where a pie does not.
 
     Args:
       optimized: If `True`, shows the optimized spend. If `False`, shows the
         non-optimized spend.
 
     Returns:
-      An Altair pie chart showing the spend by channel.
+      An Altair bar chart showing the percentage of total spend allocated to
+      each channel, sorted descending, with the percentage labeled directly
+      on each bar.
     """
     data = self.optimized_data if optimized else self.nonoptimized_data
     df = data.spend.to_dataframe().reset_index()
-    return (
-        alt.Chart(df)
-        .mark_arc(tooltip=True, padAngle=0.02)
-        .encode(
-            theta=f'{c.SPEND}:Q',
-            color=alt.Color(
-                f'{c.CHANNEL}:N',
-                legend=alt.Legend(
-                    title=None, rowPadding=c.PADDING_10, offset=-25
-                ),
+    df[c.PCT_OF_SPEND] = df[c.SPEND] / df[c.SPEND].sum()
+    df = df.sort_values(by=c.PCT_OF_SPEND, ascending=False).reset_index(
+        drop=True
+    )
+
+    channel_color_range = [
+        c.CATEGORICAL_COLOR_RANGE[i % len(c.CATEGORICAL_COLOR_RANGE)]
+        for i in range(len(df))
+    ]
+
+    chart_height = formatter.bar_chart_width(len(df) + 2)
+
+    base = alt.Chart(df).transform_calculate(
+        pct_label=f'format(datum.{c.PCT_OF_SPEND}, ".0%")'
+    )
+
+    channel_axis = alt.Axis(title=None, **formatter.AXIS_CONFIG)
+    pct_axis = alt.Axis(
+        title=None, domain=False, ticks=False, labels=False, grid=False
+    )
+
+    bar = base.mark_bar(
+        tooltip=True, size=c.BAR_SIZE, cornerRadiusEnd=c.CORNER_RADIUS
+    ).encode(
+        y=alt.Y(
+            f'{c.CHANNEL}:N',
+            axis=channel_axis,
+            sort=None,
+            scale=alt.Scale(padding=c.BAR_SIZE),
+        ),
+        x=alt.X(
+            f'{c.PCT_OF_SPEND}:Q',
+            axis=pct_axis,
+            scale=alt.Scale(domain=[0, 1]),
+        ),
+        color=alt.Color(
+            f'{c.CHANNEL}:N',
+            legend=None,
+            scale=alt.Scale(
+                domain=list(df[c.CHANNEL]), range=channel_color_range
             ),
-        )
-        .configure_view(stroke=None)
+        ),
+        tooltip=[
+            alt.Tooltip(f'{c.CHANNEL}:N'),
+            alt.Tooltip(f'{c.SPEND}:Q', format=',.0f'),
+            alt.Tooltip('pct_label:N', title='% of budget'),
+        ],
+    )
+
+    text = base.mark_text(
+        fontSize=c.AXIS_FONT_SIZE,
+        color=c.GREY_800,
+        baseline='middle',
+        dx=5,
+        align='left',
+    ).encode(
+        y=alt.Y(f'{c.CHANNEL}:N', sort=None),
+        x=alt.X(f'{c.PCT_OF_SPEND}:Q'),
+        text=alt.Text('pct_label:N'),
+    )
+
+    return (
+        (bar + text)
         .properties(
             title=formatter.custom_title_params(
                 summary_text.SPEND_ALLOCATION_CHART_TITLE
             ),
             width=c.VEGALITE_FACET_DEFAULT_WIDTH,
+            height=chart_height,
         )
+        .configure_axis(**formatter.TEXT_CONFIG)
+        .configure_view(strokeOpacity=0)
     )
 
   # TODO: Add Scuba tests for horizontal plots.

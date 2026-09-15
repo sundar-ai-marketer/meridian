@@ -62,22 +62,63 @@ Measured on JAX 0.10.2 / TFP 0.26.0-dev20260130 / numpy 2.3.5, float64, macOS
 arm64. NUTS is not bit-reproducible across library or hardware versions even at
 a fixed seed, so re-measure rather than quoting these figures.
 
-**Each row is one simulated dataset and one fit.** That cannot separate
-systematic misspecification bias from a single unlucky draw. Treat it as a
-sizing exercise at your own data's shape. Doing it properly means many seeds
-and rank statistics -- simulation-based calibration -- which this module does
-not yet implement.
+**Each row above is one simulated dataset and one fit** (`--replications 1`,
+the default). That cannot separate systematic misspecification bias from a
+single unlucky draw -- it is a sizing exercise at your own data's shape, not a
+calibration statement.
+
+## Turning the sizing exercise into a calibration statement
+
+Pass `--replications N` to simulate and fit N independent datasets, each from
+a seed deterministically derived from `--seed` via
+`numpy.random.SeedSequence(seed).spawn(N)`. Across the N fits this reports,
+per channel:
+
+  * the median and interquartile range of relative ROI error;
+  * **empirical coverage** -- the fraction of replications where the true ROI
+    fell inside the nominal credible interval. This is the headline number:
+    for a well-calibrated model under a correctly specified response shape,
+    coverage should sit near the nominal `--confidence-level` (0.9 by
+    default). Coverage measurably below that is the quantitative version of
+    "the interval does not cover this kind of error" -- the qualitative claim
+    the single-run table above can only gesture at.
+  * a 95% Wilson score interval on that coverage estimate. With N
+    replications the coverage estimate is itself noisy (binomial with only N
+    trials); report the interval, not a point estimate, and do not treat N=20
+    as enough to resolve 0.90 from 0.80.
+
+It also reports a simulation-based-calibration (SBC) rank statistic per
+channel: the fraction of posterior ROI draws that fall below the true value
+in each replication. Under a calibrated model these fractions are uniform on
+[0, 1] across replications; the report includes a one-sample
+Kolmogorov-Smirnov statistic against that uniform null as an informal check
+(its asymptotic critical value is unreliable much below ~20 replications, so
+treat it as a hint, not a test, at small N).
+
+This module does not (yet) implement rank histograms or SBC beyond that one
+KS statistic -- no chain-pooling diagnostics, no ECDF-difference plots. What
+is above is the whole of it.
+
+Multi-replication runs take N times as long as a single fit (each fit is
+several minutes); `--replications` prints a per-replication progress line and
+a running estimate of total runtime so you know what you signed up for before
+it is done. **No results for `--replications > 1` are published in this
+docstring** -- generating them takes the time it takes, and this module does
+not report numbers nobody measured.
 
 ```
 python -m meridian.validation.recovery --n-geos 5 --n-times 104 --response linear
+python -m meridian.validation.recovery --replications 20 --response linear
 ```
 """
 
 from __future__ import annotations
 
 import argparse
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 import dataclasses
+import sys
+import time
 from typing import Literal
 
 import numpy as np
@@ -96,8 +137,12 @@ __all__ = [
     'RecoveryConfig',
     'RecoveryResult',
     'ChannelRecovery',
+    'ChannelReplicationSummary',
+    'MultiRecoveryResult',
     'simulate',
     'run_recovery',
+    'run_recovery_replications',
+    'derive_replication_seeds',
 ]
 
 ResponseShape = Literal['linear', 'concave']
@@ -128,7 +173,15 @@ class RecoveryConfig:
       deliberately uninformative so that separating the channels is the data's
       work, not the prior's.
     prior_roi_sigma: Log-scale standard deviation of that prior.
-    seed: Seed for both simulation and sampling.
+    seed: Base seed for both simulation and sampling. With `replications > 1`
+      each replication derives its own seed from this one via
+      `numpy.random.SeedSequence(seed).spawn(replications)`, so the whole run
+      -- including which seed each replication gets -- is reproducible.
+    replications: Number of independent simulate-and-fit replications.
+      `1` (the default) is the single-run path: `run_recovery` behaves
+      exactly as it did before this field existed. Values `> 1` are handled
+      by `run_recovery_replications`, which turns a sizing exercise into an
+      empirical-coverage estimate.
   """
 
   true_roi: tuple[float, ...] = (1.0, 2.0, 4.0)
@@ -147,6 +200,7 @@ class RecoveryConfig:
   prior_roi_median: float = 2.0
   prior_roi_sigma: float = 0.7
   seed: int = 7
+  replications: int = 1
 
   def __post_init__(self):
     if len(self.true_roi) != len(self.spend_scale):
@@ -160,6 +214,10 @@ class RecoveryConfig:
       )
     if not 0.0 < self.confidence_level < 1.0:
       raise ValueError('`confidence_level` must be in (0, 1).')
+    if self.replications < 1:
+      raise ValueError(
+          f'`replications` must be >= 1, got {self.replications}.'
+      )
 
   @property
   def channels(self) -> list[str]:
@@ -392,9 +450,21 @@ def _build_model(df: pd.DataFrame, config: RecoveryConfig) -> model.Meridian:
   )
 
 
-def run_recovery(config: RecoveryConfig | None = None) -> RecoveryResult:
-  """Simulates, fits, and reports whether the true ROI was recovered."""
-  config = config or RecoveryConfig()
+def _fit_and_recover(
+    config: RecoveryConfig,
+) -> tuple[RecoveryResult, np.ndarray, np.ndarray]:
+  """Simulates and fits one replication.
+
+  Factored out of `run_recovery` so that `run_recovery_replications` can
+  reuse the same fit for its rank statistics (see `ChannelReplicationSummary`
+  and the SBC discussion in the module docstring) without fitting twice.
+
+  Returns:
+    A tuple `(result, draws, true_roi)`: the single-run `RecoveryResult`
+    (identical to what `run_recovery` returns), the posterior ROI draws with
+    shape `(n_draws, n_channels)`, and the realised true ROI per channel used
+    for the rank statistic.
+  """
   df, true_roi = simulate(config)
   mmm = _build_model(df, config)
 
@@ -445,8 +515,338 @@ def run_recovery(config: RecoveryConfig | None = None) -> RecoveryResult:
       )
       for i, name in enumerate(config.channels)
   )
-  return RecoveryResult(
+  result = RecoveryResult(
       config=config, channels=channels, max_r_hat=max_r_hat
+  )
+  return result, draws, true_roi
+
+
+def run_recovery(config: RecoveryConfig | None = None) -> RecoveryResult:
+  """Simulates, fits, and reports whether the true ROI was recovered.
+
+  This is the single-replication path: it ignores `config.replications` and
+  always runs exactly one simulate-and-fit, exactly as before this module
+  gained repeated-replication support. For `replications > 1`, use
+  `run_recovery_replications`.
+  """
+  config = config or RecoveryConfig()
+  result, _, _ = _fit_and_recover(config)
+  return result
+
+
+def derive_replication_seeds(seed: int, replications: int) -> tuple[int, ...]:
+  """Deterministically derives one child seed per replication.
+
+  Uses `numpy.random.SeedSequence(seed).spawn(replications)`, NumPy's
+  documented mechanism for generating independent, reproducible streams from
+  a base seed. Each spawned `SeedSequence` is reduced to a single Python int
+  (via `generate_state`) because both `simulate` and the backend's MCMC
+  sampler take a plain int seed, not a `SeedSequence`.
+
+  The same `seed` and `replications` always produce the same child seeds, so
+  a multi-replication run is as reproducible as the single-run path.
+
+  Args:
+    seed: Base seed, e.g. `RecoveryConfig.seed`.
+    replications: Number of child seeds to derive.
+
+  Returns:
+    A tuple of `replications` distinct int seeds.
+  """
+  parent = np.random.SeedSequence(seed)
+  children = parent.spawn(replications)
+  # `generate_state` returns unsigned 64-bit words; fold each one into
+  # [0, 2**32 - 1). Both backends' seeding ultimately bottoms out in
+  # `numpy.random.seed`, which the TensorFlow backend calls directly and
+  # which requires a uint32 -- so the derived seeds have to fit that range
+  # even though `simulate`'s own `default_rng` would accept a wider one.
+  return tuple(
+      int(child.generate_state(1, dtype=np.uint64)[0] % (2**32 - 1))
+      for child in children
+  )
+
+
+def _wilson_interval(
+    successes: int, n: int, z: float = 1.959963984540054
+) -> tuple[float, float]:
+  """Wilson score interval for a binomial proportion.
+
+  Preferred over the normal (Wald) approximation because it stays inside
+  [0, 1] and remains reasonable at the small N and near-0/1 proportions a
+  handful of replications can produce. `z` defaults to the 97.5th percentile
+  of the standard normal, i.e. a 95% interval.
+
+  Args:
+    successes: Number of replications where the true value was covered.
+    n: Number of replications.
+    z: Normal quantile for the desired interval width.
+
+  Returns:
+    `(low, high)`, clipped to [0, 1].
+  """
+  if n == 0:
+    return float('nan'), float('nan')
+  phat = successes / n
+  denom = 1.0 + z**2 / n
+  center = phat + z**2 / (2 * n)
+  margin = z * np.sqrt(phat * (1.0 - phat) / n + z**2 / (4 * n**2))
+  low = (center - margin) / denom
+  high = (center + margin) / denom
+  return max(0.0, float(low)), min(1.0, float(high))
+
+
+def _ks_statistic_vs_uniform(values: np.ndarray) -> float:
+  """One-sample Kolmogorov-Smirnov statistic against Uniform(0, 1).
+
+  Used on SBC rank fractions: under a calibrated model those fractions are
+  uniform on [0, 1] across replications, so a large statistic here flags
+  miscalibration. This is the statistic only, not a p-value -- see
+  `_ks_uniform_threshold` for the (asymptotic, small-N-unreliable) reference
+  value used to interpret it.
+  """
+  x = np.sort(np.asarray(values, dtype=float))
+  n = x.size
+  if n == 0:
+    return float('nan')
+  ecdf_upper = np.arange(1, n + 1) / n
+  ecdf_lower = np.arange(0, n) / n
+  return float(max(np.max(ecdf_upper - x), np.max(x - ecdf_lower)))
+
+
+def _ks_uniform_threshold(n: int, alpha: float = 0.05) -> float:
+  """Asymptotic KS critical value for a fully specified Uniform(0, 1) null.
+
+  The classic `c(alpha) / sqrt(n)` approximation, `c(0.05) = 1.36`. This is
+  asymptotic and known to be unreliable below roughly n=20 -- treat it as a
+  rough guide at small replication counts, not a calibrated test.
+  """
+  if n <= 0:
+    return float('nan')
+  return 1.36 / np.sqrt(n)
+
+
+@dataclasses.dataclass(frozen=True)
+class ChannelReplicationSummary:
+  """One channel's recovery statistics aggregated across replications."""
+
+  channel: str
+  n: int
+  median_relative_error: float
+  iqr_low: float
+  iqr_high: float
+  coverage: float
+  coverage_ci_low: float
+  coverage_ci_high: float
+  median_ci_width: float
+  rank_ks_statistic: float
+  rank_ks_threshold: float
+
+
+@dataclasses.dataclass(frozen=True)
+class MultiRecoveryResult:
+  """Outcome of N repeated simulate-and-fit replications.
+
+  Attributes:
+    config: The base config passed to `run_recovery_replications`. Its
+      `.seed` is the base seed the per-replication seeds were derived from,
+      not any individual replication's seed -- see `seeds`.
+    seeds: The per-replication seeds, in replication order, as derived by
+      `derive_replication_seeds`.
+    replications: Each replication's full single-run `RecoveryResult`, in the
+      same order as `seeds`.
+    ranks: Per replication, per channel, the SBC rank fraction -- the
+      fraction of that replication's posterior ROI draws falling below the
+      true value. Shape `(len(replications), n_channels)`.
+  """
+
+  config: RecoveryConfig
+  seeds: tuple[int, ...]
+  replications: tuple[RecoveryResult, ...]
+  ranks: tuple[tuple[float, ...], ...]
+
+  @property
+  def n(self) -> int:
+    return len(self.replications)
+
+  @property
+  def all_converged(self) -> bool:
+    return all(rep.converged for rep in self.replications)
+
+  @property
+  def passed(self) -> bool:
+    """Whether every replication converged.
+
+    Deliberately not a claim about coverage: whether empirical coverage is
+    "good enough" is a judgment call for whoever reads the report, not a
+    threshold this module bakes in.
+    """
+    return self.all_converged
+
+  def channel_summaries(self) -> tuple[ChannelReplicationSummary, ...]:
+    """Aggregates per-channel statistics across all replications."""
+    summaries = []
+    for i, channel in enumerate(self.config.channels):
+      errors = np.array(
+          [rep.channels[i].relative_error for rep in self.replications]
+      )
+      covered = np.array(
+          [rep.channels[i].covered for rep in self.replications]
+      )
+      widths = np.array([
+          rep.channels[i].ci_high - rep.channels[i].ci_low
+          for rep in self.replications
+      ])
+      rank_fracs = np.array([rep_ranks[i] for rep_ranks in self.ranks])
+      coverage_low, coverage_high = _wilson_interval(
+          int(covered.sum()), covered.size
+      )
+      summaries.append(
+          ChannelReplicationSummary(
+              channel=channel,
+              n=self.n,
+              median_relative_error=float(np.median(errors)),
+              iqr_low=float(np.quantile(errors, 0.25)),
+              iqr_high=float(np.quantile(errors, 0.75)),
+              coverage=float(covered.mean()),
+              coverage_ci_low=coverage_low,
+              coverage_ci_high=coverage_high,
+              median_ci_width=float(np.median(widths)),
+              rank_ks_statistic=_ks_statistic_vs_uniform(rank_fracs),
+              rank_ks_threshold=_ks_uniform_threshold(rank_fracs.size),
+          )
+      )
+    return tuple(summaries)
+
+  def to_frame(self) -> pd.DataFrame:
+    return pd.DataFrame([
+        {
+            'channel': s.channel,
+            'n': s.n,
+            'median_relative_error': s.median_relative_error,
+            'iqr_low': s.iqr_low,
+            'iqr_high': s.iqr_high,
+            'coverage': s.coverage,
+            'coverage_ci_low': s.coverage_ci_low,
+            'coverage_ci_high': s.coverage_ci_high,
+            'median_ci_width': s.median_ci_width,
+            'rank_ks_statistic': s.rank_ks_statistic,
+            'rank_ks_threshold': s.rank_ks_threshold,
+        }
+        for s in self.channel_summaries()
+    ])
+
+  def format_report(self) -> str:
+    nominal = self.config.confidence_level
+    n_converged = sum(1 for rep in self.replications if rep.converged)
+    lines = [
+        f'Recovery (repeated): response={self.config.response}'
+        f' max_lag={self.config.max_lag}'
+        f' n_geos={self.config.n_geos} n_times={self.config.n_times}'
+        f' replications={self.n}',
+        f'base seed={self.config.seed}, per-replication seeds derived via'
+        f' SeedSequence({self.config.seed}).spawn({self.n})',
+        '-' * 78,
+        f'{n_converged}/{self.n} replications converged (max r_hat < 1.2)',
+        '',
+        f"{'channel':<12}{'med.err':>9}{'IQR':>18}"
+        f"{f'cov({nominal:.0%})':>11}{'95% Wilson CI':>17}{'med.width':>11}"
+        f"{'SBC KS':>9}",
+    ]
+    for s in self.channel_summaries():
+      ks_flag = (
+          '*' if s.rank_ks_statistic > s.rank_ks_threshold else ' '
+      )
+      lines.append(
+          f'{s.channel:<12}{s.median_relative_error:+8.1%} '
+          f' [{s.iqr_low:+6.1%},{s.iqr_high:+6.1%}]'
+          f'{s.coverage:10.0%}'
+          f'  [{s.coverage_ci_low:5.0%},{s.coverage_ci_high:5.0%}]'
+          f'{s.median_ci_width:11.3f}'
+          f'{s.rank_ks_statistic:8.3f}{ks_flag}'
+      )
+    lines += [
+        '',
+        'coverage = fraction of replications where the true ROI fell inside'
+        f' the nominal {nominal:.0%} interval; the Wilson CI is a 95%'
+        ' interval on that coverage estimate itself, not on ROI -- with only'
+        f' {self.n} replications, coverage is a noisy estimate, not a'
+        ' precise one.',
+        "SBC KS: one-sample Kolmogorov-Smirnov statistic of each channel's"
+        ' rank fractions against Uniform(0, 1); \'*\' marks a statistic above'
+        ' the (asymptotic, unreliable below ~20 replications) 5% critical'
+        ' value -- a hint of miscalibration, not a rigorous test at this N.',
+        f'VERDICT: {"ALL CONVERGED" if self.passed else "NOT ALL CONVERGED"}'
+        ' -- whether the coverage above is acceptable is a judgment call for'
+        ' the reader, not something this module scores pass/fail.',
+    ]
+    return '\n'.join(lines)
+
+
+def run_recovery_replications(
+    config: RecoveryConfig,
+    progress: Callable[[str], None] | None = None,
+) -> MultiRecoveryResult:
+  """Runs `config.replications` independent simulate-and-fit replications.
+
+  Each replication uses a distinct seed derived from `config.seed` (see
+  `derive_replication_seeds`) and is otherwise a full, independent
+  `run_recovery`-equivalent fit: fresh simulated dataset, fresh model, fresh
+  MCMC run. Runtime therefore scales linearly with `config.replications` --
+  this prints a per-replication progress line and a running estimate of
+  total runtime so that is visible before the run finishes.
+
+  Args:
+    config: Experiment shape, with `config.replications` replications.
+    progress: Callback for progress lines; defaults to printing to stderr so
+      stdout stays free for the final report. Pass a no-op to silence it.
+
+  Returns:
+    The aggregated `MultiRecoveryResult`.
+  """
+  if progress is None:
+    progress = lambda line: print(line, file=sys.stderr)
+
+  n = config.replications
+  seeds = derive_replication_seeds(config.seed, n)
+  progress(
+      f'Running {n} replications from base seed={config.seed}'
+      f' (seeds derived via SeedSequence.spawn). Each simulate+fit takes'
+      ' minutes; an estimated total appears after replication 1.'
+  )
+
+  results = []
+  ranks = []
+  start = time.monotonic()
+  for i, seed_i in enumerate(seeds):
+    rep_config = dataclasses.replace(config, seed=seed_i, replications=1)
+    rep_start = time.monotonic()
+    result, draws, true_roi = _fit_and_recover(rep_config)
+    rep_elapsed = time.monotonic() - rep_start
+    results.append(result)
+    ranks.append(
+        tuple(
+            float((draws[:, c_i] < true_roi[c_i]).mean())
+            for c_i in range(len(config.channels))
+        )
+    )
+
+    elapsed_total = time.monotonic() - start
+    avg = elapsed_total / (i + 1)
+    remaining = avg * (n - i - 1)
+    status = 'converged' if result.converged else 'NOT CONVERGED'
+    progress(
+        f'replication {i + 1}/{n}: {rep_elapsed:.0f}s, seed={seed_i},'
+        f' max r_hat={result.max_r_hat:.3f} ({status}) | elapsed'
+        f' {elapsed_total / 60:.1f} min, est. remaining'
+        f' {remaining / 60:.1f} min, est. total'
+        f' {(elapsed_total + remaining) / 60:.1f} min'
+    )
+
+  return MultiRecoveryResult(
+      config=config,
+      seeds=seeds,
+      replications=tuple(results),
+      ranks=tuple(ranks),
   )
 
 
@@ -480,6 +880,17 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
       default=list(defaults.true_roi),
       help='True ROI per channel.',
   )
+  parser.add_argument(
+      '--replications',
+      type=int,
+      default=defaults.replications,
+      help=(
+          'Number of independent simulate-and-fit replications. 1 (default)'
+          ' runs the original single-fit check. N > 1 derives N seeds from'
+          ' --seed, fits each independently, and reports empirical coverage'
+          ' with a Wilson interval on it -- see the module docstring.'
+      ),
+  )
   return parser.parse_args(argv)
 
 
@@ -505,10 +916,18 @@ def main(argv: Sequence[str] | None = None) -> int:
       n_burnin=args.n_burnin,
       n_keep=args.n_keep,
       seed=args.seed,
+      replications=args.replications,
   )
-  result = run_recovery(config)
-  print(result.format_report())
-  return 0 if result.passed else 1
+  if config.replications <= 1:
+    # Unchanged path: same call, same report, same exit-code rule as before
+    # this module supported repeated replications.
+    result = run_recovery(config)
+    print(result.format_report())
+    return 0 if result.passed else 1
+
+  multi_result = run_recovery_replications(config)
+  print(multi_result.format_report())
+  return 0 if multi_result.passed else 1
 
 
 if __name__ == '__main__':

@@ -14,14 +14,45 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
+{#
+NOTICE: This file was modified from the original google/meridian
+source. See the NOTICE file at the repository root, and TRIAGE.md, for
+what changed and why.
+#}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://www.gstatic.com/external_hosted/vega/vega.js"></script>
-    <script src="https://www.gstatic.com/external_hosted/vega_lite/vega-lite.js"></script>
-    <script src="https://www.gstatic.com/external_hosted/vega_embed/vega-embed.js"></script>
+    {#
+    Versioned jsDelivr npm paths, replacing unversioned
+    gstatic/external_hosted URLs, so an archived report keeps rendering the
+    same way months later instead of silently changing -- or breaking, if the
+    unversioned path is retired -- when the hosted libraries change upstream.
+    These are the URLs the Vega project itself documents.
+
+    Versions are taken from the installed Altair, not guessed:
+      vega-lite 6.4.1  -- `altair.vegalite.v6.display.VEGALITE_VERSION`, and
+                          the `$schema` the generated specs actually carry.
+      vega-embed 7.0.2 -- pinned in Altair's own bundled `jupyter/js/index.js`.
+      vega 6           -- major only. Altair declares `VEGA_VERSION == "6"`
+                          and names no patch, and major is the right pinning
+                          level here anyway: Vega-Lite 6 compiles to the Vega
+                          6 spec, so compatibility is a major-version
+                          contract. Inventing a patch number nobody verified
+                          would risk a 404, which fails silently -- the
+                          scripts simply do not load and no chart renders.
+
+    Subresource Integrity hashes are not set: computing them means fetching
+    the files, which needs network access this build does not have. A fully
+    self-contained, offline-renderable report would mean vendoring these
+    three files into the repo rather than loading them from a CDN at all --
+    a bigger change than pinning, and not done here.
+    #}
+    <script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@7.0.2"></script>
     <title>
       {{ title }}
     </title>

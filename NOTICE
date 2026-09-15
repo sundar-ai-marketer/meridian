@@ -20,7 +20,15 @@ that it is new. TRIAGE.md records what changed and why, per upstream issue.
 Files modified from the original google/meridian source:
 
   meridian/analysis/__init__.py
+  meridian/analysis/optimizer.py
+  meridian/analysis/optimizer_test.py
+  meridian/analysis/summarizer.py
+  meridian/analysis/summarizer_test.py
+  meridian/analysis/summary_text.py
+  meridian/analysis/visualizer.py
   meridian/analysis/weekly_optimization_grid_test.py
+  meridian/constants.py
+  meridian/templates/summary.html.jinja
   meridian/backend/test_utils.py
   meridian/data/data_frame_input_data_builder.py
   meridian/data/data_frame_input_data_builder_test.py
@@ -53,6 +61,12 @@ Files added by this fork:
   meridian/analysis/geo_diagnostics_test.py
   meridian/analysis/prior_predictive.py
   meridian/analysis/prior_predictive_test.py
+  meridian/analysis/sampling_diagnostics.py
+  meridian/analysis/sampling_diagnostics_test.py
+  Makefile
+  Dockerfile
+  .dockerignore
+  .devcontainer/devcontainer.json
   meridian/benchmark/__init__.py
   meridian/benchmark/benchmark.py
   meridian/benchmark/benchmark_test.py
@@ -82,6 +96,16 @@ Summary of behavioural changes to existing code:
   * Several input-validation errors now name the offending column, coordinate
     or value.
   * Test-only fixes for protobuf >= 6 and for Python 3.11 mock behaviour.
+  * The generated HTML report shows credible intervals on the response-curve
+    chart, which previously passed `include_ci=False`, and carries a caveat
+    stating that those intervals are conditional on the assumed saturation
+    shape.
+  * Multi-channel charts use an explicit colour-blind-safe categorical range
+    instead of falling back to Vega-Lite's default scheme.
+  * The budget-allocation chart is a labelled bar rather than a pie whose
+    values were reachable only on hover.
+  * The report loads pinned Vega library versions instead of unversioned URLs,
+    so an archived report keeps rendering as it did when it was written.
 
 This fork's distribution is named `meridian-mmm-fork`, not `google-meridian`.
 The import path is unchanged (`import meridian`), but the published package is

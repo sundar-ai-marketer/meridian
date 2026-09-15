@@ -1,0 +1,41 @@
+// NOTICE: This file is new in this fork and does not exist in the original
+// google/meridian source.
+//
+// Dev Container / GitHub Codespaces definition. Gives "Open in Codespaces" or
+// VS Code's "Reopen in Container" a working Meridian environment with no
+// local setup at all.
+//
+// The heavy step -- `scripts/setup.sh` installs TensorFlow, JAX and every
+// extra, which takes several minutes -- runs once in `onCreateCommand`, which
+// Codespaces/VS Code treat as the one-time "build the environment" step and
+// show progress for. `postCreateCommand` only prints a short, fast pointer to
+// `make help` once that is done, rather than adding more heavy work.
+{
+  "name": "Meridian (Python 3.11)",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bookworm",
+
+  "onCreateCommand": "bash scripts/setup.sh",
+  "postCreateCommand": "echo 'Meridian environment ready. Run: make help'",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-toolsai.jupyter"
+      ],
+      "settings": {
+        // Point the Python/Jupyter extensions at the venv scripts/setup.sh
+        // creates, so "Open in Container" needs no manual interpreter pick.
+        "python.defaultInterpreterPath": "${containerWorkspaceFolder}/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "jupyter.notebookFileRoot": "${containerWorkspaceFolder}"
+      }
+    }
+  },
+
+  // TensorFlow/JAX pull in native libraries; keep the container's own view of
+  // the repo instead of bind-mounting a host .venv built for another OS/arch.
+  "remoteUser": "vscode"
+}

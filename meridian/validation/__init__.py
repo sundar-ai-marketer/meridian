@@ -18,16 +18,24 @@
 """Validation tools: does the model recover what it should?"""
 
 from meridian.validation.recovery import ChannelRecovery
+from meridian.validation.recovery import ChannelReplicationSummary
+from meridian.validation.recovery import MultiRecoveryResult
 from meridian.validation.recovery import RecoveryConfig
 from meridian.validation.recovery import RecoveryResult
+from meridian.validation.recovery import derive_replication_seeds
 from meridian.validation.recovery import run_recovery
+from meridian.validation.recovery import run_recovery_replications
 from meridian.validation.recovery import simulate
 
 
 __all__ = [
     'ChannelRecovery',
+    'ChannelReplicationSummary',
+    'MultiRecoveryResult',
     'RecoveryConfig',
     'RecoveryResult',
+    'derive_replication_seeds',
     'run_recovery',
+    'run_recovery_replications',
     'simulate',
 ]

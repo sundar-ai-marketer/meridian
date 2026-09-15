@@ -210,6 +210,152 @@ class PriorPredictiveCheckTest(parameterized.TestCase):
         revenue.total_actual, kpi.total_actual, places=3
     )
 
+  def _mean_only_draws(
+      self, check: prior_predictive.PriorPredictiveCheck
+  ) -> np.ndarray:
+    """Reproduces the pre-fix (mean-only, no sigma noise) draws independently.
+
+    This calls the same `analyzer.expected_outcome` the class itself calls,
+    but skips `_prior_predictive_noise_sd` entirely, so the comparison below
+    is against what `_build_data` computed before this fix, not against
+    another code path inside the fix.
+    """
+    prior_mean = np.asarray(
+        check._analyzer.expected_outcome(  # pylint: disable=protected-access
+            use_posterior=False,
+            aggregate_geos=True,
+            aggregate_times=False,
+            use_kpi=check._use_kpi,  # pylint: disable=protected-access
+        )
+    )
+    return prior_mean.reshape(-1, prior_mean.shape[-1])
+
+  def test_predictive_interval_is_wider_than_mean_only_interval(self):
+    """The core claim of the sigma fix (google/meridian#647 follow-up).
+
+    Before the fix, `expected`'s `ci_lo`/`ci_hi` came from the conditional
+    *mean* draws alone. A correct prior *predictive* interval also carries
+    the observation-noise parameter `sigma`, so it must be wider. `self.mmm`
+    is sampled with a fixed seed in `setUpClass`, and the noise this class
+    adds uses a fixed internal seed too, so this comparison is fully
+    deterministic -- not a statistical test that could flake.
+    """
+    check = prior_predictive.PriorPredictiveCheck(self.mmm)
+    mean_draws = self._mean_only_draws(check)
+    lo_q = (1.0 - check.confidence_level) / 2.0
+    hi_q = 1.0 - lo_q
+    mean_only_width = np.quantile(mean_draws, hi_q, axis=0) - np.quantile(
+        mean_draws, lo_q, axis=0
+    )
+
+    data = check.prior_predictive_data
+    predictive_width = (
+        data['expected'].sel({c.METRIC: 'ci_hi'}).values
+        - data['expected'].sel({c.METRIC: 'ci_lo'}).values
+    )
+
+    # Almost every time period should widen; a handful can fail to by pure
+    # quantile-estimation noise even with a fixed seed, so this is not an
+    # exact `np.all`.
+    fraction_wider = np.mean(predictive_width >= mean_only_width)
+    self.assertGreaterEqual(fraction_wider, 0.85)
+    # The typical (median) period should widen by a real, not a rounding-
+    # error, margin.
+    self.assertGreater(
+        np.median(predictive_width / mean_only_width), 1.02
+    )
+
+    # At the fully-aggregated total, the widening is a small but exact
+    # population-level effect: Var(predictive total) = Var(mean total) +
+    # Var(noise total) >= Var(mean total) always, given the additive
+    # construction in `_build_data`.
+    total_mean_only_width = np.quantile(
+        mean_draws.sum(axis=-1), hi_q
+    ) - np.quantile(mean_draws.sum(axis=-1), lo_q)
+    predictive_totals = data.attrs['total_predictive_draws']
+    total_predictive_width = np.quantile(
+        predictive_totals, hi_q
+    ) - np.quantile(predictive_totals, lo_q)
+    self.assertGreaterEqual(total_predictive_width, total_mean_only_width)
+
+  def test_predictive_noise_is_same_order_of_magnitude_as_the_outcome(self):
+    """Guards against a units/scale bug in the sigma conversion.
+
+    `_prior_predictive_noise_sd` converts `sigma` from the population-scaled
+    KPI space Meridian samples in back to the outcome's own units (see its
+    docstring). Getting that conversion wrong by a large factor -- the
+    documented risk in the task this addresses -- would make the noise
+    either negligible (silently reproducing the pre-fix bug) or overwhelming
+    (drowning the mean in noise). Neither happened: the noise should land
+    within an order of magnitude of the actual observed outcome, not eight
+    orders of magnitude off in either direction.
+    """
+    check = prior_predictive.PriorPredictiveCheck(self.mmm)
+    mean_draws = self._mean_only_draws(check)
+    # pylint: disable-next=protected-access
+    noise_sd = check._prior_predictive_noise_sd(mean_draws)
+
+    median_actual = float(
+        np.median(np.abs(check.prior_predictive_data['actual'].values))
+    )
+    median_noise_sd = float(np.median(noise_sd))
+
+    self.assertGreater(median_noise_sd, median_actual * 0.01)
+    self.assertLess(median_noise_sd, median_actual * 100)
+
+  def test_predictive_noise_sd_is_non_negative(self):
+    check = prior_predictive.PriorPredictiveCheck(self.mmm)
+    mean_draws = self._mean_only_draws(check)
+    # pylint: disable-next=protected-access
+    noise_sd = check._prior_predictive_noise_sd(mean_draws)
+    self.assertTrue(np.all(noise_sd >= 0))
+
+  @parameterized.named_parameters(
+      dict(testcase_name='geo_level_sigma', unique_sigma_for_each_geo=True),
+      dict(
+          testcase_name='shared_sigma', unique_sigma_for_each_geo=False
+      ),
+  )
+  def test_predictive_check_handles_both_sigma_shapes(
+      self, unique_sigma_for_each_geo: bool
+  ):
+    """`sigma` has a geo dimension only if `unique_sigma_for_each_geo=True`.
+
+    `_prior_predictive_noise_sd` branches on this; both branches must run
+    without error and produce a non-degenerate (positive, finite) interval.
+    """
+    data = data_test_utils.sample_input_data_non_revenue_revenue_per_kpi(
+        n_geos=_N_GEOS,
+        n_times=_N_TIMES,
+        n_media_times=_N_MEDIA_TIMES,
+        n_media_channels=2,
+        n_controls=1,
+    )
+    mmm = model.Meridian(
+        input_data=data,
+        model_spec=spec.ModelSpec(
+            max_lag=2, unique_sigma_for_each_geo=unique_sigma_for_each_geo
+        ),
+    )
+    mmm.sample_prior(_N_DRAWS, seed=0)
+    summary = prior_predictive.PriorPredictiveCheck(mmm).summary()
+    self.assertTrue(np.isfinite(summary.total_prior_median))
+    self.assertBetween(summary.coverage, 0.0, 1.0)
+
+  def test_predictive_check_handles_national_model(self):
+    """A national model has one geo and no `unique_sigma_for_each_geo`."""
+    data = data_test_utils.sample_input_data_non_revenue_revenue_per_kpi(
+        n_geos=1,
+        n_times=_N_TIMES,
+        n_media_times=_N_MEDIA_TIMES,
+        n_media_channels=2,
+        n_controls=1,
+    )
+    mmm = model.Meridian(input_data=data, model_spec=spec.ModelSpec(max_lag=2))
+    mmm.sample_prior(_N_DRAWS, seed=0)
+    summary = prior_predictive.PriorPredictiveCheck(mmm).summary()
+    self.assertTrue(np.isfinite(summary.total_prior_median))
+
 
 if __name__ == '__main__':
   absltest.main()
