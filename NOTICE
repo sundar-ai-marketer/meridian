@@ -38,6 +38,7 @@ Files modified from the original google/meridian source:
   .gitignore
   README.md
   pyproject.toml
+  .github/workflows/ci.yml
 
 Files added by this fork:
 
