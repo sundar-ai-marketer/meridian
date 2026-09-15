@@ -1,2 +1,12 @@
-global-exclude *_test.py
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
 include meridian/templates/*
+# Apache 2.0 section 4(d): a redistribution has to carry the NOTICE file.
+# TRIAGE.md is what the NOTICE points at for what changed and why.
+include NOTICE
+include TRIAGE.md
+# Must come last. MANIFEST.in directives are applied in order, so an earlier
+# global-exclude is undone by the `include meridian/templates/*` above, which
+# is how meridian/templates/formatter_test.py used to reach the wheel.
+global-exclude *_test.py

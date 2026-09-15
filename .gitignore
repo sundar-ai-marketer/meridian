@@ -5,7 +5,7 @@
 *.pyc
 
 # Byte-compiled
-_pycache__/
+__pycache__/
 .cache/
 
 # Poetry, setuptools, PyPI distribution artifacts.
@@ -38,3 +38,7 @@ env/
 
 # Output of examples/quickstart.py (default --output-dir).
 /quickstart_output/
+
+# Generated from meridian/templates/style.scss by scripts/compile_report_css.py
+# (or by setup.py's compile_scss during a non-editable build).
+/meridian/templates/style.css

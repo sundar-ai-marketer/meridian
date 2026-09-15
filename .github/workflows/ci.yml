@@ -94,9 +94,13 @@ jobs:
         if: ${{ !contains(github.event.head_commit.message, '#skip-pytest') }}
         with:
           python_version: ${{ matrix.python-version }}
-      # Run tests (in parallel)
+      # `-n auto` matters. The suite is ~5,500 tests; measured locally it takes
+      # about 7 minutes at `-n 8` and far longer serially, against the 60-minute
+      # job timeout above. `pytest -vv` alone is serial despite the comment that
+      # used to sit here, and also prints a line per test, which makes a failure
+      # hard to find in the log.
       - name: Run core tests
         if: ${{ !contains(github.event.head_commit.message, '#skip-pytest') }}
-        run: pytest -vv
+        run: pytest -q -n auto
         env:
           MERIDIAN_BACKEND: ${{ matrix.meridian-backend }}

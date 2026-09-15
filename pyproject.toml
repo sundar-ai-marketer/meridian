@@ -4,20 +4,35 @@
 [project]
 # Project metadata. Available keys are documented at:
 # https://packaging.python.org/en/latest/specifications/declaring-project-metadata
-name = "google-meridian"
+# NOT `google-meridian`. That distribution name belongs to Google and this is
+# an unaffiliated fork; uploading under it would misrepresent authorship. The
+# import path stays `meridian`, so `import meridian` is unchanged either way.
+# Confirm this name is still free on PyPI before the first upload.
+name = "meridian-mmm-fork"
 description = """\
-  Google's open source mixed marketing model library, helps you understand \
-  your return on investment and direct your ad spend with confidence. \
+  Unaffiliated fork of Google's Meridian marketing mix modeling library, with \
+  fixes for open upstream issues and added model-validation diagnostics. \
   """
 readme = "README.md"
-requires-python = ">=3.10"
-license-files = ["LICENSE"]
+# 3.10 is not supported: `scripts/verify_environment.py` fails it, CI does not
+# test it, and `scripts/setup.sh` will not select it.
+requires-python = ">=3.11"
+# Apache 2.0 section 4(d) requires redistributions to carry the NOTICE file.
+# Without it here, neither the wheel nor the sdist contains one.
+license-files = ["LICENSE", "NOTICE"]
 authors = [
   {name = "The Meridian Authors", email="no-reply@google.com"},
+]
+maintainers = [
+  {name = "Sundar Ramesh Kumar"},
 ]
 classifiers = [  # List of https://pypi.org/classifiers/
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: Apache Software License",
     "Topic :: Other/Nonlisted Topic",
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
@@ -55,9 +70,15 @@ dependencies = [
 dynamic = ["version"]
 
 [project.urls]
-homepage = "https://github.com/google/meridian"
-repository = "https://github.com/google/meridian"
-changelog = "https://github.com/google/meridian/blob/main/CHANGELOG.md"
+# FORK_URL below is a placeholder. Replace every occurrence with this fork's
+# own GitHub URL before publishing, otherwise package metadata routes users
+# to Google for problems Google did not write and cannot support. Upstream is
+# still linked separately, which is where it belongs.
+homepage = "https://github.com/FORK_URL"
+repository = "https://github.com/FORK_URL"
+issues = "https://github.com/FORK_URL/issues"
+changelog = "https://github.com/FORK_URL/blob/main/CHANGELOG.md"
+upstream = "https://github.com/google/meridian"
 documentation = "https://developers.google.com/meridian"
 
 [project.optional-dependencies]
@@ -68,6 +89,10 @@ dev = [
   "pytest-xdist",
   "pylint>=2.6.0",
   "pyink",
+  # Needed by scripts/compile_report_css.py. An editable install skips the
+  # `compile_scss` build command, so the report stylesheet has to be built
+  # separately or every generated report comes out unstyled.
+  "libsass",
 ]
 # Colab deps
 # Installed through `pip install -e .[colab]`

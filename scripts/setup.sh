@@ -72,6 +72,13 @@ say "Installing this checkout with all extras (several minutes)"
 cd "$REPO_ROOT"
 "$VENV_PY" -m pip install -e ".$EXTRAS"
 
+# An editable install never runs setup.py's `build`, so the `compile_scss`
+# command that generates the report stylesheet never fires. The report template
+# includes it with `ignore missing`, so the absence is silent and every
+# generated report comes out unstyled. Compile it explicitly.
+say "Compiling the report stylesheet"
+"$VENV_PY" scripts/compile_report_css.py
+
 say "Verifying the environment"
 if ! "$VENV_PY" scripts/verify_environment.py; then
   die "Environment verification failed. Fix the items marked FAIL above."
