@@ -56,6 +56,7 @@ Files added by this fork:
   meridian/validation/__init__.py
   meridian/validation/recovery.py
   meridian/validation/recovery_test.py
+  scripts/verify_environment.py
 
 Summary of behavioural changes to existing code:
 
