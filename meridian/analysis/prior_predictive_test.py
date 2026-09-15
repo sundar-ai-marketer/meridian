@@ -154,11 +154,14 @@ class PriorPredictiveCheckTest(parameterized.TestCase):
     self.assertFalse(summary.total_actual_within_ci)
     self.assertIn('order of magnitude', summary.verdict)
 
-  def test_plot_layers_band_mean_and_actual(self):
+  def test_plot_layers_band_and_series(self):
+    """Two layers: the credible band, and both lines sharing one colour
+    scale so they appear in a single legend."""
     check = prior_predictive.PriorPredictiveCheck(self.mmm)
-    chart = check.plot_prior_predictive()
-    spec_dict = chart.to_dict()
-    self.assertLen(spec_dict['layer'], 3)
+    spec_dict = check.plot_prior_predictive().to_dict()
+    self.assertLen(spec_dict['layer'], 2)
+    self.assertEqual(spec_dict['layer'][0]['mark']['type'], 'area')
+    self.assertEqual(spec_dict['layer'][1]['mark']['type'], 'line')
 
   def test_plot_respects_selected_times(self):
     check = prior_predictive.PriorPredictiveCheck(self.mmm)
@@ -166,8 +169,34 @@ class PriorPredictiveCheckTest(parameterized.TestCase):
         str(t)
         for t in check.prior_predictive_data.coords[c.TIME].values[:5]
     ]
-    chart = check.plot_prior_predictive(selected_times=times)
-    self.assertLen(chart.to_dict()['datasets'].popitem()[1], 5)
+    spec_dict = check.plot_prior_predictive(selected_times=times).to_dict()
+    # Two datasets: the band keeps one row per period, the melted line frame
+    # has one row per period per series.
+    sizes = sorted(len(v) for v in spec_dict['datasets'].values())
+    self.assertEqual(sizes, [len(times), len(times) * 2])
+
+  def test_plot_has_one_legend_naming_all_three_series(self):
+    """Without a colour encoding the band and both lines render in one hue
+    with no legend, so a reader cannot tell which is which."""
+    chart = prior_predictive.PriorPredictiveCheck(self.mmm).plot_prior_predictive()
+    spec_dict = chart.to_dict()
+    color = spec_dict['layer'][0]['encoding']['color']
+    self.assertIn('Observed', color['scale']['domain'])
+    self.assertIn('Prior mean', color['scale']['domain'])
+    self.assertLen(color['scale']['domain'], 3)
+    # Colour must not be the only cue.
+    self.assertIn('strokeDash', spec_dict['layer'][1]['encoding'])
+
+  def test_plot_width_is_fixed_not_scaled_by_period_count(self):
+    """`bar_chart_width` sizes by number of bars: 156 weekly periods would
+    produce a ~9700px chart and break any report it is placed in."""
+    chart = prior_predictive.PriorPredictiveCheck(self.mmm).plot_prior_predictive()
+    self.assertEqual(chart.to_dict()['width'], c.VEGALITE_FACET_EXTRA_LARGE_WIDTH)
+
+  def test_plot_rejects_unknown_selected_times_clearly(self):
+    check = prior_predictive.PriorPredictiveCheck(self.mmm)
+    with self.assertRaisesRegex(ValueError, 'not in the model time'):
+      check.plot_prior_predictive(selected_times=['1999-01-01'])
 
   def test_use_kpi_changes_scale(self):
     """With revenue_per_kpi present, revenue and KPI totals must differ."""

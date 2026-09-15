@@ -46,6 +46,7 @@ import dataclasses
 import altair as alt
 from meridian import constants as c
 from meridian.analysis import analyzer as analyzer_module
+from meridian.common import currency as currency_module
 from meridian.common import errors
 from meridian.model import model
 from meridian.templates import formatter
@@ -64,6 +65,13 @@ _CI_LO = 'ci_lo'
 _CI_HI = 'ci_hi'
 _EXPECTED = 'expected'
 _ACTUAL = 'actual'
+_SERIES = 'series'
+_VALUE = 'value'
+
+# Grey band, amber prior mean, blue observed: distinguishable in
+# greyscale and for the common colour-vision deficiencies, and the two
+# lines also differ by dash pattern so colour is never the only cue.
+_SERIES_COLORS = ['#CFD8DC', '#EA8600', '#1A73E8']
 
 
 @dataclasses.dataclass(frozen=True)
@@ -287,6 +295,16 @@ class PriorPredictiveCheck:
   def _plot_frame(self, selected_times: Sequence[str] | None) -> pd.DataFrame:
     data = self._data
     if selected_times is not None:
+      available = set(str(t) for t in data.coords[c.TIME].values)
+      unknown = [t for t in selected_times if str(t) not in available]
+      if unknown:
+        # xarray would raise a bare KeyError naming neither the bad value nor
+        # what was expected.
+        raise ValueError(
+            f'`selected_times` contains values not in the model time'
+            f' coordinates: {unknown}. Times run from'
+            f' {min(available)} to {max(available)}.'
+        )
       data = data.sel({c.TIME: list(selected_times)})
     return pd.DataFrame({
         c.TIME: data.coords[c.TIME].values,
@@ -306,28 +324,100 @@ class PriorPredictiveCheck:
 
     Returns:
       An Altair chart layering the prior credible band, the prior mean, and the
-      observed outcome.
+      observed outcome, with a legend identifying each.
+
+    Raises:
+      ValueError: If `selected_times` contains unknown time coordinates.
     """
     df = self._plot_frame(selected_times)
     outcome_label = 'KPI' if self._use_kpi else 'Revenue'
+    interval_label = f'Prior {self._confidence_level:.0%} interval'
+    currency = getattr(
+        self._meridian.input_data, 'currency_code', None
+    )
+    symbol = '' if self._use_kpi else currency_module.get_currency_symbol(
+        currency
+    )
 
-    base = alt.Chart(df).encode(
-        x=alt.X(f'{c.TIME}:T', title='Time', axis=alt.Axis(**formatter.AXIS_CONFIG))
+    # Long form so the two series can share a colour scale and one legend.
+    lines = df.melt(
+        id_vars=[c.TIME],
+        value_vars=[_MEAN, _ACTUAL],
+        var_name=_SERIES,
+        value_name=_VALUE,
+    ).replace({_SERIES: {_MEAN: 'Prior mean', _ACTUAL: 'Observed'}})
+
+    x = alt.X(
+        f'{c.TIME}:T',
+        title='Time',
+        axis=alt.Axis(
+            tickCount=8, format=c.QUARTER_FORMAT, **formatter.AXIS_CONFIG
+        ),
     )
-    band = base.mark_area(opacity=0.25).encode(
-        y=alt.Y(f'{_CI_LO}:Q', title=outcome_label),
-        y2=alt.Y2(f'{_CI_HI}:Q'),
+    y_axis = alt.Axis(
+        labelExpr=formatter.compact_number_expr(currency=symbol),
+        **formatter.AXIS_CONFIG,
     )
-    prior_mean = base.mark_line(strokeDash=[4, 3]).encode(y=f'{_MEAN}:Q')
-    observed = base.mark_line().encode(y=f'{_ACTUAL}:Q')
+
+    # A constant column so the band joins the same colour scale as the lines
+    # and therefore appears in the one shared legend.
+    band_df = df.assign(**{_SERIES: interval_label})
+    band = (
+        alt.Chart(band_df)
+        .mark_area(opacity=0.3)
+        .encode(
+            x=x,
+            y=alt.Y(f'{_CI_LO}:Q', title=outcome_label, axis=y_axis),
+            y2=alt.Y2(f'{_CI_HI}:Q'),
+            color=alt.Color(
+                f'{_SERIES}:N',
+                scale=alt.Scale(
+                    domain=[interval_label, 'Prior mean', 'Observed'],
+                    range=_SERIES_COLORS,
+                ),
+                legend=alt.Legend(title=None),
+            ),
+        )
+    )
+    series = (
+        alt.Chart(lines)
+        .mark_line()
+        .encode(
+            x=x,
+            y=alt.Y(f'{_VALUE}:Q', title=outcome_label, axis=y_axis),
+            color=alt.Color(
+                f'{_SERIES}:N',
+                scale=alt.Scale(
+                    domain=[interval_label, 'Prior mean', 'Observed'],
+                    range=_SERIES_COLORS,
+                ),
+                legend=alt.Legend(title=None),
+            ),
+            strokeDash=alt.StrokeDash(
+                f'{_SERIES}:N',
+                scale=alt.Scale(
+                    domain=['Prior mean', 'Observed'], range=[[4, 3], [1, 0]]
+                ),
+                legend=None,
+            ),
+            tooltip=[
+                alt.Tooltip(f'{c.TIME}:T', title='Time'),
+                alt.Tooltip(f'{_SERIES}:N', title='Series'),
+                alt.Tooltip(f'{_VALUE}:Q', title=outcome_label, format=',.0f'),
+            ],
+        )
+    )
 
     return (
-        alt.layer(band, prior_mean, observed)
+        alt.layer(band, series)
         .properties(
             title=formatter.custom_title_params(
                 f'Prior predictive vs observed {outcome_label.lower()}'
             ),
-            width=formatter.bar_chart_width(len(df)),
+            # A fixed width, as the sibling charts use. Sizing by point count
+            # is for bar charts: 156 weekly periods would be ~9700px wide.
+            width=c.VEGALITE_FACET_EXTRA_LARGE_WIDTH,
+            height=300,
         )
         .configure_axis(**formatter.TEXT_CONFIG)
     )

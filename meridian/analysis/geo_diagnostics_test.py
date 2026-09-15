@@ -133,13 +133,48 @@ class GeoAllocationReliabilityTest(parameterized.TestCase):
     ):
       self.assertIn(expected, self.diag.verdict)
 
-  def test_zero_mean_yields_infinite_cv(self):
+  def test_zero_signal_yields_nan_not_a_number(self):
+    """A cell with no media execution has no coefficient of variation."""
     mean, sd, cv = geo_diagnostics._coefficient_of_variation(
         np.zeros((4, 3)), axis=(0,)
     )
     self.assertTrue(np.all(mean == 0))
     self.assertTrue(np.all(sd == 0))
-    self.assertTrue(np.all(np.isinf(cv)))
+    self.assertTrue(np.all(np.isnan(cv)))
+
+  def test_floating_point_residue_is_not_treated_as_signal(self):
+    """The real failure mode: a channel absent from one geo.
+
+    Incremental outcome is deterministically zero there, so mean and standard
+    deviation collapse to floating-point residue rather than exact zero. The
+    old `mean != 0` test fired and computed noise over noise, producing a CV
+    anywhere from 1e-16 to 1e+2 depending on rounding -- either extreme
+    corrupting the ranking and the reliable/unreliable split.
+    """
+    rng = np.random.default_rng(0)
+    draws = rng.normal(100.0, 20.0, size=(2, 50, 3, 2))
+    draws[:, :, 1, 0] = rng.normal(0.0, 1e-16, size=(2, 50))
+
+    _, _, cv = geo_diagnostics._coefficient_of_variation(draws, axis=(0, 1))
+
+    self.assertTrue(np.isnan(cv[1, 0]))
+    # Every other cell keeps a real, finite CV.
+    others = np.delete(cv.ravel(), np.ravel_multi_index((1, 0), cv.shape))
+    self.assertTrue(np.all(np.isfinite(others)))
+
+  def test_no_signal_cells_are_excluded_from_fraction_reliable(self):
+    diag = self.diag
+    cv = np.array([[0.1, np.nan], [0.2, 0.9]])
+    with mock.patch.object(
+        diag,
+        '_by_geo',
+        geo_diagnostics._Reduced(
+            mean=np.ones_like(cv), sd=np.zeros_like(cv), cv=cv
+        ),
+    ):
+      # Two of the three informative cells clear the threshold; the NaN is
+      # neither counted as reliable nor as unreliable.
+      self.assertAlmostEqual(diag.fraction_reliable, 2 / 3)
 
 
 if __name__ == '__main__':

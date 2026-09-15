@@ -28,13 +28,18 @@ keywords = [
 # Installed locally with `pip install -e .`
 dependencies = [
   "arviz < 0.20.0",
-  "altair >= 5",
+  # Upper bound added by this fork: `>= 5` alone lets a future major
+  # version install with no CI gate. Tested against 6.3.0.
+  "altair >= 5, < 7",
   "babel",
   "bidict",
   "immutabledict",
   "jax >= 0.7.2, < 1.0.0",
   "jaxlib >= 0.7.2, < 1.0.0",
   "joblib",
+  # Not imported by this package directly -- it is arviz's dependency, and
+  # the ceiling is deliberate: matplotlib 3.11 breaks arviz's import
+  # (upstream CHANGELOG 1.7.0). Do not "prune" it as unused.
   "matplotlib < 3.11.0",
   "natsort >= 7.1.1, < 8",
   "numpy >= 2.0.2, < 2.4.0",

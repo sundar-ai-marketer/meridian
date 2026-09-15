@@ -67,11 +67,27 @@ _CV = 'cv'
 def _coefficient_of_variation(
     draws: np.ndarray, axis: tuple[int, ...]
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-  """Returns (mean, sd, cv) reduced over `axis`."""
+  """Returns (mean, sd, cv) reduced over `axis`.
+
+  Cells carrying no signal get `NaN`, not a number. A channel with no media
+  execution in a geo -- a channel launched in only some geos, or discontinued
+  in one -- produces deterministically zero incremental outcome, so both mean
+  and standard deviation collapse to floating-point residue rather than exact
+  zero. Dividing one by the other yields noise: it can land anywhere from 1e-16
+  to 1e+2 depending on rounding, and either extreme corrupts the ranking, the
+  reliable/unreliable split, and the precision ratio. `_calculate_vif` treats
+  constant columns the same way.
+  """
   mean = np.mean(draws, axis=axis)
   sd = np.std(draws, axis=axis)
+
+  # "Negligible" is relative to the largest cell, so the test is scale-free.
+  scale = float(np.nanmax(np.abs(mean))) if mean.size else 0.0
+  floor = max(scale * 1e-10, float(np.finfo(np.float64).tiny))
+  no_signal = np.abs(mean) <= floor
+
   with np.errstate(divide='ignore', invalid='ignore'):
-    cv = np.where(mean != 0, sd / np.abs(mean), np.inf)
+    cv = np.where(no_signal, np.nan, sd / np.abs(mean))
   return mean, sd, cv
 
 
@@ -143,7 +159,7 @@ class GeoAllocationReliability:
     )
 
     geos = [str(g) for g in per_geo.coords[c.GEO].values]
-    channel_dim = c.CHANNEL if c.CHANNEL in per_geo.dims else c.MEDIA_CHANNEL
+    channel_dim = c.CHANNEL
     channels = [str(m) for m in per_geo.coords[channel_dim].values]
 
     # Draw axes are (chain, draw); reduce over both.
@@ -173,13 +189,15 @@ class GeoAllocationReliability:
 
   def summary(self) -> pd.DataFrame:
     """Returns a per geo and channel table, worst precision first."""
-    frame = (
-        self.reliability_data.to_dataframe().reset_index().sort_values(
-            _CV, ascending=False
-        )
-    )
+    frame = self.reliability_data.to_dataframe().reset_index()
+    frame['has_signal'] = ~frame[_CV].isna()
     frame['reliable'] = frame[_CV] <= RELIABLE_CV_THRESHOLD
-    return frame.reset_index(drop=True)
+    # Worst precision first; cells with no media execution sort to the end
+    # rather than to either extreme of the ranking.
+    return (
+        frame.sort_values([_CV], ascending=False, na_position='last')
+        .reset_index(drop=True)
+    )
 
   def precision_loss(self) -> pd.DataFrame:
     """Compares aggregated CV against the median per-geo CV, per channel.
@@ -189,12 +207,15 @@ class GeoAllocationReliability:
       per-geo CV, and their ratio. A ratio of 4 means splitting by geo makes
       the estimate four times noisier in relative terms.
     """
-    median_geo_cv = np.median(self._by_geo.cv, axis=0)
+    with np.errstate(invalid='ignore'):
+      # nanmedian: a channel absent from some geos still has a meaningful
+      # median across the geos where it ran.
+      median_geo_cv = np.nanmedian(self._by_geo.cv, axis=0)
     with np.errstate(divide='ignore', invalid='ignore'):
       ratio = np.where(
-          self._aggregated.cv != 0,
+          np.isfinite(self._aggregated.cv) & (self._aggregated.cv != 0),
           median_geo_cv / self._aggregated.cv,
-          np.inf,
+          np.nan,
       )
     return pd.DataFrame({
         c.CHANNEL: self._channels,
@@ -205,14 +226,24 @@ class GeoAllocationReliability:
 
   @property
   def fraction_reliable(self) -> float:
-    """Fraction of geo and channel estimates at or below the CV threshold."""
-    return float(np.mean(self._by_geo.cv <= RELIABLE_CV_THRESHOLD))
+    """Fraction of *informative* estimates at or below the CV threshold.
+
+    Cells with no media execution carry no information and are excluded rather
+    than counted as either reliable or unreliable.
+    """
+    cv = self._by_geo.cv
+    informative = cv[~np.isnan(cv)]
+    if informative.size == 0:
+      return 0.0
+    return float(np.mean(informative <= RELIABLE_CV_THRESHOLD))
 
   @property
   def verdict(self) -> str:
     """A short reading of whether per-geo allocation is supportable."""
     fraction = self.fraction_reliable
-    ratio = float(np.median(self.precision_loss()['cv_ratio']))
+    ratios = self.precision_loss()['cv_ratio'].to_numpy()
+    finite_ratios = ratios[np.isfinite(ratios)]
+    ratio = float(np.median(finite_ratios)) if finite_ratios.size else float('nan')
     if fraction >= 0.8:
       return (
           f'{fraction:.0%} of geo-channel estimates have CV <='

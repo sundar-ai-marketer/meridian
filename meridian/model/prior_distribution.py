@@ -42,6 +42,42 @@ __all__ = [
 ]
 
 
+def _is_distribution(value: Any) -> bool:
+  """Whether `value` looks like a TFP distribution."""
+  return hasattr(value, 'parameters') and hasattr(value, 'dtype')
+
+
+def _contains_float32(dist: Any, _depth: int = 0) -> bool:
+  """Whether `dist`, or anything nested inside it, is float32.
+
+  A wrapper's own `.dtype` cannot be trusted. `IndependentMultivariateDistribution`
+  derives its dtype from `backend.result_type`, which returns the backend's
+  configured float precision whenever any nested dtype is a float type -- so a
+  wrapper holding two float32 distributions reports float64. Checking only the
+  outer dtype lets float32 through the very guard that exists to stop it.
+  """
+  if _depth > 10:  # Defensive: distributions do not nest this deeply.
+    return False
+  try:
+    if backend.standardize_dtype(dist.dtype) == 'float32':
+      return True
+  except (TypeError, ValueError, AttributeError):
+    pass
+  try:
+    params = dict(dist.parameters)
+  except AttributeError:
+    return False
+  for value in params.values():
+    if _is_distribution(value):
+      if _contains_float32(value, _depth + 1):
+        return True
+    elif isinstance(value, (list, tuple)):
+      for item in value:
+        if _is_distribution(item) and _contains_float32(item, _depth + 1):
+          return True
+  return False
+
+
 def _widen_distribution_to_float64(dist: Any) -> Any | None:
   """Returns `dist` with its float32 parameters widened to float64.
 
@@ -65,17 +101,27 @@ def _widen_distribution_to_float64(dist: Any) -> Any | None:
   for key, value in params.items():
     if value is None or isinstance(value, (bool, str)):
       continue
-    if hasattr(value, 'parameters') and hasattr(value, 'dtype'):
-      # A nested distribution.
-      try:
-        nested_dtype = backend.standardize_dtype(value.dtype)
-      except (TypeError, ValueError, AttributeError):
-        continue
-      if nested_dtype == 'float32':
-        nested = _widen_distribution_to_float64(value)
-        if nested is None:
-          return None
+    if _is_distribution(value):
+      nested = _widen_distribution_to_float64(value)
+      if nested is not None:
         overrides[key] = nested
+      continue
+    if isinstance(value, (list, tuple)) and any(
+        _is_distribution(item) for item in value
+    ):
+      # A sequence of distributions, as `IndependentMultivariateDistribution`
+      # holds. Widening only the outer object would leave these float32.
+      widened_items, changed = [], False
+      for item in value:
+        replacement = (
+            _widen_distribution_to_float64(item)
+            if _is_distribution(item)
+            else None
+        )
+        widened_items.append(replacement if replacement is not None else item)
+        changed = changed or replacement is not None
+      if changed:
+        overrides[key] = type(value)(widened_items)
       continue
     try:
       array = np.asarray(value)
@@ -581,7 +627,7 @@ class PriorDistribution:
             dist_dtype = backend.standardize_dtype(dist.dtype)
           except (TypeError, ValueError, AttributeError):
             continue
-          if dist_dtype == 'float32':
+          if dist_dtype == 'float32' or _contains_float32(dist):
             # Python floats build float32 distributions, so the documented
             # idiom -- e.g. `LogNormal(0.2, 0.9)` -- produces float32 while the
             # JAX backend defaults to 64-bit. Widening float32 -> float64 is
@@ -597,6 +643,16 @@ class PriorDistribution:
                   ' `np.float64(0.2)` or `np.array([...], dtype=np.float64)`,'
                   ' or opt out of 64-bit by setting'
                   ' `MERIDIAN_ENABLE_JAX_X64=false`.'
+              )
+            # Confirm the coercion actually took. A distribution whose
+            # reported dtype is derived from its children can still hide
+            # float32 leaves after a copy.
+            if _contains_float32(coerced):
+              raise ValueError(
+                  f"The distribution for parameter '{field.name}' still"
+                  ' contains float32 components after conversion. Construct it'
+                  ' with 64-bit parameters, e.g. `np.float64(0.2)`, or opt out'
+                  ' of 64-bit by setting `MERIDIAN_ENABLE_JAX_X64=false`.'
               )
             object.__setattr__(self, field.name, coerced)
             widened.append(field.name)
