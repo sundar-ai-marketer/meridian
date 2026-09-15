@@ -50,6 +50,23 @@ def _f(x) -> np.ndarray:
   return np.asarray(x, dtype=backend.np_float_dtype)
 
 
+def _rtol(float64_tol: float = 1e-9, float32_tol: float = 1e-5) -> float:
+  """Tolerance appropriate to the active backend's precision.
+
+  JAX defaults to float64, where these identities hold to ~1e-15. The
+  TensorFlow backend is float32, where machine epsilon alone is 1.2e-7 and
+  accumulated pipeline error reaches ~4.5e-7 -- measured, not assumed. A single
+  tolerance would either be unmeetable on float32 or too slack to mean anything
+  on float64, so pick per dtype. Either way the bound is far tighter than any
+  real breakage, which would be orders of magnitude larger.
+  """
+  return (
+      float64_tol
+      if backend.standardize_dtype(backend.float_dtype) == 'float64'
+      else float32_tol
+  )
+
+
 class AdstockInvariantsTest(parameterized.TestCase):
   """Carryover must move outcome through time without creating it."""
 
@@ -72,7 +89,9 @@ class AdstockInvariantsTest(parameterized.TestCase):
         )
     )
     np.testing.assert_allclose(
-        weights.sum(axis=-1), np.ones(weights.shape[:-1]), rtol=1e-9
+        weights.sum(axis=-1),
+        np.ones(weights.shape[:-1]),
+        rtol=_rtol(1e-9, 1e-6),
     )
 
   @parameterized.named_parameters(
@@ -112,7 +131,7 @@ class AdstockInvariantsTest(parameterized.TestCase):
     )
     out = np.asarray(transformer.forward(media)).ravel()
     # Skip the leading periods, where the window is still filling.
-    np.testing.assert_allclose(out[max_lag:], 3.0, rtol=1e-9)
+    np.testing.assert_allclose(out[max_lag:], 3.0, rtol=_rtol(1e-9, 1e-6))
 
 
 class HillInvariantsTest(parameterized.TestCase):
@@ -203,7 +222,7 @@ class ReportedNumberInvariantsTest(absltest.TestCase):
     spend = np.asarray(
         self.data.aggregate_media_spend(calibration_period=None)
     )
-    np.testing.assert_allclose(roi, incremental / spend, rtol=1e-9)
+    np.testing.assert_allclose(roi, incremental / spend, rtol=_rtol())
 
   def test_incremental_outcome_is_additive_over_geos(self):
     """A geo breakdown that does not sum to the total cannot be shown next to
@@ -219,7 +238,7 @@ class ReportedNumberInvariantsTest(absltest.TestCase):
         )
     )
     np.testing.assert_allclose(
-        per_geo.sum(axis=-2), aggregated, rtol=1e-9
+        per_geo.sum(axis=-2), aggregated, rtol=_rtol()
     )
 
   def test_incremental_outcome_is_additive_over_times(self):
@@ -234,7 +253,7 @@ class ReportedNumberInvariantsTest(absltest.TestCase):
         )
     )
     np.testing.assert_allclose(
-        per_time.sum(axis=-2), aggregated, rtol=1e-9
+        per_time.sum(axis=-2), aggregated, rtol=_rtol()
     )
 
   def test_response_curves_are_monotone_in_spend(self):

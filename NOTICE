@@ -38,9 +38,11 @@ Files modified from the original google/meridian source:
   .gitignore
   README.md
   CONTRIBUTING.md
+  CITATION.cff
   pyproject.toml
   .github/workflows/ci.yml
   .github/workflows/publish.yml
+  .github/workflows/proto-publish.yml
 
 Files added by this fork:
 

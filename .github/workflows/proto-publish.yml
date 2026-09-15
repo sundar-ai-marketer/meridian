@@ -1,3 +1,6 @@
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
 name: Publish Proto # For tagging and publishing releases.
 
 on:
@@ -65,9 +68,16 @@ jobs:
 
   create-proto-tag:
     needs: check-proto-version
-    # Only run if new_version was discovered, and do this only on the main branch.
+    # Only run if new_version was discovered, and do this only on the main
+    # branch of the upstream repository. Without the repository guard a fork
+    # auto-creates a proto release tag on its first push to main: a plain
+    # `git push` sends no tags, so `git describe --match 'proto-v*'` finds
+    # nothing, the version check reports "first version", and this job succeeds
+    # using the default GITHUB_TOKEN. The sibling publish jobs below are
+    # already guarded this way.
     if: >
-      github.ref == 'refs/heads/main'
+      github.repository == 'google/meridian'
+      && github.ref == 'refs/heads/main'
       && needs.check-proto-version.outputs.new_version != ''
     runs-on: ubuntu-latest
     permissions:
