@@ -26,7 +26,7 @@ Status values:
 
 ---
 
-## FIXED HERE (8 upstream issues + 4 found here, 13 commits)
+## FIXED HERE (9 upstream issues + 4 found here, 22 commits)
 
 | # | Title | What was wrong | Fix |
 |---|---|---|---|
