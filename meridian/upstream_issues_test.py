@@ -15,11 +15,17 @@
 # NOTICE: This file is new in this fork and does not exist in the
 # original google/meridian source.
 
-"""Executable verification of every disposition recorded in TRIAGE.md.
+"""Executable verification of the code-testable dispositions in TRIAGE.md.
 
-TRIAGE.md states, for each issue open on the upstream tracker, whether it is
-already fixed upstream, fixed here, or not a defect. A document says that once;
-this module asserts it on every run.
+TRIAGE.md states, for each of the 47 issues open on the upstream tracker,
+whether it is already fixed upstream, fixed here, or not a defect. A document
+says that once; this module asserts it on every run.
+
+Not every disposition can be asserted in code, and this file does not pretend
+otherwise. Usage questions, failures on hardware nobody here owns, and declined
+feature requests have no executable form. Together with the guards living in
+their own modules' test files, 17 of the 47 issues are covered here or
+alongside; the remainder are judgement recorded in prose.
 
 Two kinds of test live here:
 

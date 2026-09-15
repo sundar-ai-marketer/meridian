@@ -1,3 +1,6 @@
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
 # Compiled python modules.
 *.pyc
 

@@ -1,7 +1,7 @@
 # Upstream issue triage
 
 Disposition for every issue open on [google/meridian](https://github.com/google/meridian/issues)
-as of 2026-09-15 (41 open issues, 59 open PRs), evaluated against this fork at
+as of 2026-09-15 (47 open issues, 63 open PRs), evaluated against this fork at
 upstream v2.0.0 (`00134ea`).
 
 **Why this file exists.** Google does not accept external pull requests — a
@@ -10,7 +10,7 @@ accepting external pull requests". Fixes therefore live here permanently, and
 each one needs a written reason.
 
 **Verification environment.** Python 3.11.8, TensorFlow 2.21.0, JAX 0.10.2
-(CPU), NumPy 2.3.5, protobuf 7.36.1, macOS arm64 (M4 Max). JAX is the default
+(CPU), NumPy 2.3.5, macOS arm64 (M4 Max). protobuf is transitive and unpinned, so its version varies by install. JAX is the default
 backend from v2.0.0 and defaults to 64-bit precision.
 
 Status values:
@@ -86,12 +86,18 @@ Status values:
 | 1620 | Run scenario planner without Looker Studio | The library produces the proto/DataFrames. Verified `DataFrameModelConverter` yields plain pandas frames that can feed any front end. |
 | 1676 | Budget optimization when KPI is non-revenue | Fixed-budget reallocates; flexible-budget needs a revenue interpretation to trade off total spend. Supply `revenue_per_kpi`, or use fixed-budget and read CPIK rather than ROI. |
 
-## FEATURE REQUESTS — declined, with reasons (3)
+## FEATURE REQUESTS — declined, with reasons (9)
 
 | # | Title | Decision |
 |---|---|---|
+| 291 | No succinct way to aggregate optimization results | **Decline; workaround is one line.** `OptimizationResults.output_optimization_summary` writes HTML, not a table. But `results.optimized_data` and `.nonoptimized_data` are `xarray.Dataset` objects, so `results.optimized_data.to_dataframe()` gives exactly the summary asked for. A convenience wrapper would be thin sugar over that. |
+| 307 | Open Summarizer module to customize reports | **Decline.** Templating the two-pager (logos, fonts, card selection) means designing a extension surface and owning it across upstream rebases. The generated HTML and the underlying `xarray` data are both available, so a custom report can be built alongside rather than by modifying the module. |
+| 384 | Verbose mode for long-running operations | **Decline for now, genuinely wanted.** Progress during `sample_posterior` means hooking TFP's NUTS sampler callback, which is upstream's internal surface and a rebase liability. `meridian.benchmark` gives the expected duration for a data shape beforehand, which addresses the underlying need -- knowing how long to wait -- without touching the sampler. |
+| 385 | A more flexible carryover effect | **Decline, same reason as #795.** Longer time-to-convert needs peak effect at a lag > 0. Both shipped decay kernels are monotonically decreasing, so this needs a new kernel plus a new sampled delay parameter touching priors, sampler and serde. |
+| 426 | Geo-level graphics | **Decline the charts; the numbers exist here.** This fork's `meridian.analysis.geo_diagnostics` returns per-geo, per-channel posterior means, standard deviations and coefficients of variation as a DataFrame, which is the data such charts would plot -- and it also tells you whether per-geo estimates are precise enough to be worth plotting. Rendering is left to the caller. |
+| 453 | Many-to-one mapping of media variables to channels | **Decline.** Mapping several media variables onto one channel changes what a "channel" means throughout the model, the priors and the optimizer. Pre-aggregating the variables into one column before building `InputData` achieves the same result without that ambiguity. |
 | 753 | Non-normal likelihoods | **Decline.** Changing the likelihood alters the model's statistical core and invalidates the ROI/contribution prior machinery. Not something to bolt on without a validation programme. |
-| 795 | Carryover model | **Decline, with the precise reason.** Meridian does model carryover, and v2.0.0 ships two decay families. Both are monotonically decreasing in lag -- geometric is `alpha^l`, binomial is `(1 - l/w)^alpha` -- so neither can place peak effect at a lag > 0, which is what LightweightMMM's carryover does. Supporting it needs a new decay kernel *and* a new sampled per-channel delay parameter, which touches the priors, the sampler and serde. Not a bolt-on. |
+| 795 | Carryover model | **Decline, with the precise reason.** Meridian does model carryover, and v2.0.0 ships two decay families. Both are monotonically decreasing in lag -- geometric is `alpha^l`, binomial is `(1 - l/w)^(1/alpha - 1)` (the code reparameterizes alpha via `_map_alpha_for_binomial_decay`) -- so neither can place peak effect at a lag > 0, which is what LightweightMMM's carryover does. Supporting it needs a new decay kernel *and* a new sampled per-channel delay parameter, which touches the priors, the sampler and serde. Not a bolt-on. |
 | 1713 | Support KPIs with occasional negative values | **Decline the feature; improve the refusal.** The input gate is one loop and trivial to relax, but ROI, CPIK and contribution are all expressed relative to total outcome, so a signed KPI makes those quantities ill-defined rather than merely harder to estimate — the model would return plausible-looking numbers that are wrong. The error now states that reasoning, locates the offending value, and points to modelling gross inflow and outflow separately. |
 
 ## OPEN — real and unresolved (3)
@@ -116,8 +122,9 @@ remaining 6 and the 1 error are fixed here, with tests.
 ### End-to-end model run
 
 Bundled `geo_media.csv` — 20 geos x 156 weeks x 4 channels, non-revenue KPI
-with `revenue_per_kpi` — at the demo's own MCMC settings (7 chains, 2000 adapt,
-500 burn-in, 1000 keep) on Python 3.11.8 / JAX 0.10.2 CPU / M4 Max:
+with `revenue_per_kpi` — at demo-grade MCMC settings (7 chains, 2000 adapt, 500
+burn-in, 1000 keep -- comparable to, but not identical to, any single
+bundled notebook; those use 7-10 chains and 1000-2000 adapt) on Python 3.11.8 / JAX 0.10.2 CPU / M4 Max:
 
 | Stage | Result |
 |---|---|
