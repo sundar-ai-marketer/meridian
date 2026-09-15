@@ -15,6 +15,7 @@
 """Meridian analysis API for trained models."""
 
 from meridian.analysis import analyzer
+from meridian.analysis import geo_diagnostics
 from meridian.analysis import optimizer
 from meridian.analysis import prior_predictive
 from meridian.analysis import review
