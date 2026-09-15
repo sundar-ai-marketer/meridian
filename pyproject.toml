@@ -103,7 +103,7 @@ scenarioplanner = [
 
 # Meridian GeoX.
 geox = [
-  "meridian-geox >= 0.1.1,"
+  "meridian-geox >= 0.1.1"
 ]
 
 [tool.pyink]
