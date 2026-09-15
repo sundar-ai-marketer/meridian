@@ -15,6 +15,7 @@
 import dataclasses
 import datetime
 import itertools
+import re
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -282,9 +283,9 @@ class InputDataTest(parameterized.TestCase):
       self, field: str, name: str, kpi_type: str
   ):
     maybe_flip = lambda da, key: (da * -1) if key == field else (da * 1)
-    with self.assertRaisesWithLiteralMatch(
+    with self.assertRaisesRegex(
         ValueError,
-        expected_exception_message=f"{name} values must be non-negative.",
+        re.escape(f"{name} values must be non-negative."),
     ):
       input_data.InputData(
           controls=self.lagged_controls,
@@ -2211,9 +2212,9 @@ class NonpaidInputDataTest(parameterized.TestCase):
       self, field: str, name: str, kpi_type: str
   ):
     maybe_flip = lambda da, key: (da * -1) if key == field else (da * 1)
-    with self.assertRaisesWithLiteralMatch(
+    with self.assertRaisesRegex(
         ValueError,
-        expected_exception_message=f"{name} values must be non-negative.",
+        re.escape(f"{name} values must be non-negative."),
     ):
       input_data.InputData(
           controls=self.controls,
@@ -2290,6 +2291,44 @@ class NonpaidInputDataTest(parameterized.TestCase):
           media_spend=self.media_spend,
           currency_code=currency_code,
       )
+
+  def test_negative_kpi_error_locates_the_value_and_explains_why(self):
+    """The error must locate the bad cell and say why the gate exists.
+
+    Signed KPIs (net revenue, net cash flow) are a recurring request --
+    google/meridian#1713 -- and the bare "must be non-negative" said neither
+    which value was at fault nor why the constraint is there.
+    """
+    kpi = self.kpi.copy(deep=True)
+    kpi.values[1, 2] = -1.0
+    with self.assertRaises(ValueError) as cm:
+      input_data.InputData(
+          kpi=kpi,
+          kpi_type=constants.NON_REVENUE,
+          population=self.population,
+          media=self.lagged_media,
+          media_spend=self.media_spend,
+      )
+    message = str(cm.exception)
+    self.assertIn("Found 1 negative value(s)", message)
+    self.assertIn(str(kpi.coords[constants.GEO].values[1]), message)
+    self.assertIn("ill-defined", message)
+
+  def test_negative_spend_error_locates_the_value_without_kpi_rationale(self):
+    spend = self.media_spend.copy(deep=True)
+    spend.values[0, 1, 0] = -1.0
+    with self.assertRaises(ValueError) as cm:
+      input_data.InputData(
+          kpi=self.kpi,
+          kpi_type=constants.NON_REVENUE,
+          population=self.population,
+          media=self.lagged_media,
+          media_spend=spend,
+      )
+    message = str(cm.exception)
+    self.assertIn("Found 1 negative value(s)", message)
+    # The KPI-specific rationale must not leak onto other fields.
+    self.assertNotIn("ill-defined", message)
 
 
 if __name__ == "__main__":

@@ -650,8 +650,36 @@ class InputData:
 
     for field, loggable_field in fields_to_loggable_name.items():
       da = getattr(self, field)
-      if da is not None and (da.values < 0).any():
-        raise ValueError(f"{loggable_field} values must be non-negative.")
+      if da is None:
+        continue
+      negative = da.values < 0
+      if not negative.any():
+        continue
+
+      count = int(negative.sum())
+      # Point at an offending coordinate: "it must be non-negative" alone
+      # leaves the user grepping a wide DataFrame for the bad cell.
+      first = {
+          str(dim): str(da.coords[dim].values[idx])
+          for dim, idx in zip(da.dims, np.argwhere(negative)[0])
+          if dim in da.coords
+      }
+      message = (
+          f"{loggable_field} values must be non-negative. Found {count}"
+          f" negative value(s); the first is at {first}."
+      )
+      if field == constants.KPI:
+        # Signed KPIs (net revenue, net cash flow) are a recurring request --
+        # google/meridian#1713. Say why the gate exists rather than only that
+        # it does.
+        message += (
+            " Meridian's ROI, CPIK and contribution metrics are all expressed"
+            " relative to total outcome, so a KPI that can be negative makes"
+            " those quantities ill-defined rather than merely harder to"
+            " estimate. If your KPI is a net figure, model the gross inflow"
+            " and outflow components separately."
+        )
+      raise ValueError(message)
 
   def _validate_names(self):
     """Verifies that the names of the data arrays are correct."""
