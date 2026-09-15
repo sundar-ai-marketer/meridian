@@ -109,6 +109,39 @@ class ModelContext:
     self._validate_time_invariants()
     self._validate_media_spend_for_paid_channels()
     self._validate_rf_spend_for_paid_channels()
+    self._warn_insufficient_adstock_burn_in()
+
+  def _warn_insufficient_adstock_burn_in(self):
+    """Warns when there is too little media history to fill the adstock window.
+
+    Adstock at time `t` is a weighted sum over `media_{t-i}` for `i` in
+    `[0, max_lag]`. Those lags are only observed when `media_time` extends
+    `max_lag` periods before `time`. When it does not, Meridian pads the
+    missing history with zeros, which silently understates carryover for the
+    first periods of the modeling window and biases the affected channels'
+    contribution downwards.
+
+    This is easy to hit by accident: a single wide DataFrame in which every
+    column is populated for every date yields `n_media_times == n_times`, i.e.
+    no burn-in at all, with no other symptom. See google/meridian#1502.
+    """
+    max_lag = self._model_spec.max_lag
+    if not max_lag:
+      return
+    burn_in = self.n_media_times - self.n_times
+    if burn_in >= max_lag:
+      return
+    warnings.warn(
+        f'Insufficient media history for adstock: `max_lag` is {max_lag} but'
+        f' `media_time` extends only {burn_in} period(s) before `time`'
+        f' (n_media_times={self.n_media_times}, n_times={self.n_times}). The'
+        f' first {max_lag - burn_in} period(s) of the modeling window will be'
+        ' adstocked against zero-padded history, understating carryover. To'
+        ' fix, supply `max_lag` additional periods of media execution before'
+        ' the modeling window and leave KPI, controls and spend missing (NaN)'
+        ' in those periods. To intentionally model without burn-in, set'
+        ' `max_lag=0`.'
+    )
 
   def _validate_data_dependent_model_spec(self):
     """Validates that the data dependent model specs have correct shapes."""
