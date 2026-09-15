@@ -357,6 +357,16 @@ def _calculate_outliers(
   )
 
 
+def _non_finite_variables(
+    input_da: xr.DataArray, var_dim: str
+) -> list[str]:
+  """Returns the names of variables containing NaN or infinite values."""
+  num_vars = input_da.sizes[var_dim]
+  np_data = input_da.values.reshape(-1, num_vars)
+  mask = ~np.all(np.isfinite(np_data), axis=0)
+  return [str(v) for v in input_da[var_dim].values[mask]]
+
+
 def _calculate_vif(
     input_da: xr.DataArray,
     var_dim: str,
@@ -380,15 +390,24 @@ def _calculate_vif(
   num_vars = input_da.sizes[var_dim]
   np_data = input_da.values.reshape(-1, num_vars)
 
-  is_constant = np.std(np_data, axis=0) < std_threshold
-  vif_values = np.full(num_vars, np.nan)
-  (non_constant_vars_indices,) = (~is_constant).nonzero()
+  # Exclude non-finite variables alongside constant ones. `np.std` of a column
+  # containing NaN is NaN, and `NaN < std_threshold` is False, so without this
+  # such a column is treated as non-constant and reaches statsmodels, which
+  # aborts the whole check with `MissingDataError('exog contains inf or
+  # nans')` and names no variable. See google/meridian#1466.
+  is_non_finite = ~np.all(np.isfinite(np_data), axis=0)
+  with np.errstate(invalid='ignore'):
+    is_constant = np.std(np_data, axis=0) < std_threshold
+  is_excluded = is_constant | is_non_finite
 
-  if non_constant_vars_indices.size > 0:
+  vif_values = np.full(num_vars, np.nan)
+  (usable_vars_indices,) = (~is_excluded).nonzero()
+
+  if usable_vars_indices.size > 0:
     design_matrix = sm.add_constant(
-        np_data[:, ~is_constant], prepend=True, has_constant='add'
+        np_data[:, ~is_excluded], prepend=True, has_constant='add'
     )
-    for i, var_index in enumerate(non_constant_vars_indices):
+    for i, var_index in enumerate(usable_vars_indices):
       vif_values[var_index] = outliers_influence.variance_inflation_factor(
           design_matrix, i + 1
       )
@@ -2073,6 +2092,24 @@ class EDAEngine:
     )
 
     findings = []
+    non_finite_vars = _non_finite_variables(
+        tc_da, eda_constants.VARIABLE
+    )
+    if non_finite_vars:
+      findings.append(
+          eda_outcome.EDAFinding(
+              severity=eda_outcome.EDASeverity.FAIL,
+              explanation=(
+                  'These variables contain NaN or infinite values and were'
+                  ' excluded from the VIF calculation:'
+                  f' {non_finite_vars}. Fix them in the input data. Note that'
+                  ' non-finite values can be introduced by scaling even when'
+                  ' the raw input is clean, for example a variable that is'
+                  ' constant within a geo.'
+              ),
+              finding_cause=eda_outcome.FindingCause.INCONSISTENT_DATA,
+          )
+      )
     if not extreme_overall_vif_df.empty:
       high_vif_vars_message = (
           '\nVariables with extreme VIF:'
@@ -2166,6 +2203,24 @@ class EDAEngine:
     )
 
     findings = []
+    non_finite_vars = _non_finite_variables(
+        national_tc_da, eda_constants.VARIABLE
+    )
+    if non_finite_vars:
+      findings.append(
+          eda_outcome.EDAFinding(
+              severity=eda_outcome.EDASeverity.FAIL,
+              explanation=(
+                  'These variables contain NaN or infinite values and were'
+                  ' excluded from the VIF calculation:'
+                  f' {non_finite_vars}. Fix them in the input data. Note that'
+                  ' non-finite values can be introduced by scaling even when'
+                  ' the raw input is clean, for example a variable that is'
+                  ' constant within a geo.'
+              ),
+              finding_cause=eda_outcome.FindingCause.INCONSISTENT_DATA,
+          )
+      )
     if not extreme_national_vif_df.empty:
       high_vif_vars_message = (
           '\nVariables with extreme VIF:'
