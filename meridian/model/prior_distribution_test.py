@@ -2605,6 +2605,41 @@ class TestLognormalDistFromRange(parameterized.TestCase):
           1.0, 2.0, mass_percent=mass_percent
       )
 
+  def test_nested_float32_distributions_are_widened(self):
+    """A wrapper's own dtype cannot be trusted.
+
+    `IndependentMultivariateDistribution` derives its dtype via
+    `backend.result_type`, which reports the backend's configured precision
+    whenever any nested dtype is a float -- so a wrapper holding two float32
+    distributions reports float64 and slipped straight through the guard.
+    """
+    expected_dtype = backend.standardize_dtype(backend.float_dtype)
+    if expected_dtype != 'float64':
+      self.skipTest('Dtype coercion runs in 64-bit environment.')
+
+    nested = prior_distribution.IndependentMultivariateDistribution(
+        [backend.tfd.Uniform(0.0, 1.0), backend.tfd.Gamma(2.0, 2.0)],
+        name=c.ROI_M,
+    )
+    # The wrapper lies about its own dtype; the leaves are what matter.
+    self.assertEqual(backend.standardize_dtype(nested.dtype), 'float64')
+    self.assertEqual(
+        [backend.standardize_dtype(d.dtype) for d in nested._distributions],  # pylint: disable=protected-access
+        ['float32', 'float32'],
+    )
+
+    with self.assertWarnsRegex(
+        UserWarning, 'Widened float32 prior distribution'
+    ):
+      prior = prior_distribution.PriorDistribution(roi_m=nested)
+
+    self.assertEqual(
+        [
+            backend.standardize_dtype(d.dtype)
+            for d in prior.roi_m._distributions  # pylint: disable=protected-access
+        ],
+        ['float64', 'float64'],
+    )
 
 if __name__ == '__main__':
   absltest.main()
