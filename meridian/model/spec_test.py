@@ -784,6 +784,18 @@ class ModelSpecTest(parameterized.TestCase):
           adstock_decay_spec=spec_adstock_decay_spec,
       )
 
+  def test_explicit_none_prior_raises_clear_error(self):
+    """`prior=None` must fail here, not as an AttributeError much later.
+
+    `prior` has a default factory, so an explicit None silently replaced it and
+    only surfaced as `'NoneType' object has no attribute 'beta_m'` from inside
+    ModelContext.
+    """
+    with self.assertRaisesRegex(
+        ValueError, "`prior` must be a `PriorDistribution`, not None"
+    ):
+      spec.ModelSpec(prior=None)
+
 
 if __name__ == "__main__":
   absltest.main()
