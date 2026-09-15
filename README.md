@@ -1,3 +1,6 @@
+<!-- NOTICE: This file was modified from the original google/meridian source.
+     See the NOTICE file at the repository root for details. -->
+
 # About Meridian
 
 > **Unofficial fork.** This repository is a personal fork of
@@ -298,9 +301,11 @@ Added modules:
 
 Added test modules:
 
-*   `meridian/upstream_issues_test.py` — every disposition in
-    [`TRIAGE.md`](TRIAGE.md) as an executable assertion, so a rebase that
-    silently regresses one of them fails the suite.
+*   `meridian/upstream_issues_test.py` — the code-testable dispositions in
+    [`TRIAGE.md`](TRIAGE.md) as executable assertions, so a rebase that
+    silently regresses one of them fails the suite. 17 of the 47 open upstream
+    issues are guarded this way; the rest are usage questions, other people's
+    hardware, or declined features, none of which can be asserted in code.
 *   `meridian/math_invariants_test.py` — the arithmetic identities behind
     reported figures, verified at machine precision: `roi ==
     incremental_outcome / spend` (7.1e-15), per-geo incremental summing to the
