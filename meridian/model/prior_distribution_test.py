@@ -2085,23 +2085,32 @@ class PriorDistributionTest(test_utils.MeridianTestCase):
           ),
       ),
   )
-  def test_prior_distribution_dtype_mismatch_raises_value_error(
+  def test_prior_distribution_dtype_mismatch_is_widened(
       self,
       param_name: str,
       get_mismatched_dist: Callable[[], backend.tfd.Distribution],
   ):
     expected_dtype = backend.standardize_dtype(backend.float_dtype)
     if expected_dtype != 'float64':
-      self.skipTest('Dtype mismatch validation runs in 64-bit environment.')
+      self.skipTest('Dtype coercion runs in 64-bit environment.')
 
     mismatched_dist = get_mismatched_dist()
-    with self.assertRaisesRegex(
-        ValueError,
-        f"The distribution for parameter '{param_name}' has dtype"
-        r' float32, which does not match the expected backend'
-        r' float dtype float64',
+    with self.assertWarnsRegex(
+        UserWarning, 'Widened float32 prior distribution'
     ):
-      prior_distribution.PriorDistribution(**{param_name: mismatched_dist})
+      prior = prior_distribution.PriorDistribution(
+          **{param_name: mismatched_dist}
+      )
+
+    widened = getattr(prior, param_name)
+    self.assertEqual(backend.standardize_dtype(widened.dtype), 'float64')
+    # Widening float32 -> float64 is lossless: the distribution must be
+    # unchanged.
+    np.testing.assert_allclose(
+        np.asarray(widened.mean()),
+        np.asarray(mismatched_dist.mean()),
+        rtol=1e-6,
+    )
 
   @parameterized.named_parameters(
       dict(
