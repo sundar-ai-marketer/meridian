@@ -113,6 +113,48 @@ Added modules:
     your model are precise enough to allocate budget on.
 *   `meridian.benchmark` — record what actually governs runtime on your
     hardware: `python -m meridian.benchmark.benchmark --help`.
+*   `meridian.validation.recovery` — generate data whose true ROI is known by
+    construction, fit it, and report whether the posterior recovers the truth.
+    Run it at the shape of your own data before trusting a model built on it:
+    `python -m meridian.validation.recovery --help`.
+
+Added test modules:
+
+*   `meridian/upstream_issues_test.py` — every disposition in
+    [`TRIAGE.md`](TRIAGE.md) as an executable assertion, so a rebase that
+    silently regresses one of them fails the suite.
+*   `meridian/math_invariants_test.py` — the arithmetic identities behind
+    reported figures, verified at machine precision: `roi ==
+    incremental_outcome / spend` (7.1e-15), per-geo incremental summing to the
+    aggregate (4.5e-13), normalized adstock weights summing to 1, and the Hill
+    closed form.
+
+## Reading ROI intervals honestly
+
+Recovery testing on synthetic data found a limit worth knowing before any of
+these numbers reach a client.
+
+When the simulated response has the concave shape Meridian assumes, recovery is
+good: the premium channel's ROI came back within 2.8% of truth, inside the 90%
+credible interval. When the true response is **linear** instead, the same
+channel's ROI was overstated by 71% and the interval did not contain the truth.
+Cutting the noise tenfold did not help — the interval narrowed to about ±3% and
+still missed every true value.
+
+This is not a Meridian defect. It is what fitting a concave saturation curve to
+a response that is not concave does, in any MMM that assumes saturation. The
+consequence for reporting is:
+
+> Meridian's credible intervals quantify parameter uncertainty **conditional on
+> the assumed saturation shape**. They do not cover being wrong about that
+> shape.
+
+A channel far from saturation — typically one at low spend, whose real response
+is still close to linear — can therefore have its ROI overstated substantially
+while its interval looks reassuringly tight. Use
+`meridian.validation.recovery` with `--response linear` to size that effect at
+your own data shape, and treat the gap as a floor on the uncertainty you carry
+into a recommendation.
 
 ## Meridian Documentation & Tutorials
 

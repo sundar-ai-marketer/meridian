@@ -138,8 +138,44 @@ is under-sampling, not a defect: r_hat is a diagnostic of chain length, and
 This is the direct answer to #1624 and #1446: on v2.0.0 with the JAX backend,
 the demo workload converges cleanly.
 
+### Mathematical invariants
+
+`meridian/math_invariants_test.py` asserts the arithmetic behind reported
+figures. Each was measured before being codified:
+
+| Identity | Max error |
+|---|---|
+| `roi == incremental_outcome / spend` | 7.1e-15 |
+| per-geo incremental sums to aggregated | 4.5e-13 |
+| normalized adstock weights sum to 1 (both decay families) | exact |
+| `hill(x) == x^slope / (x^slope + ec^slope)` | matches closed form |
+| adstock with `max_lag=0` equals raw media | exact |
+
+### ROI recovery on synthetic data
+
+`meridian/validation/recovery.py` generates data whose true ROI is known by
+construction and checks whether the posterior recovers it. Priors are
+deliberately uninformative and identical across channels, so separating them is
+the data's work.
+
+| Response shape | Carryover | Highest-ROI channel error | All inside 90% CI |
+|---|---|---|---|
+| concave (matches Meridian's assumption) | none | +2.8% | yes |
+| concave | geometric | −13.2% | yes |
+| linear | none | **+71.4%** | **no** |
+| linear, noise cut 10x | none | +29.9% | **no** |
+| linear, population confound removed | none | +69.8% | **no** |
+
+Eliminating noise and eliminating a confound in the generator each left the
+bias intact; only matching the response shape removed it. The conclusion is
+that this is saturation misspecification, not a library defect — and that
+credible intervals do not cover it. See the README section "Reading ROI
+intervals honestly".
+
 ### Environment
 
 The `[geox]`, `[mlflow]` and `[scenarioplanner]` extras are needed for the full
 suite to run green. Six `weekly_optimization_grid` tests additionally require
-either Python >= 3.12 or the `side_effect` fix applied here.
+either Python >= 3.12 or the `side_effect` fix applied here. Both the JAX and
+TensorFlow backends are exercised; the new modules use `backend.tfd` rather
+than a hardcoded TFP substrate so they work on either.
