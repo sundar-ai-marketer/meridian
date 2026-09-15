@@ -1,5 +1,20 @@
 # About Meridian
 
+> **Unofficial fork.** This repository is a personal fork of
+> [google/meridian](https://github.com/google/meridian), maintained by Sundar
+> Ramesh Kumar. It is **not affiliated with, endorsed by, or supported by
+> Google.** "Meridian" is Google's project name, used here only to identify the
+> upstream work this is derived from.
+>
+> Upstream does not accept external pull requests, so fixes are maintained
+> here. See [`TRIAGE.md`](TRIAGE.md) for what changed and why, and
+> [`NOTICE`](NOTICE) for attribution. Licensed under Apache 2.0, the same terms
+> as the original.
+>
+> **Do not report problems with this fork to Google.** Use this repository's
+> issue tracker.
+
+
 Marketing mix modeling (MMM) is a statistical analysis technique that measures
 the impact of marketing campaigns and activities to guide budget planning
 decisions and improve overall media effectiveness. MMM uses aggregated data to
@@ -277,29 +292,24 @@ started quickly with using Meridian:
 
 ## Support
 
-**Questions about methodology**: Please see the [Modeling](https://developers.google.com/meridian/docs/basics/meridian-introduction) tab in the technical documentation.
+**Problems with this fork** — installation, the added modules, or anything
+listed in [`TRIAGE.md`](TRIAGE.md): use this repository's issue tracker. Run
+`python scripts/verify_environment.py` first; it diagnoses the common install
+failures and prints the fix.
 
-**Issues installing or using Meridian**: Feel free to post questions in the
-[Discussions](https://github.com/google/meridian/discussions) or [Issues](https://github.com/google/meridian/issues) tabs of the Meridian GitHub repository. The Meridian team responds to
-these questions weekly in batches, so please be patient and don't reach out
-directly to your Google Account teams.
+**Questions about MMM methodology**: Google's
+[technical documentation](https://developers.google.com/meridian/docs/basics/meridian-introduction)
+remains the reference, and applies to this fork unchanged.
 
-**Bug reports**: Please post bug reports to the [Issues](https://github.com/google/meridian/issues)
-tab of the Meridian GitHub repository. We also encourage the community to share
-tips and advice with each other on the [Issues](https://github.com/google/meridian/issues)
-tab. When our team addresses or resolves a new bug, we will notify you through
-the comments on the issue.
+**Do not raise this fork's issues on google/meridian.** Google did not write
+these changes and cannot support them. If you believe you have found a defect
+in *upstream* code that is unrelated to this fork's changes, reproduce it
+against a clean `google-meridian` install first, then report it there.
 
-**Feature requests**: Please post these to the [Discussions](https://github.com/google/meridian/discussions)
-tab of the Meridian GitHub repository. We have an internal roadmap for Meridian
-development, but would love your inputs for new feature requests so that we can
-prioritize them based on the roadmap.
-
-**Pull requests**: These are appreciated but are very difficult for us to merge
-because the code in this repository is linked to Google internal systems and has
-to pass internal review. If you submit a pull request and we believe that we can
-incorporate a change in the base code, we will reach out to you directly about
-this.
+**A caution before you trust a number**: read
+[Reading ROI intervals honestly](#reading-roi-intervals-honestly). Credible
+intervals here do not cover saturation misspecification, and the gap can be
+large.
 
 ## Citing Meridian
 
