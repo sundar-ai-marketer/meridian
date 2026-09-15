@@ -1539,6 +1539,66 @@ class ContextTest(
         actual_knot_info.weights, expected_knot_info.weights
     )
 
+  @parameterized.named_parameters(
+      dict(
+          testcase_name="no_burn_in_at_all",
+          n_media_times=50,
+          max_lag=8,
+          expect_warning=True,
+      ),
+      dict(
+          testcase_name="partial_burn_in",
+          n_media_times=53,
+          max_lag=8,
+          expect_warning=True,
+      ),
+      dict(
+          testcase_name="exactly_enough_burn_in",
+          n_media_times=58,
+          max_lag=8,
+          expect_warning=False,
+      ),
+      dict(
+          testcase_name="more_than_enough_burn_in",
+          n_media_times=60,
+          max_lag=8,
+          expect_warning=False,
+      ),
+      dict(
+          testcase_name="max_lag_zero_needs_no_burn_in",
+          n_media_times=50,
+          max_lag=0,
+          expect_warning=False,
+      ),
+  )
+  def test_warn_insufficient_adstock_burn_in(
+      self, n_media_times: int, max_lag: int, expect_warning: bool
+  ):
+    """Media history shorter than `max_lag` must warn, not pass silently."""
+    data = data_test_utils.sample_input_data_non_revenue_revenue_per_kpi(
+        n_geos=5,
+        n_times=50,
+        n_media_times=n_media_times,
+        n_media_channels=2,
+    )
+    model_spec = spec.ModelSpec(max_lag=max_lag)
+
+    with warnings.catch_warnings(record=True) as caught:
+      warnings.simplefilter("always")
+      context.ModelContext(input_data=data, model_spec=model_spec)
+
+    matched = [
+        str(w.message)
+        for w in caught
+        if "Insufficient media history for adstock" in str(w.message)
+    ]
+    if expect_warning:
+      self.assertLen(matched, 1)
+      self.assertIn(f"`max_lag` is {max_lag}", matched[0])
+      self.assertIn(f"n_media_times={n_media_times}", matched[0])
+    else:
+      self.assertEmpty(matched)
+
 
 class AdstockDecaySpecFromChannelMappingTest(
     test_utils.MeridianTestCase,
