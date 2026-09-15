@@ -16,6 +16,7 @@
 
 from meridian.analysis import analyzer
 from meridian.analysis import optimizer
+from meridian.analysis import prior_predictive
 from meridian.analysis import review
 from meridian.analysis import summarizer
 from meridian.analysis import visualizer
