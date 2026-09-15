@@ -236,7 +236,7 @@ def normalize_tensor_protos(proto: message.Message):
     # A map is defined as a repeated field whose message type has the
     # map_entry option set.
     is_map = (
-        desc.label == FieldDescriptor.LABEL_REPEATED
+        _is_repeated_field(desc)
         and desc.message_type.has_options
         and desc.message_type.GetOptions().map_entry
     )
@@ -246,13 +246,26 @@ def normalize_tensor_protos(proto: message.Message):
         # Helper checks if values are scalars or messages.
         _process_message_for_normalization(item)
 
-    elif desc.label == FieldDescriptor.LABEL_REPEATED:
+    elif _is_repeated_field(desc):
       # Handle standard repeated message fields.
       for item in value:
         _process_message_for_normalization(item)
     else:
       # Handle singular message fields.
       _process_message_for_normalization(value)
+
+
+def _is_repeated_field(desc: FieldDescriptor) -> bool:
+  """Returns whether `desc` describes a repeated field.
+
+  `FieldDescriptor.label` was removed from descriptor instances in protobuf
+  6.x; `is_repeated` is the supported accessor from protobuf 5.27 onward. Fall
+  back to `label` so this keeps working on older runtimes.
+  """
+  is_repeated = getattr(desc, 'is_repeated', None)
+  if is_repeated is not None:
+    return bool(is_repeated)
+  return desc.label == FieldDescriptor.LABEL_REPEATED
 
 
 def _process_message_for_normalization(msg: Any):
