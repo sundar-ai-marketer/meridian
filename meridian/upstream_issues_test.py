@@ -44,9 +44,9 @@ from absl.testing import absltest
 from absl.testing import parameterized
 import numpy as np
 import pandas as pd
-import tensorflow_probability.substrates.jax as tfp_jax
 import xarray as xr
 
+from meridian import backend
 from meridian import constants as c
 from meridian.analysis import analyzer as analyzer_module
 from meridian.data import data_frame_input_data_builder as dfb
@@ -253,9 +253,7 @@ class ValidationTest(parameterized.TestCase):
   def test_issues_1364_1404_float32_priors_are_accepted(self, loc, scale):
     """The documented prior idiom yields float32; the 64-bit JAX default
     rejected it, which blocked both issues."""
-    from meridian import backend  # pylint: disable=g-import-not-at-top
-
-    dist = tfp_jax.distributions.LogNormal(loc, scale, name=c.ROI_M)
+    dist = backend.tfd.LogNormal(loc, scale, name=c.ROI_M)
     prior = prior_distribution.PriorDistribution(roi_m=dist)
     expected = backend.standardize_dtype(backend.float_dtype)
     self.assertEqual(
