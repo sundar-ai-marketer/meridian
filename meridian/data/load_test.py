@@ -17,6 +17,7 @@ import copy
 import dataclasses
 import datetime
 import os
+import re
 from typing import Any
 import warnings
 
@@ -1471,23 +1472,23 @@ class InputDataLoaderTest(parameterized.TestCase):
       (
           'wrong_value',
           'wrong_value',
-          "DataFrame is missing one or more columns from ['revenue', 'time']",
+          "Required: ['revenue', 'time']",
       ),
       (
           'extra_control',
           'extra_control',
           (
-              "DataFrame is missing one or more columns from ['control_0',"
-              " 'control_1', 'control_2', 'time']"
+              "Required: ['control_0', 'control_1', 'control_2',"
+              " 'time']"
           ),
       ),
   )
   def test_dataframe_data_loader_wrong_coords_fails(
       self, coord_test_nr, error_message
   ):
-    with self.assertRaisesWithLiteralMatch(
+    with self.assertRaisesRegex(
         ValueError,
-        error_message,
+        re.escape(error_message),
     ):
       load.DataFrameDataLoader(
           df=self._sample_df_with_media_only,

@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import os
+import re
+
 from absl.testing import absltest
 from absl.testing import parameterized
 from meridian import constants
@@ -1146,9 +1148,9 @@ class DataFrameInputDataBuilderTest(parameterized.TestCase):
       setter,
       missing_cols,
   ):
-    with self.assertRaisesWithLiteralMatch(
+    with self.assertRaisesRegex(
         ValueError,
-        f"DataFrame is missing one or more columns from {missing_cols}",
+        re.escape(f"Required: {missing_cols}"),
     ):
       setter(
           data_frame_input_data_builder.DataFrameInputDataBuilder(
@@ -1371,9 +1373,9 @@ class DataFrameInputDataBuilderTest(parameterized.TestCase):
       ),
   )
   def test_with_duplicate_columns(self, setter, dupes):
-    with self.assertRaisesWithLiteralMatch(
+    with self.assertRaisesRegex(
         ValueError,
-        f"DataFrame has duplicate columns from {dupes}",
+        re.escape(f"DataFrame has duplicate columns from {dupes}"),
     ):
       setter(
           data_frame_input_data_builder.DataFrameInputDataBuilder(
@@ -1471,9 +1473,9 @@ class DataFrameInputDataBuilderTest(parameterized.TestCase):
       ),
   )
   def test_with_missing_time_column(self, df, setter, missing_cols):
-    with self.assertRaisesWithLiteralMatch(
+    with self.assertRaisesRegex(
         ValueError,
-        f"DataFrame is missing one or more columns from {missing_cols}",
+        re.escape(f"Required: {missing_cols}"),
     ):
       setter(
           data_frame_input_data_builder.DataFrameInputDataBuilder(
@@ -2375,6 +2377,31 @@ class DataFrameInputDataBuilderTest(parameterized.TestCase):
         expected_regex="NA values found in the media spend data.",
     ):
       builder.build()
+
+  def test_missing_column_error_names_the_missing_column(self):
+    """The error must name what is absent, not just what was required.
+
+    Reported as google/meridian#1596: a user whose time column was named
+    something other than `time` was told the DataFrame was "missing one or more
+    columns from ['Sales', 'time']" and went hunting for `Sales`, which was
+    present all along.
+    """
+    df = pd.DataFrame({
+        "geo": ["A", "A"],
+        "date": ["2024-01-01", "2024-01-02"],
+        "Sales": [1.0, 2.0],
+    })
+    builder = data_frame_input_data_builder.DataFrameInputDataBuilder(
+        kpi_type=constants.NON_REVENUE
+    )
+    with self.assertRaises(ValueError) as cm:
+      # `time_col` is left unset, so it defaults to "time", which is absent.
+      builder.with_kpi(df, kpi_col="Sales", geo_col="geo")
+    message = str(cm.exception)
+    self.assertIn("missing required column(s): ['time']", message)
+    # The column the user would otherwise hunt for is reported as present.
+    self.assertIn("'Sales'", message)
+    self.assertIn("Present in DataFrame:", message)
 
 
 if __name__ == "__main__":
