@@ -51,25 +51,44 @@ Python 3.11, 3.12 or 3.13. Do not install into an environment that already has
 TensorFlow — see the note on `tensorflow-metal` below.
 
 ```sh
-# 1. Clone
 git clone <your-repo-url> meridian && cd meridian
-
-# 2. A clean, isolated environment. Do not skip this.
-python3.11 -m venv ~/.venvs/meridian
-source ~/.venvs/meridian/bin/activate
-python -m pip install -U pip setuptools wheel
-
-# 3. Install the checkout, with every extra the test suite needs
-pip install -e ".[dev,colab,schema,mlflow,geox,scenarioplanner]"
-
-# 4. Prove the environment works before trusting anything
-python scripts/verify_environment.py
+./scripts/setup.sh
 ```
 
-Step 4 should end with `RESULT: PASS`. If it does not, it names the fix. Then:
+That finds a supported Python, builds an isolated environment, removes
+`tensorflow-metal` if present, installs this checkout with every extra, and
+verifies the result. It is safe to re-run and exits non-zero if the environment
+does not come out usable.
+
+Then see it actually work, end to end, on the bundled sample data:
 
 ```sh
-pytest meridian -q -n 8           # full suite, about 6 minutes
+.venv/bin/python examples/quickstart.py
+```
+
+That runs a real analysis in about three minutes — build input data, set an ROI
+prior, check the prior against the data *before* fitting, fit, check
+convergence, read ROI, optimize a budget, and save the model. Pass `--full` for
+the demo's proper MCMC settings (about 35 minutes on an M4 Max).
+
+<details>
+<summary>Manual setup, if you would rather not run a script</summary>
+
+```sh
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip setuptools wheel
+pip install -e ".[dev,colab,schema,mlflow,geox,scenarioplanner]"
+python scripts/verify_environment.py     # must end with RESULT: PASS
+```
+
+</details>
+
+To run the tests:
+
+```sh
+pytest meridian -q -n 8                                  # ~10 min, 5486 tests
+MERIDIAN_BACKEND=tensorflow pytest meridian -q -n 8      # the other backend
 ```
 
 ### Things that will bite you otherwise
