@@ -19,6 +19,7 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from meridian import backend
 from meridian import constants as c
 from meridian.analysis import prior_predictive
 from meridian.common import errors
@@ -27,7 +28,6 @@ from meridian.model import model
 from meridian.model import prior_distribution
 from meridian.model import spec
 import numpy as np
-import tensorflow_probability.substrates.jax as tfp_jax
 
 
 _N_GEOS = 3
@@ -136,9 +136,14 @@ class PriorPredictiveCheckTest(parameterized.TestCase):
 
   def test_absurd_prior_is_flagged(self):
     """A wildly optimistic ROI prior must be caught before any fitting."""
+    # Use the backend's own TFP substrate and float dtype: a JAX-substrate
+    # distribution handed to a TensorFlow-backed model fails when the sampler
+    # receives a `tf.int32` seed.
     absurd = prior_distribution.PriorDistribution(
-        roi_m=tfp_jax.distributions.LogNormal(
-            np.float64(8.0), np.float64(0.1), name=c.ROI_M
+        roi_m=backend.tfd.LogNormal(
+            backend.np_float_dtype(8.0),
+            backend.np_float_dtype(0.1),
+            name=c.ROI_M,
         )
     )
     mmm = _build_model(absurd)
