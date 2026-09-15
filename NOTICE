@@ -37,6 +37,7 @@ Files modified from the original google/meridian source:
   meridian/model/spec_test.py
   .gitignore
   README.md
+  CONTRIBUTING.md
   pyproject.toml
   .github/workflows/ci.yml
   .github/workflows/publish.yml

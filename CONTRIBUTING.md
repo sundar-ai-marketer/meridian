@@ -1,29 +1,64 @@
 # How to Contribute
 
-We'd love to accept your patches and contributions to this project. There are
-just a few small guidelines you need to follow.
+This is a personal fork of
+[google/meridian](https://github.com/google/meridian), maintained by Sundar
+Ramesh Kumar. It is not affiliated with, endorsed by, or supported by Google.
 
-## Contributor License Agreement
+It is published so the fixes are usable and auditable, not to run a community
+project. Issues are welcome; pull requests may or may not be merged, depending
+on whether the change fits how this fork is used. If you need a guarantee,
+fork it yourself — that is what Apache 2.0 is for.
 
-Contributions to this project must be accompanied by a Contributor License
-Agreement (CLA). You (or your employer) retain the copyright to your
-contribution; this simply gives us permission to use and redistribute your
-contributions as part of the project. Head over to
-<https://cla.developers.google.com/> to see your current agreements on file or
-to sign a new one.
+**There is no Contributor License Agreement for this fork.** The upstream
+project requires one; this one does not. Anything merged here is under the
+Apache License 2.0, the same licence as the code. By opening a pull request you
+confirm you have the right to contribute the work under those terms.
 
-You generally only need to submit a CLA once, so if you've already submitted one
-(even if it was for a different project), you probably don't need to do it
-again.
+## Where a change belongs
 
-## Code Reviews
+Before opening a pull request, decide whether the change belongs here or
+upstream.
 
-All submissions, including submissions by project members, require review. We
-use GitHub pull requests for this purpose. Consult
-[GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
-information on using pull requests.
+*   **Upstream**, if it is a defect in Google's code unrelated to this fork's
+    changes. Reproduce it against a clean `pip install google-meridian` first,
+    then report it at [google/meridian](https://github.com/google/meridian/issues).
+    Note that Google states it is not currently accepting external pull
+    requests, so expect to file an issue rather than a patch.
+*   **Here**, if it is a defect in this fork's own modules
+    (`meridian/validation`, `meridian/benchmark`,
+    `meridian.analysis.prior_predictive`, `meridian.analysis.geo_diagnostics`),
+    or a fix for something [`TRIAGE.md`](TRIAGE.md) records as unresolved.
 
-## Community Guidelines
+## What a change needs
 
-This project follows
-[Google's Open Source Community Guidelines](https://opensource.google/conduct/).
+*   **A test.** Behaviour changes need one that fails before the change.
+*   **A green suite on both backends.** JAX is the default; the TensorFlow
+    backend is deprecated upstream but still exercised in CI:
+
+    ```sh
+    pytest meridian -q -n 8
+    MERIDIAN_BACKEND=tensorflow pytest meridian -q -n 8
+    ```
+
+    Use `backend.tfd` and `backend.np_float_dtype` rather than importing a TFP
+    substrate directly, or your code will only work on one backend.
+*   **An updated [`TRIAGE.md`](TRIAGE.md)** if the change alters the
+    disposition of an upstream issue, and an updated
+    [`NOTICE`](NOTICE) if it adds or modifies a file — Apache 2.0 section 4(b)
+    requires modified files to say so.
+
+## Two tests to take seriously
+
+*   `meridian/upstream_issues_test.py` makes every disposition in `TRIAGE.md`
+    executable. A failure means a patch was dropped or upstream regressed
+    something this fork relies on.
+*   `meridian/math_invariants_test.py` asserts the arithmetic behind reported
+    ROI — that `roi == incremental_outcome / spend`, that a geo breakdown sums
+    to its total, that adstock weights sum to one. A failure here means the
+    numbers changed. Do not adjust the test to make it pass without
+    understanding why.
+
+## Code style
+
+Match the surrounding code: two-space indent, Google-style docstrings,
+`pyink`/`pylint` are declared in the `[dev]` extra.
