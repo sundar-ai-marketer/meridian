@@ -1,4 +1,4 @@
-# Copyright 2026 The Meridian Authors.
+# Copyright 2026 Meridian fork contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file is new in this fork and does not exist in the
+# original google/meridian source.
 
 """Whether geo-level budget allocation is supportable on a given model.
 
