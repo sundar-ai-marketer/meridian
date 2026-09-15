@@ -26,3 +26,9 @@ poetry.lock
 
 # pyenv, virtualenv artifacts.
 .python-version
+.venv/
+venv/
+env/
+
+# Local environment overrides.
+.env
