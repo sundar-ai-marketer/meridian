@@ -1167,6 +1167,13 @@ class ContextTest(
     )
     with warnings.catch_warnings(record=True) as w:
       warnings.simplefilter("module")
+      # The shared fixtures carry only 3 periods of media history against
+      # a default `max_lag` of 8, so the adstock burn-in warning fires.
+      # It is unrelated to what these tests assert, so exclude it from
+      # the counts rather than loosening them.
+      warnings.filterwarnings(
+          "ignore", message="Insufficient media history for adstock"
+      )
       context.ModelContext(
           input_data=self.input_data_with_media_and_rf,
           model_spec=model_spec,
@@ -1410,6 +1417,13 @@ class ContextTest(
   def test_init_geo_args_no_warning(self):
     with warnings.catch_warnings(record=True) as w:
       warnings.simplefilter("module")
+      # The shared fixtures carry only 3 periods of media history against
+      # a default `max_lag` of 8, so the adstock burn-in warning fires.
+      # It is unrelated to what these tests assert, so exclude it from
+      # the counts rather than loosening them.
+      warnings.filterwarnings(
+          "ignore", message="Insufficient media history for adstock"
+      )
       context.ModelContext(
           input_data=self.input_data_with_media_only,
           model_spec=spec.ModelSpec(
@@ -1421,6 +1435,13 @@ class ContextTest(
   def test_init_national_args_with_broadcast_warnings(self):
     with warnings.catch_warnings(record=True) as warns:
       warnings.simplefilter("module")
+      # The shared fixtures carry only 3 periods of media history against
+      # a default `max_lag` of 8, so the adstock burn-in warning fires.
+      # It is unrelated to what these tests assert, so exclude it from
+      # the counts rather than loosening them.
+      warnings.filterwarnings(
+          "ignore", message="Insufficient media history for adstock"
+      )
       _ = context.ModelContext(
           input_data=self.national_input_data_media_only,
           model_spec=spec.ModelSpec(
@@ -1441,6 +1462,13 @@ class ContextTest(
   def test_init_national_args_with_model_spec_warnings(self):
     with warnings.catch_warnings(record=True) as w:
       warnings.simplefilter("module")
+      # The shared fixtures carry only 3 periods of media history against
+      # a default `max_lag` of 8, so the adstock burn-in warning fires.
+      # It is unrelated to what these tests assert, so exclude it from
+      # the counts rather than loosening them.
+      warnings.filterwarnings(
+          "ignore", message="Insufficient media history for adstock"
+      )
       _ = context.ModelContext(
           input_data=self.national_input_data_media_only,
           model_spec=spec.ModelSpec(unique_sigma_for_each_geo=True),
@@ -1505,6 +1533,13 @@ class ContextTest(
     with warnings.catch_warnings(record=True) as warns:
       # Cause all warnings to always be triggered.
       warnings.simplefilter("always")
+      # The shared fixtures carry only 3 periods of media history against
+      # a default `max_lag` of 8, so the adstock burn-in warning fires.
+      # It is unrelated to what these tests assert, so exclude it from
+      # the counts rather than loosening them.
+      warnings.filterwarnings(
+          "ignore", message="Insufficient media history for adstock"
+      )
 
       model_context = context.ModelContext(
           input_data=data, model_spec=spec.ModelSpec()
