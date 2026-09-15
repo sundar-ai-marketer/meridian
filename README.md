@@ -86,6 +86,34 @@ developed across the library (out-of-the-box) using tensors. We recommend
 running your Meridian model on GPUs to get real time optimization results and
 significantly reduce training time.
 
+## Differences from upstream
+
+This is a fork of [google/meridian](https://github.com/google/meridian).
+Upstream does not accept external pull requests, so fixes live here.
+
+[`TRIAGE.md`](TRIAGE.md) records a disposition for every issue open on the
+upstream tracker: verified already fixed, fixed here, a usage question, an
+environment problem, a declined feature with its reason, or genuinely
+unresolved.
+
+Behaviour changes to existing code:
+
+*   Float32 prior distributions are widened to float64 rather than rejected, so
+    the documented `LogNormal(0.2, 0.9)` idiom works on the 64-bit JAX default.
+*   A warning when media history is too short to fill the adstock window, which
+    otherwise silently zero-pads and understates carryover.
+*   Non-finite variables are excluded from the VIF check instead of aborting it.
+*   Input validation errors name the offending column or coordinate.
+
+Added modules:
+
+*   `meridian.analysis.prior_predictive` — check priors against observed data
+    from `sample_prior()` alone, before committing to a full fit.
+*   `meridian.analysis.geo_diagnostics` — measure whether per-geo estimates on
+    your model are precise enough to allocate budget on.
+*   `meridian.benchmark` — record what actually governs runtime on your
+    hardware: `python -m meridian.benchmark.benchmark --help`.
+
 ## Meridian Documentation & Tutorials
 
 The following documentation, colab, and video resources will help you get
