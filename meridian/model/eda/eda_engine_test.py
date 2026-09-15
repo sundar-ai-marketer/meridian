@@ -8526,5 +8526,63 @@ class HelpersTest(test_utils.MeridianTestCase):
     actual = eda_engine.get_triangle_corr_mat(da, lower=lower)
     np.testing.assert_allclose(actual.values, expected_values)
 
+  def _vif_input(self, columns: dict[str, list[float]]) -> xr.DataArray:
+    return xr.DataArray(
+        np.array(list(columns.values())).T,
+        dims=["sample", eda_constants.VARIABLE],
+        coords={eda_constants.VARIABLE: list(columns)},
+    )
+
+  def test_calculate_vif_excludes_non_finite_variables(self):
+    """A non-finite column must not abort the whole VIF check.
+
+    Reported as google/meridian#1466: statsmodels raises
+    `MissingDataError('exog contains inf or nans')`, which the EDA engine
+    surfaces as an opaque critical failure naming no variable.
+    """
+    rng = np.random.default_rng(0)
+    good_a = rng.normal(size=20).tolist()
+    good_b = rng.normal(size=20).tolist()
+    with_nan = rng.normal(size=20).tolist()
+    with_nan[3] = np.nan
+    with_inf = rng.normal(size=20).tolist()
+    with_inf[7] = np.inf
+
+    da = self._vif_input({
+        "good_a": good_a,
+        "good_b": good_b,
+        "has_nan": with_nan,
+        "has_inf": with_inf,
+    })
+
+    vif = eda_engine._calculate_vif(da, eda_constants.VARIABLE, 1e-3)
+
+    # Finite variables still get a real VIF; non-finite ones are NaN, matching
+    # how constant variables are already reported.
+    self.assertTrue(np.isfinite(vif.sel({eda_constants.VARIABLE: "good_a"}).item()))
+    self.assertTrue(np.isfinite(vif.sel({eda_constants.VARIABLE: "good_b"}).item()))
+    self.assertTrue(np.isnan(vif.sel({eda_constants.VARIABLE: "has_nan"}).item()))
+    self.assertTrue(np.isnan(vif.sel({eda_constants.VARIABLE: "has_inf"}).item()))
+
+  def test_non_finite_variables_names_offenders(self):
+    da = self._vif_input({
+        "clean": [1.0, 2.0, 3.0],
+        "nan_col": [1.0, np.nan, 3.0],
+        "inf_col": [1.0, 2.0, -np.inf],
+    })
+    self.assertCountEqual(
+        eda_engine._non_finite_variables(da, eda_constants.VARIABLE),
+        ["nan_col", "inf_col"],
+    )
+
+  def test_calculate_vif_all_non_finite_returns_all_nan(self):
+    da = self._vif_input({
+        "a": [np.nan, 1.0, 2.0],
+        "b": [1.0, np.inf, 2.0],
+    })
+    vif = eda_engine._calculate_vif(da, eda_constants.VARIABLE, 1e-3)
+    self.assertTrue(np.all(np.isnan(vif.values)))
+
+
 if __name__ == "__main__":
   absltest.main()
