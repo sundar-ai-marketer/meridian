@@ -543,7 +543,13 @@ class WeeklyOptimizationGridTest(parameterized.TestCase):
     with mock.patch.object(
         weekly_optimization_grid.WeeklyOptimizationGrid,
         '_create_grids',
-        wraps=weekly_optimization_grid.WeeklyOptimizationGrid._create_grids,
+        # `wraps` is ignored by `autospec` before Python 3.12, which makes
+        # the mock return a bare MagicMock and breaks the tuple unpacking in
+        # `to_optimization_grid`. `side_effect` calls through on every
+        # supported version while still recording the call.
+        side_effect=(
+            weekly_optimization_grid.WeeklyOptimizationGrid._create_grids
+        ),
         autospec=True,
     ) as mock_create_grids:
       grid = weekly_grid.to_optimization_grid(
@@ -628,7 +634,13 @@ class WeeklyOptimizationGridTest(parameterized.TestCase):
     with mock.patch.object(
         weekly_optimization_grid.WeeklyOptimizationGrid,
         '_create_grids',
-        wraps=weekly_optimization_grid.WeeklyOptimizationGrid._create_grids,
+        # `wraps` is ignored by `autospec` before Python 3.12, which makes
+        # the mock return a bare MagicMock and breaks the tuple unpacking in
+        # `to_optimization_grid`. `side_effect` calls through on every
+        # supported version while still recording the call.
+        side_effect=(
+            weekly_optimization_grid.WeeklyOptimizationGrid._create_grids
+        ),
         autospec=True,
     ) as mock_create_grids:
       grid = weekly_grid.to_optimization_grid(
