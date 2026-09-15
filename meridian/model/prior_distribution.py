@@ -38,6 +38,61 @@ __all__ = [
 ]
 
 
+def _widen_distribution_to_float64(dist: Any) -> Any | None:
+  """Returns `dist` with its float32 parameters widened to float64.
+
+  TFP distributions keep their constructor arguments in `.parameters`, so a
+  distribution can be rebuilt with converted parameters via `.copy()`. Nested
+  distributions (as used by `Independent`, `TransformedDistribution` and
+  friends) are widened recursively.
+
+  Args:
+    dist: The distribution to widen.
+
+  Returns:
+    An equivalent float64 distribution, or `None` if it could not be rebuilt.
+  """
+  try:
+    params = dict(dist.parameters)
+  except AttributeError:
+    return None
+
+  overrides = {}
+  for key, value in params.items():
+    if value is None or isinstance(value, (bool, str)):
+      continue
+    if hasattr(value, 'parameters') and hasattr(value, 'dtype'):
+      # A nested distribution.
+      try:
+        nested_dtype = backend.standardize_dtype(value.dtype)
+      except (TypeError, ValueError, AttributeError):
+        continue
+      if nested_dtype == 'float32':
+        nested = _widen_distribution_to_float64(value)
+        if nested is None:
+          return None
+        overrides[key] = nested
+      continue
+    try:
+      array = np.asarray(value)
+    except (TypeError, ValueError):
+      continue
+    if array.dtype.kind == 'f':
+      # Cast every floating-point parameter, not just float32 ones: a Python
+      # float is float64 under `np.asarray` yet still builds a float32
+      # distribution in TFP, so the parameter dtype alone does not identify
+      # what needs widening -- the distribution's dtype (checked by the caller)
+      # does.
+      overrides[key] = array.astype(np.float64)
+
+  if not overrides:
+    return None
+  try:
+    return dist.copy(**overrides)
+  except Exception:  # pylint: disable=broad-except
+    return None
+
+
 @dataclasses.dataclass(kw_only=True)
 class PriorDistribution:
   """Contains prior distributions for each model parameter.
@@ -514,6 +569,7 @@ class PriorDistribution:
   def __post_init__(self):
     expected_dtype = backend.standardize_dtype(backend.float_dtype)
     if expected_dtype == 'float64':
+      widened = []
       for field in dataclasses.fields(self):
         dist = getattr(self, field.name)
         if hasattr(dist, 'dtype'):
@@ -522,11 +578,30 @@ class PriorDistribution:
           except (TypeError, ValueError, AttributeError):
             continue
           if dist_dtype == 'float32':
-            raise ValueError(
-                f"The distribution for parameter '{field.name}' has dtype"
-                f' {dist_dtype}, which does not match the expected backend'
-                f' float dtype {expected_dtype}.'
-            )
+            # Python floats build float32 distributions, so the documented
+            # idiom -- e.g. `LogNormal(0.2, 0.9)` -- produces float32 while the
+            # JAX backend defaults to 64-bit. Widening float32 -> float64 is
+            # lossless and is what the caller meant, so coerce rather than
+            # reject. Only raise if the distribution cannot be rebuilt.
+            coerced = _widen_distribution_to_float64(dist)
+            if coerced is None:
+              raise ValueError(
+                  f"The distribution for parameter '{field.name}' has dtype"
+                  f' {dist_dtype}, which does not match the expected backend'
+                  f' float dtype {expected_dtype}, and could not be converted'
+                  ' automatically. Construct it with 64-bit parameters, e.g.'
+                  ' `np.float64(0.2)` or `np.array([...], dtype=np.float64)`,'
+                  ' or opt out of 64-bit by setting'
+                  ' `MERIDIAN_ENABLE_JAX_X64=false`.'
+              )
+            object.__setattr__(self, field.name, coerced)
+            widened.append(field.name)
+      if widened:
+        warnings.warn(
+            'Widened float32 prior distribution(s) to float64 to match the'
+            f' backend dtype: {sorted(widened)}. Pass 64-bit parameters (e.g.'
+            ' `np.float64(0.2)`) to silence this warning.'
+        )
     for param, bounds in _parameter_space_bounds.items():
       prevent_deterministic_prior_at_bounds = (
           _prevent_deterministic_prior_at_bounds[param]
