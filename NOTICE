@@ -39,6 +39,7 @@ Files modified from the original google/meridian source:
   README.md
   pyproject.toml
   .github/workflows/ci.yml
+  .github/workflows/publish.yml
 
 Files added by this fork:
 
