@@ -40,6 +40,7 @@ Files modified from the original google/meridian source:
   CONTRIBUTING.md
   CITATION.cff
   pyproject.toml
+  MANIFEST.in
   .github/workflows/ci.yml
   .github/workflows/publish.yml
   .github/workflows/proto-publish.yml
@@ -62,6 +63,7 @@ Files added by this fork:
   meridian/validation/recovery_test.py
   scripts/verify_environment.py
   scripts/setup.sh
+  scripts/compile_report_css.py
   examples/quickstart.py
   meridian/benchmark/__main__.py
   meridian/validation/__main__.py
@@ -80,6 +82,10 @@ Summary of behavioural changes to existing code:
   * Several input-validation errors now name the offending column, coordinate
     or value.
   * Test-only fixes for protobuf >= 6 and for Python 3.11 mock behaviour.
+
+This fork's distribution is named `meridian-mmm-fork`, not `google-meridian`.
+The import path is unchanged (`import meridian`), but the published package is
+deliberately distinct so it cannot be mistaken for Google's release.
 
 No change alters the model's statistical specification. Feature requests that
 would have done so are declined in TRIAGE.md with reasons.

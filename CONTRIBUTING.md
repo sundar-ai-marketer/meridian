@@ -53,7 +53,7 @@ upstream.
 ## Two tests to take seriously
 
 *   `meridian/upstream_issues_test.py` makes the code-testable dispositions in
-    `TRIAGE.md` executable — 17 of the 47 open upstream issues. A failure means
+    `TRIAGE.md` executable — 15 of the 47 open upstream issues. A failure means
     a patch was dropped or upstream regressed something this fork relies on.
 *   `meridian/math_invariants_test.py` asserts the arithmetic behind reported
     ROI — that `roi == incremental_outcome / spend`, that a geo breakdown sums

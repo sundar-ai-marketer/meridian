@@ -54,7 +54,7 @@ Python 3.11, 3.12 or 3.13. Do not install into an environment that already has
 TensorFlow — see the note on `tensorflow-metal` below.
 
 ```sh
-git clone <your-repo-url> meridian && cd meridian
+git clone https://github.com/FORK_URL.git meridian && cd meridian
 ./scripts/setup.sh
 ```
 
@@ -69,7 +69,7 @@ Then see it actually work, end to end, on the bundled sample data:
 .venv/bin/python examples/quickstart.py
 ```
 
-That runs a real analysis in about three minutes — build input data, set an ROI
+That runs a real analysis in about six minutes on an M4 Max — build input data, set an ROI
 prior, check the prior against the data *before* fitting, fit, check
 convergence, read ROI, optimize a budget, and save the model. Pass `--full` for
 the demo's proper MCMC settings (about 35 minutes on an M4 Max).
@@ -82,6 +82,7 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
 pip install -e ".[dev,colab,schema,mlflow,geox,scenarioplanner]"
+python scripts/compile_report_css.py     # see "Report stylesheet" below
 python scripts/verify_environment.py     # must end with RESULT: PASS
 ```
 
@@ -90,8 +91,8 @@ python scripts/verify_environment.py     # must end with RESULT: PASS
 To run the tests:
 
 ```sh
-pytest meridian -q -n 8                                  # ~10 min, 5486 tests
-MERIDIAN_BACKEND=tensorflow pytest meridian -q -n 8      # the other backend
+pytest meridian -q -n 8                                  # ~7 min, 5536 tests
+MERIDIAN_BACKEND=tensorflow pytest meridian -q -n 8      # ~9 min, the other backend
 ```
 
 ### Things that will bite you otherwise
@@ -100,6 +101,13 @@ MERIDIAN_BACKEND=tensorflow pytest meridian -q -n 8      # the other backend
     TensorFlow, `import meridian` dies inside `libmetal_plugin.dylib` with a
     symbol-not-found error that says nothing about the real cause. Remove it:
     `pip uninstall -y tensorflow-metal`. `verify_environment.py` checks for it.
+*   **Report stylesheet.** `meridian/templates/style.css` is generated from
+    `style.scss` by a `setup.py` build command. An editable install never runs
+    that command, and the report template includes the file with `ignore
+    missing` — so every generated report comes out with an empty `<style>` tag
+    and no formatting, with no error. `scripts/setup.sh` compiles it for you;
+    after a manual `pip install -e`, run `python scripts/compile_report_css.py`.
+    `verify_environment.py` checks for it.
 *   **Install the extras.** Without `[schema,mlflow,geox,scenarioplanner]`,
     about 20 tests fail on missing imports. They are not real failures, but
     they look like them.
@@ -303,13 +311,17 @@ Added test modules:
 
 *   `meridian/upstream_issues_test.py` — the code-testable dispositions in
     [`TRIAGE.md`](TRIAGE.md) as executable assertions, so a rebase that
-    silently regresses one of them fails the suite. 17 of the 47 open upstream
-    issues are guarded this way; the rest are usage questions, other people's
-    hardware, or declined features, none of which can be asserted in code.
+    silently regresses one of them fails the suite. 15 of the 47 open upstream
+    issues are guarded in that file. Three more (#647, #1396, #1668) are
+    guarded by the test modules for the features that answered them —
+    `prior_predictive_test.py`, `benchmark_test.py`, `geo_diagnostics_test.py`.
+    The remaining 29 are usage questions, other people's hardware, or declined
+    features, none of which can be asserted in code.
 *   `meridian/math_invariants_test.py` — the arithmetic identities behind
-    reported figures, verified at machine precision: `roi ==
+    reported figures. Measured error on this fork: `roi ==
     incremental_outcome / spend` (7.1e-15), per-geo incremental summing to the
-    aggregate (4.5e-13), normalized adstock weights summing to 1, and the Hill
+    aggregate (4.5e-13). The assertions themselves allow 1e-9 on float64, to
+    leave headroom across backends. Also normalized adstock weights summing to 1, and the Hill
     closed form.
 
 ## Maintaining this fork
@@ -348,16 +360,29 @@ means the arithmetic behind reported ROI changed. Do not paper over it.
 Recovery testing on synthetic data found a limit worth knowing before any of
 these numbers reach a client.
 
-When the simulated response has the concave shape Meridian assumes, recovery is
-good: the premium channel's ROI came back within 2.8% of truth, inside the 90%
-credible interval. When the true response is **linear** instead, the same
-channel's ROI was overstated by 71% and the interval did not contain the truth.
-Cutting the noise tenfold did not help — the interval narrowed to about ±3% and
-still missed every true value.
+`python -m meridian.validation --response {concave,linear}` generates data whose
+true ROI is known by construction, fits Meridian, and reports recovery. Below is
+the highest-ROI channel (true ROI 4.0, lowest spend) at 5 geos, 104 weeks, 3
+channels, seed 7 — measured on the library versions recorded at the top of
+[`TRIAGE.md`](TRIAGE.md):
 
-This is not a Meridian defect. It is what fitting a concave saturation curve to
-a response that is not concave does, in any MMM that assumes saturation. The
-consequence for reporting is:
+| true response | carryover | ROI error | truth inside 90% CI |
+|---|---|---|---|
+| concave | none (`--max-lag 0`) | +9% | yes |
+| concave | geometric (default, `max_lag=4`) | −43% | yes |
+| **linear** | none (`--max-lag 0`) | **+71%** | **no** |
+| linear | geometric (default) | +39% | yes |
+
+All four converged (max r-hat ≤ 1.04) and all four recovered channel *ordering*.
+Two separate things are visible here, and they are worth keeping apart:
+
+**1. Saturation misspecification biases the level and the interval misses it.**
+On the no-carryover rows — the clean comparison, where the only thing that
+changes is the response shape — a linear truth overstates ROI by 71% and the
+90% interval excludes the true value. Concave truth lands within 9% and is
+covered. That is what fitting a concave saturation curve to a response that is
+not concave does, in any MMM that assumes saturation. It is not a Meridian
+defect. The reporting consequence:
 
 > Meridian's credible intervals quantify parameter uncertainty **conditional on
 > the assumed saturation shape**. They do not cover being wrong about that
@@ -365,15 +390,25 @@ consequence for reporting is:
 
 A channel far from saturation — typically one at low spend, whose real response
 is still close to linear — can therefore have its ROI overstated substantially
-while its interval looks reassuringly tight. Use
-`meridian.validation.recovery` with `--response linear` to size that effect at
-your own data shape, and treat the gap as a floor on the uncertainty you carry
-into a recommendation.
+while its interval looks reassuringly tight.
 
-Two things that tool does **not** do: it sizes the generic risk at your data's
-shape and scale, and it does not diagnose whether any particular channel's real
-response is linear — which often is not identifiable from observational spend
-data at all. To inspect a fitted channel's estimated response shape, see
+**2. Adding carryover costs a lot of precision on its own.** The same concave
+data with `max_lag=4` lands 43% low rather than 9% high. Estimating adstock and
+saturation jointly from 520 geo-weeks is simply harder than estimating
+saturation alone. Rank channels and allocate on the interval; do not quote a
+median ROI to two decimals off a model this size and call it a measurement.
+
+**Re-measure before citing any of this.** Each row is one simulated dataset and
+one fit — enough to size the effect, not enough to separate systematic bias from
+an unlucky draw, and NUTS is not bit-reproducible across library or hardware
+versions even at a fixed seed. Doing it properly means many seeds and rank
+statistics (simulation-based calibration), which this module does not implement
+yet. Run it at the shape and scale of *your* data and treat the gap you measure
+as a floor on the uncertainty you carry into a recommendation.
+
+What this does **not** do: it does not diagnose whether any particular channel's
+real response is linear — which often is not identifiable from observational
+spend data at all. To inspect a fitted channel's estimated response shape, see
 [`demo/ROI_mROI_Response_Curves.ipynb`](demo/ROI_mROI_Response_Curves.ipynb).
 
 ## Meridian Documentation & Tutorials
@@ -426,9 +461,9 @@ in *upstream* code that is unrelated to this fork's changes, reproduce it
 against a clean `google-meridian` install first, then report it there.
 
 **A caution before you trust a number**: read
-[Reading ROI intervals honestly](#reading-roi-intervals-honestly). Credible
-intervals here do not cover saturation misspecification, and the gap can be
-large.
+[Reading ROI intervals honestly](#reading-roi-intervals-honestly). On simulated
+data where the answer is known, channel ordering recovered but absolute ROI was
+off by about 40% in both directions.
 
 ## Citing Meridian
 

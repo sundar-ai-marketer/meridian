@@ -167,17 +167,27 @@ the data's work.
 
 | Response shape | Carryover | Highest-ROI channel error | All inside 90% CI |
 |---|---|---|---|
-| concave (matches Meridian's assumption) | none | +2.8% | yes |
-| concave | geometric | −13.2% | yes |
-| linear | none | **+71.4%** | **no** |
-| linear, noise cut 10x | none | +29.9% | **no** |
-| linear, population confound removed | none | +69.8% | **no** |
+| concave (matches Meridian's assumption) | none | +9.4% | yes |
+| concave | geometric (`max_lag=4`, the CLI default) | −43.1% | yes |
+| linear | none | **+70.9%** | **no** |
+| linear | geometric | +39.3% | yes |
+| linear, noise cut 10x | none | +29.9% † | **no** † |
+| linear, population confound removed | none | +69.8% † | **no** † |
 
-Eliminating noise and eliminating a confound in the generator each left the
-bias intact; only matching the response shape removed it. The conclusion is
-that this is saturation misspecification, not a library defect — and that
-credible intervals do not cover it. See the README section "Reading ROI
-intervals honestly".
+† Recorded from the original run and not re-measured since. The unmarked rows
+were re-measured on the environment above; NUTS is not bit-reproducible across
+library versions even at a fixed seed, and the concave figures moved by more
+than the linear ones between runs. Re-measure before quoting any of them.
+
+Two findings, which the carryover column keeps apart. Comparing the two
+no-carryover shapes — the only thing differing is the response — a linear truth
+overstates ROI by about 70% and the interval excludes the true value; eliminating
+noise and eliminating a confound each left that bias intact. That is saturation
+misspecification, not a library defect, and credible intervals do not cover it.
+Separately, turning carryover on costs substantial precision even when the shape
+assumption holds, which is why the default-config numbers look nothing like the
+no-carryover ones. Channel ordering was recovered in every run. See the README
+section "Reading ROI intervals honestly".
 
 ### Environment
 

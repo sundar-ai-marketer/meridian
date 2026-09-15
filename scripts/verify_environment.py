@@ -190,6 +190,36 @@ def check_optional_dependencies(report: Report) -> None:
       report.add(_GREEN, f'extra [{extra}]', dist)
 
 
+def check_report_stylesheet(report: Report, repo_root: pathlib.Path) -> None:
+  """Checks that the HTML report stylesheet was generated.
+
+  `summary.html.jinja` inlines `style.css` with `ignore missing`, so when the
+  file is absent every generated report silently comes out with an empty
+  `<style>` tag and no formatting at all. An editable install never runs the
+  `compile_scss` build command that generates it.
+  """
+  stylesheet = repo_root / 'meridian' / 'templates' / 'style.css'
+  if not stylesheet.is_file():
+    report.add(
+        _RED,
+        'report stylesheet',
+        'meridian/templates/style.css is missing, so generated reports will'
+        ' have no styling at all (the template ignores it silently).'
+        ' Fix: python scripts/compile_report_css.py',
+    )
+    return
+  size = stylesheet.stat().st_size
+  if size == 0:
+    report.add(
+        _RED,
+        'report stylesheet',
+        'meridian/templates/style.css is empty.'
+        ' Fix: python scripts/compile_report_css.py --force',
+    )
+    return
+  report.add(_GREEN, 'report stylesheet', f'compiled ({size:,} bytes)')
+
+
 def check_end_to_end(report: Report) -> None:
   """A tiny real fit. Slow-ish, but it is the only check that proves the
   install can actually produce a number."""
@@ -255,6 +285,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     check_backend(report)
     check_core_versions(report)
     check_optional_dependencies(report)
+    check_report_stylesheet(report, repo_root)
     if not args.skip_fit:
       print('  ... running a small model fit, this takes a moment')
       check_end_to_end(report)

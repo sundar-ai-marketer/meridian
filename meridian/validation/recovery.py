@@ -26,35 +26,47 @@ data.
 
 ## The result that motivated this module
 
-Recovery is good when the simulated response has the concave shape Meridian
-assumes, and bad when it does not:
+Recovery degrades when the simulated response is not the concave shape Meridian
+assumes. At 5 geos, 104 weeks, 3 channels, seed 7, the highest-ROI channel
+(true ROI 4.0, lowest spend) recovers like this:
 
-| response shape | premium-channel ROI error | true value inside 90% CI |
-|---|---|---|
-| concave        | +2.8%                     | yes |
-| linear         | +71.4%                    | no  |
+| response shape | carryover | ROI error | true value inside 90% CI |
+|---|---|---|---|
+| concave        | none      | +9%       | yes |
+| concave        | geometric | -43%      | yes |
+| linear         | none      | **+71%**  | **no** |
+| linear         | geometric | +39%      | yes |
 
-Cutting the noise tenfold on linear data did not fix it -- the interval
-narrowed to about +/-3% and still missed every true value. Removing a
-population confound from the generator did not fix it either. Only matching
-the response shape did.
-
-That is not a Meridian defect. It is what fitting a concave saturation curve
-to a response that is not concave does, in any MMM that assumes saturation.
-The consequence for reporting is the part worth internalising:
+Read the no-carryover rows against each other: response shape is the only thing
+that differs, and a linear truth overstates ROI by 71% with an interval that
+excludes the true value. That is not a Meridian defect. It is what fitting a
+concave saturation curve to a response that is not concave does, in any MMM
+that assumes saturation. The consequence worth internalising:
 
 **Meridian's credible intervals quantify parameter uncertainty conditional on
 the assumed saturation shape. They do not cover being wrong about that shape.**
 
 So a channel far from saturation -- typically one at low spend, whose real
 response is still close to linear -- can have its ROI overstated by tens of
-percent, with an interval that excludes the truth and narrows as you add data.
-Presenting such an interval as the total uncertainty overstates what the method
-can support.
+percent with an interval that excludes the truth. Presenting such an interval
+as the total uncertainty overstates what the method can support.
 
-Use `response='linear'` here to see how large that effect is at your own data
-shape, and treat the gap as a floor on the uncertainty you should carry into a
-recommendation.
+The carryover rows carry a second, separate lesson: estimating adstock and
+saturation jointly from 520 geo-weeks costs real precision even when the shape
+assumption holds. Channel ordering survived in all four runs; the level did not.
+
+NOTE ON CONFIG: these figures are `max_lag`-specific, and the CLI defaults to
+`max_lag=4`. Pass `--max-lag 0` to reproduce the no-carryover rows.
+
+Measured on JAX 0.10.2 / TFP 0.26.0-dev20260130 / numpy 2.3.5, float64, macOS
+arm64. NUTS is not bit-reproducible across library or hardware versions even at
+a fixed seed, so re-measure rather than quoting these figures.
+
+**Each row is one simulated dataset and one fit.** That cannot separate
+systematic misspecification bias from a single unlucky draw. Treat it as a
+sizing exercise at your own data's shape. Doing it properly means many seeds
+and rank statistics -- simulation-based calibration -- which this module does
+not yet implement.
 
 ```
 python -m meridian.validation.recovery --n-geos 5 --n-times 104 --response linear
