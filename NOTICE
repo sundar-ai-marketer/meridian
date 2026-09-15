@@ -52,6 +52,10 @@ Files added by this fork:
   meridian/benchmark/benchmark.py
   meridian/benchmark/benchmark_test.py
   meridian/upstream_issues_test.py
+  meridian/math_invariants_test.py
+  meridian/validation/__init__.py
+  meridian/validation/recovery.py
+  meridian/validation/recovery_test.py
 
 Summary of behavioural changes to existing code:
 
