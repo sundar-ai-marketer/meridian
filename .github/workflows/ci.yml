@@ -1,3 +1,6 @@
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
 name: CI  # For unit tests and build
 
 on:
@@ -41,7 +44,7 @@ jobs:
       # Check meridian version
       - uses: ./.github/actions/install-meridian
         with:
-          python_version: ${{ inputs.python_version }}
+          python_version: ${{ env.USE_PYTHON_VERSION }}
           extras: ''
 
       - name: Get meridian version
