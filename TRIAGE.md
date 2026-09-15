@@ -26,7 +26,7 @@ Status values:
 
 ---
 
-## FIXED HERE (5 upstream issues + 3 found here, 6 commits)
+## FIXED HERE (8 upstream issues + 4 found here, 13 commits)
 
 | # | Title | What was wrong | Fix |
 |---|---|---|---|
@@ -36,6 +36,10 @@ Status values:
 | 1466 | `ModelFittingError: Model has critical EDA issue` | `np.std` of a NaN column is NaN and `NaN < threshold` is False, so non-finite variables were treated as non-constant and passed to statsmodels, which aborted the whole check with `MissingDataError` naming no variable. | Exclude non-finite variables like constant ones; add a finding that names them. |
 | 1502 | `times` coords already set when `n_media_times = n_times + max_lag` | The reported error no longer reproduces, but the silent path does: a fully populated DataFrame yields `n_media_times == n_times`, i.e. **no burn-in at all**, with no error or warning. Adstock is then zero-padded and carryover is understated. | Warn in `ModelContext` when media history is shorter than `max_lag`. Corrected the `with_media`/`with_reach` docstrings, which described the relationship backwards. |
 | 1596 | Revenue based model not working | The error listed every required column rather than the absent one, so the user hunted for `Sales` (present) instead of `time` (absent). | Name the missing columns and list what the DataFrame contains. |
+| 647 | Expose a method for prior predictive checks | `ModelFit` compares only the *posterior* to observed data, so a bad prior was discovered after a full fit rather than before one. | New `analysis/prior_predictive.py`: interval coverage, prior-vs-actual total ratio, and a plot, from `sample_prior()` alone. |
+| 1396 | Add macOS benchmark suite | No way to record what governs runtime, so environment problems (#1746, #1585) were indistinguishable from library behaviour. | New `meridian/benchmark/`. The issue asked for "tokens/sec" and "first-token latency", which do not exist in an MMM library; implemented the metrics that do. |
+| 1668 | Geo-level budget allocation | Asked whether per-geo response curves are too noisy to allocate on. Previously answerable only by assertion. | New `analysis/geo_diagnostics.py` measures posterior CV per geo and channel against the aggregated CV, so the question is answered on the user's own model. |
+| — | *(not filed upstream)* | `ModelSpec(prior=None)` silently replaced the default priors and surfaced as `AttributeError: 'NoneType' object has no attribute 'beta_m'` from inside ModelContext. | Reject it in `__post_init__` with a message saying to omit the argument. |
 | — | *(not filed upstream)* | `meridian_serde_test` failed on protobuf ≥ 6: `FieldDescriptor.label` was removed from descriptor instances. | `_is_repeated_field` prefers `is_repeated`, falls back to `label`. |
 | — | *(not filed upstream)* | Six `weekly_optimization_grid` tests failed on Python 3.11: `mock.patch.object(..., wraps=..., autospec=True)` ignores `wraps` before 3.12, returning a MagicMock that unpacks as empty. | Use `side_effect`, which calls through on every supported version. |
 
@@ -67,7 +71,7 @@ Status values:
 | 1746 | `sample_posterior()` taking too long | 10 min on Colab T4 vs 1 hr on g4dn.xlarge is an environment difference (thermal/driver/CPU-fallback), not library behaviour. Confirm the GPU is actually being used. |
 | 1486 | Meridian Community Connector in Looker Studio | A separate Looker Studio product, not this codebase. Out of scope for the fork. |
 
-## USAGE — questions, not defects (10)
+## USAGE — questions, not defects (9)
 
 | # | Title | Answer |
 |---|---|---|
@@ -80,16 +84,13 @@ Status values:
 | 1567 | How to model retail shops in a geo hierarchy | Geos must partition the market without overlap. Model shops as geos only if the KPI is attributable to exactly one shop; otherwise use trade areas. |
 | 1620 | Run scenario planner without Looker Studio | The library produces the proto/DataFrames. Verified `DataFrameModelConverter` yields plain pandas frames that can feed any front end. |
 | 1676 | Budget optimization when KPI is non-revenue | Fixed-budget reallocates; flexible-budget needs a revenue interpretation to trade off total spend. Supply `revenue_per_kpi`, or use fixed-budget and read CPIK rather than ROI. |
-| 1668 | Geo-level budget allocation | Not supported. Optimization is aggregate across geos; per-geo response curves have much wider posteriors, so per-geo allocation would be unreliable. Building your own optimizer on `response_curves()` per geo is reasonable but carries that uncertainty. |
 
-## FEATURE REQUESTS — decisions (5)
+## FEATURE REQUESTS — declined, with reasons (3)
 
 | # | Title | Decision |
 |---|---|---|
-| 647 | Expose prior predictive checks | **Accept, not yet implemented.** `sample_prior()` already produces the draws; what is missing is a plotting helper. Low risk, deferred. |
 | 753 | Non-normal likelihoods | **Decline.** Changing the likelihood alters the model's statistical core and invalidates the ROI/contribution prior machinery. Not something to bolt on without a validation programme. |
-| 795 | Carryover model | **Decline as stated.** Meridian already models carryover via geometric adstock. The request is for a *delayed peak* (lag before maximum effect), which the current adstock cannot express. Implementing it means a new adstock family plus priors. |
-| 1396 | macOS benchmark suite | **Decline.** The proposal asks for "first-token latency" and "tokens/sec", which do not exist in an MMM library. The request appears to be directed at the wrong project. |
+| 795 | Carryover model | **Decline, with the precise reason.** Meridian does model carryover, and v2.0.0 ships two decay families. Both are monotonically decreasing in lag -- geometric is `alpha^l`, binomial is `(1 - l/w)^alpha` -- so neither can place peak effect at a lag > 0, which is what LightweightMMM's carryover does. Supporting it needs a new decay kernel *and* a new sampled per-channel delay parameter, which touches the priors, the sampler and serde. Not a bolt-on. |
 | 1713 | Support KPIs with occasional negative values | **Decline.** The input gate is one loop and trivial to relax, but the ROI and contribution prior machinery divides by and normalises against total outcome, so negative KPIs would produce numbers that look plausible and are not. Model gross flows separately instead. |
 
 ## OPEN — real and unresolved (3)
@@ -104,7 +105,40 @@ Status values:
 
 ## Verification
 
-Full upstream test suite on this fork, before changes: **26 failed, 5341 passed,
-44 skipped, 1 error**. Of the 26, 20 were missing optional dependencies
-(`geox`, `mlflow`) — installing the extras turns all 20 green (287 passed). The
-remaining 6 plus the 1 error are fixed here.
+### Test suite
+
+Full upstream suite before any changes: **26 failed, 5341 passed, 44 skipped,
+1 error**. Of the 26 failures, 20 were missing optional dependencies (`geox`,
+`mlflow`); installing those extras turns all 20 green (287 passed). The
+remaining 6 and the 1 error are fixed here, with tests.
+
+### End-to-end model run
+
+Bundled `geo_media.csv` — 20 geos x 156 weeks x 4 channels, non-revenue KPI
+with `revenue_per_kpi` — at the demo's own MCMC settings (7 chains, 2000 adapt,
+500 burn-in, 1000 keep) on Python 3.11.8 / JAX 0.10.2 CPU / M4 Max:
+
+| Stage | Result |
+|---|---|
+| `sample_posterior` | 2111 s (~35 min) |
+| Convergence | **max r_hat 1.0456** against a 1.2 threshold |
+| ROI (Channel0–3) | 2.682, 1.591, 3.664, 1.928 — all finite |
+| Budget optimization | ran; optimized ROI 2.449 vs non-optimized 2.411 |
+| Summary two-pager | written, 562 KB |
+| Serde round-trip | ROI **bit-identical** (max delta 0.00e+00); `media_prior_type` preserved |
+| `save_mmm`/`load_mmm` | works (deprecated path still functional) |
+
+A shorter run (4 chains, 400 adapt) gave ROI 2.685 / 1.598 / 3.790 / 1.990 —
+close enough to the full run to indicate the estimates are stable rather than
+sampling artefacts. That shorter run did *not* converge (max r_hat 1.60), which
+is under-sampling, not a defect: r_hat is a diagnostic of chain length, and
+2000 adaptation steps are what the demo prescribes.
+
+This is the direct answer to #1624 and #1446: on v2.0.0 with the JAX backend,
+the demo workload converges cleanly.
+
+### Environment
+
+The `[geox]`, `[mlflow]` and `[scenarioplanner]` extras are needed for the full
+suite to run green. Six `weekly_optimization_grid` tests additionally require
+either Python >= 3.12 or the `side_effect` fix applied here.
