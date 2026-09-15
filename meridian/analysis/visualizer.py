@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 """Visualization module that creates analytical plots for the Meridian model."""
 
@@ -1831,6 +1835,13 @@ class MediaSummary:
         for channel in outcome_df[c.CHANNEL].unique()
         if channel != c.BASELINE
     ])
+    # Vega-Lite's default categorical scheme fails colourblind-accessibility
+    # checks (see the comment on c.CATEGORICAL_COLOR_RANGE), so an explicit
+    # `range=` is required whenever there are more than two categories.
+    legend_color_range = [
+        c.CATEGORICAL_COLOR_RANGE[i % len(c.CATEGORICAL_COLOR_RANGE)]
+        for i in range(len(legend_order))
+    ]
 
     # Get the minimum incremental outcome for baseline across all time periods
     # as the lower bound for the stacked area chart.
@@ -1881,7 +1892,9 @@ class MediaSummary:
                     title=None,
                     orient='bottom',
                 ),
-                scale=alt.Scale(domain=legend_order),
+                scale=alt.Scale(
+                    domain=legend_order, range=legend_color_range
+                ),
                 sort=legend_order,
             ),
             tooltip=[
@@ -1956,6 +1969,13 @@ class MediaSummary:
         for channel in plot_df[c.CHANNEL].unique()
         if channel != c.BASELINE
     ])
+    # Vega-Lite's default categorical scheme fails colourblind-accessibility
+    # checks (see the comment on c.CATEGORICAL_COLOR_RANGE), so an explicit
+    # `range=` is required whenever there are more than two categories.
+    legend_color_range = [
+        c.CATEGORICAL_COLOR_RANGE[i % len(c.CATEGORICAL_COLOR_RANGE)]
+        for i in range(len(legend_order))
+    ]
 
     plot = (
         alt.Chart(plot_df, width=c.VEGALITE_FACET_EXTRA_LARGE_WIDTH)
@@ -1993,7 +2013,9 @@ class MediaSummary:
                     title=None,
                     orient='bottom',
                 ),
-                scale=alt.Scale(domain=legend_order),
+                scale=alt.Scale(
+                    domain=legend_order, range=legend_color_range
+                ),
                 sort=legend_order,
             ),
             tooltip=[

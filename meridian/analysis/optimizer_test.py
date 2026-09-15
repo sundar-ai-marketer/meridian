@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 """Optimization tests using mocked data.
 
@@ -3663,44 +3667,85 @@ class OptimizerPlotsTest(parameterized.TestCase):
     )
 
   def test_budget_allocation_optimized_data(self):
+    # NOTE: plot_budget_allocation() was changed from a pie chart (whose
+    # slice percentages were only reachable via hover tooltip -- see
+    # NOTICE/TRIAGE) to a bar chart sorted descending by spend share, with
+    # the percentage labeled directly on each bar. This test was updated
+    # accordingly: it now expects the extra `pct_of_spend` column and the
+    # descending sort, instead of the pie chart's raw, unsorted data.
     plot = self.optimization_results.plot_budget_allocation()
     df = plot.data
-    self.assertEqual(list(df.columns), [c.CHANNEL, c.SPEND])
+    self.assertEqual(list(df.columns), [c.CHANNEL, c.SPEND, c.PCT_OF_SPEND])
     self.assertEqual(df.channel.size, 3)
-    self.assertEqual(
-        list(df.spend), list(self.sample_optimized_data.spend.values)
+    expected = (
+        self.sample_optimized_data.spend.to_dataframe()
+        .reset_index()
+        .sort_values(by=c.SPEND, ascending=False)
     )
+    self.assertEqual(list(df.channel), list(expected.channel))
+    self.assertEqual(list(df.spend), list(expected.spend))
+    self.assertAlmostEqual(df.pct_of_spend.sum(), 1.0)
 
   def test_budget_allocation_nonoptimized_data(self):
     plot = self.optimization_results.plot_budget_allocation(optimized=False)
     df = plot.data
-    self.assertEqual(
-        list(df.spend), list(self.sample_non_optimized_data.spend.values)
+    expected = (
+        self.sample_non_optimized_data.spend.to_dataframe()
+        .reset_index()
+        .sort_values(by=c.SPEND, ascending=False)
     )
+    self.assertEqual(list(df.channel), list(expected.channel))
+    self.assertEqual(list(df.spend), list(expected.spend))
 
   def test_budget_allocation_correct_encoding(self):
+    # NOTE: updated along with the pie-to-bar change above -- this used to
+    # assert the pie chart's `mark_arc`/`theta` shape (the defect being
+    # fixed), and now asserts the labeled-bar shape instead.
     plot = self.optimization_results.plot_budget_allocation()
-    encoding = plot.encoding.to_dict()
     config = plot.config.to_dict()
-    mark = plot.mark.to_dict()
 
+    self.assertLen(plot.layer, 2)
+    bar_mark = plot.layer[0].mark.to_dict()
+    bar_encoding = plot.layer[0].encoding.to_dict()
+    text_mark = plot.layer[1].mark.to_dict()
+    text_encoding = plot.layer[1].encoding.to_dict()
+
+    self.assertEqual(bar_mark['type'], 'bar')
+    self.assertEqual(text_mark['type'], 'text')
+
+    # Percentages are now direct labels on the bar, not hover-only.
     self.assertEqual(
-        encoding,
-        {
-            'color': {
-                'field': c.CHANNEL,
-                'legend': {
-                    'offset': -25,
-                    'rowPadding': c.PADDING_10,
-                    'title': None,
-                },
+        text_encoding['text'], {'field': 'pct_label', 'type': 'nominal'}
+    )
+    self.assertEqual(
+        text_encoding['x'], {'field': c.PCT_OF_SPEND, 'type': 'quantitative'}
+    )
+    self.assertEqual(
+        text_encoding['y'],
+        {'field': c.CHANNEL, 'sort': None, 'type': 'nominal'},
+    )
+
+    self.assertEqual(bar_encoding['x']['field'], c.PCT_OF_SPEND)
+    self.assertEqual(bar_encoding['y']['field'], c.CHANNEL)
+    self.assertIsNone(bar_encoding['color']['legend'])
+    color_scale = bar_encoding['color']['scale']
+    self.assertEqual(
+        color_scale['range'],
+        list(c.CATEGORICAL_COLOR_RANGE[: len(color_scale['domain'])]),
+    )
+    self.assertEqual(
+        bar_encoding['tooltip'],
+        [
+            {'field': c.CHANNEL, 'type': 'nominal'},
+            {'field': c.SPEND, 'format': ',.0f', 'type': 'quantitative'},
+            {
+                'field': 'pct_label',
+                'title': '% of budget',
                 'type': 'nominal',
             },
-            'theta': {'field': c.SPEND, 'type': 'quantitative'},
-        },
+        ],
     )
-    self.assertEqual(config, {'view': {'stroke': None}})
-    self.assertEqual(mark, {'padAngle': 0.02, 'tooltip': True, 'type': 'arc'})
+    self.assertEqual(config['view'], {'strokeOpacity': 0})
     self.assertEqual(plot.title.text, summary_text.SPEND_ALLOCATION_CHART_TITLE)
 
   @parameterized.parameters([True, False])

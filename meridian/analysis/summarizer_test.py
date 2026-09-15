@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 import datetime as dt
 import os
@@ -866,9 +870,8 @@ class SummarizerTest(parameterized.TestCase):
               '2022-07-23',
               '2022-07-30',
           ]),
-          plot_separately=False,
-          include_ci=False,
-          num_channels_displayed=7,
+          plot_separately=True,
+          include_ci=True,
       )
       plot().to_json.assert_called_once()
 
@@ -1219,9 +1222,8 @@ class SummarizerTest(parameterized.TestCase):
           selected_times=frozenset(
               self.summarizer_revenue._meridian.input_data.time.values
           ),
-          plot_separately=False,
-          include_ci=False,
-          num_channels_displayed=7,
+          plot_separately=True,
+          include_ci=True,
       )
       plot().to_json.assert_called_once()
 

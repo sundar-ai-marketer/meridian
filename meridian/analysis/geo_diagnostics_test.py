@@ -22,6 +22,7 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from meridian import constants as c
+from meridian.analysis import analyzer as analyzer_module
 from meridian.analysis import geo_diagnostics
 from meridian.common import errors
 from meridian.data import test_utils as data_test_utils
@@ -79,7 +80,10 @@ class GeoAllocationReliabilityTest(parameterized.TestCase):
     data = self.diag.reliability_data
     self.assertEqual(data.sizes[c.GEO], _N_GEOS)
     self.assertEqual(data.sizes[c.CHANNEL], 2)
-    self.assertCountEqual(list(data.data_vars), ['mean', 'sd', 'cv'])
+    self.assertCountEqual(
+        list(data.data_vars),
+        ['mean', 'sd', 'cv', 'prob_positive', 'ci_excludes_zero'],
+    )
 
   def test_cv_matches_sd_over_abs_mean(self):
     data = self.diag.reliability_data
@@ -128,7 +132,11 @@ class GeoAllocationReliabilityTest(parameterized.TestCase):
         self.diag,
         '_by_geo',
         geo_diagnostics._Reduced(
-            mean=np.ones_like(fake), sd=fake, cv=fake
+            mean=np.ones_like(fake),
+            sd=fake,
+            cv=fake,
+            prob_positive=np.ones_like(fake),
+            ci_excludes_zero=np.ones_like(fake, dtype=bool),
         ),
     ):
       self.assertIn(expected, self.diag.verdict)
@@ -169,12 +177,162 @@ class GeoAllocationReliabilityTest(parameterized.TestCase):
         diag,
         '_by_geo',
         geo_diagnostics._Reduced(
-            mean=np.ones_like(cv), sd=np.zeros_like(cv), cv=cv
+            mean=np.ones_like(cv),
+            sd=np.zeros_like(cv),
+            cv=cv,
+            prob_positive=np.full_like(cv, 0.5),
+            ci_excludes_zero=np.zeros_like(cv, dtype=bool),
         ),
     ):
       # Two of the three informative cells clear the threshold; the NaN is
       # neither counted as reliable nor as unreliable.
       self.assertAlmostEqual(diag.fraction_reliable, 2 / 3)
+
+  def test_sign_precision_all_positive_draws(self):
+    """Draws that never cross zero: prob_positive is 1, CI excludes zero."""
+    draws = np.full((2, 50), 10.0) + np.random.default_rng(0).normal(
+        0.0, 0.1, size=(2, 50)
+    )
+    prob_positive, ci_excludes_zero = geo_diagnostics._sign_precision(
+        draws, axis=(0, 1)
+    )
+    self.assertEqual(prob_positive, 1.0)
+    self.assertTrue(ci_excludes_zero)
+
+  def test_sign_precision_distinguishes_straddling_zero_from_no_signal(self):
+    """The module's core claim: CV alone conflates these two cases.
+
+    A geo with literally zero execution and a geo whose effect sign is
+    genuinely uncertain both drive CV very high (or NaN), but only the
+    second has real posterior mass on both sides of zero.
+    """
+    rng = np.random.default_rng(0)
+    no_execution = np.zeros((2, 200))
+    straddling_zero = rng.normal(0.5, 20.0, size=(2, 200))
+
+    _, _, no_exec_cv = geo_diagnostics._coefficient_of_variation(
+        no_execution, axis=(0, 1)
+    )
+    _, _, straddle_cv = geo_diagnostics._coefficient_of_variation(
+        straddling_zero, axis=(0, 1)
+    )
+    self.assertTrue(np.isnan(no_exec_cv))
+    self.assertGreater(straddle_cv, geo_diagnostics.RELIABLE_CV_THRESHOLD)
+
+    no_exec_prob_pos, no_exec_ci_excl = geo_diagnostics._sign_precision(
+        no_execution, axis=(0, 1)
+    )
+    straddle_prob_pos, straddle_ci_excl = geo_diagnostics._sign_precision(
+        straddling_zero, axis=(0, 1)
+    )
+    # No execution: every draw is exactly zero, so it is not "positive" by
+    # a strict `> 0` test, and the credible interval collapses to a point at
+    # zero -- it does not exclude zero.
+    self.assertEqual(no_exec_prob_pos, 0.0)
+    self.assertFalse(no_exec_ci_excl)
+    # Straddling zero: a real, high-variance posterior puts mass on both
+    # sides, so probability of a positive draw is well away from 0 or 1, and
+    # the credible interval does not exclude zero either -- but for a very
+    # different reason than the no-execution case.
+    self.assertBetween(straddle_prob_pos, 0.2, 0.8)
+    self.assertFalse(straddle_ci_excl)
+
+  def test_summary_sign_uncertain_excludes_no_signal_and_reliable_cells(self):
+    # One row per geo (_N_GEOS = 4), two channels: [no-signal, reliable],
+    # [straddling-zero, reliable], [reliable, reliable], [reliable, reliable].
+    mean = np.array([[0.0, 5.0], [0.1, 8.0], [5.0, 6.0], [7.0, 9.0]])
+    sd = np.array([[0.0, 1.0], [5.0, 1.0], [1.0, 1.0], [1.0, 1.0]])
+    cv = np.array(
+        [[np.nan, 0.2], [50.0, 0.125], [0.2, 0.167], [0.143, 0.111]]
+    )
+    prob_positive = np.array(
+        [[0.5, 0.99], [0.55, 0.99], [0.99, 0.99], [0.99, 0.99]]
+    )
+    ci_excludes_zero = np.array(
+        [[False, True], [False, True], [True, True], [True, True]]
+    )
+    with mock.patch.object(
+        self.diag,
+        '_by_geo',
+        geo_diagnostics._Reduced(
+            mean=mean,
+            sd=sd,
+            cv=cv,
+            prob_positive=prob_positive,
+            ci_excludes_zero=ci_excludes_zero,
+        ),
+    ):
+      frame = self.diag.summary()
+    # (0, 0): no signal -- not sign-uncertain, regardless of the CI.
+    no_signal_row = frame[
+        (frame[c.GEO] == self.diag._geos[0]) & (~frame['has_signal'])
+    ]
+    self.assertFalse(no_signal_row['sign_uncertain'].all())
+    # (1, 0): informative, CV = 50 (unreliable), CI does not exclude zero --
+    # the straddling-zero case this diagnostic exists to surface.
+    straddling_row = frame[np.isclose(frame['cv'], 50.0)]
+    self.assertTrue(straddling_row['sign_uncertain'].all())
+    # cv = 0.2 and cv = 0.125 both clear RELIABLE_CV_THRESHOLD, so neither is
+    # sign-uncertain even though their CI happens to exclude zero.
+    reliable_rows = frame[frame['reliable']]
+    self.assertFalse(reliable_rows['sign_uncertain'].any())
+
+  def test_plot_reliability_one_bar_per_geo(self):
+    chart = self.diag.plot_reliability()
+    spec_dict = chart.to_dict()
+    data_key = spec_dict['data']['name']
+    dataset = spec_dict['datasets'][data_key]
+    self.assertLen(dataset, _N_GEOS)
+    self.assertEqual(spec_dict['mark']['type'], 'bar')
+
+  def test_plot_reliability_includes_geos_with_no_informative_channel(self):
+    """A geo where every channel is no-signal still gets a bar, at zero."""
+    cv = np.full((_N_GEOS, 2), np.nan)
+    with mock.patch.object(
+        self.diag,
+        '_by_geo',
+        geo_diagnostics._Reduced(
+            mean=np.zeros_like(cv),
+            sd=np.zeros_like(cv),
+            cv=cv,
+            prob_positive=np.full_like(cv, 0.5),
+            ci_excludes_zero=np.zeros_like(cv, dtype=bool),
+        ),
+    ):
+      chart = self.diag.plot_reliability()
+    spec_dict = chart.to_dict()
+    data_key = spec_dict['data']['name']
+    dataset = spec_dict['datasets'][data_key]
+    self.assertLen(dataset, _N_GEOS)
+    self.assertTrue(all(row['fraction_reliable'] == 0.0 for row in dataset))
+
+
+class ResolveUseKpiTest(parameterized.TestCase):
+
+  @classmethod
+  def setUpClass(cls):
+    super().setUpClass()
+    cls.mmm = _build_model()
+    cls.mmm.sample_prior(20, seed=0)
+
+  def test_resolves_like_the_private_method(self):
+    analyzer = analyzer_module.Analyzer(
+        model_context=self.mmm.model_context,
+        inference_data=self.mmm.inference_data,
+    )
+    self.assertEqual(
+        geo_diagnostics.resolve_use_kpi(analyzer, False),
+        analyzer._use_kpi(False),  # pylint: disable=protected-access
+    )
+
+  def test_raises_actionable_error_if_private_method_is_gone(self):
+    analyzer = analyzer_module.Analyzer(
+        model_context=self.mmm.model_context,
+        inference_data=self.mmm.inference_data,
+    )
+    with mock.patch.object(type(analyzer), '_use_kpi', new=None):
+      with self.assertRaisesRegex(AttributeError, 'TRIAGE.md'):
+        geo_diagnostics.resolve_use_kpi(analyzer, False)
 
 
 if __name__ == '__main__':

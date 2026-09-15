@@ -17,6 +17,8 @@
 
 """Tests for the ROI recovery check."""
 
+import dataclasses
+
 from absl.testing import absltest
 from absl.testing import parameterized
 from meridian.validation import recovery
@@ -50,6 +52,40 @@ class RecoveryConfigTest(parameterized.TestCase):
         true_roi=(1.0, 2.0), spend_scale=(10.0, 20.0)
     )
     self.assertLen(config.channels, 2)
+
+  def test_replications_defaults_to_one(self):
+    self.assertEqual(recovery.RecoveryConfig().replications, 1)
+
+  @parameterized.named_parameters(
+      dict(testcase_name='zero', replications=0),
+      dict(testcase_name='negative', replications=-3),
+  )
+  def test_rejects_non_positive_replications(self, replications):
+    with self.assertRaisesRegex(ValueError, '`replications` must be >= 1'):
+      recovery.RecoveryConfig(replications=replications)
+
+
+class SeedDerivationTest(parameterized.TestCase):
+
+  def test_seeds_are_deterministic_for_the_same_base_seed(self):
+    first = recovery.derive_replication_seeds(7, 5)
+    second = recovery.derive_replication_seeds(7, 5)
+    self.assertEqual(first, second)
+
+  def test_seeds_differ_from_each_other(self):
+    seeds = recovery.derive_replication_seeds(7, 10)
+    self.assertLen(set(seeds), 10)
+
+  def test_different_base_seeds_give_different_children(self):
+    self.assertNotEqual(
+        recovery.derive_replication_seeds(7, 5),
+        recovery.derive_replication_seeds(8, 5),
+    )
+
+  def test_seeds_are_plain_positive_ints(self):
+    for seed in recovery.derive_replication_seeds(7, 3):
+      self.assertIsInstance(seed, int)
+      self.assertGreaterEqual(seed, 0)
 
 
 class SimulateTest(parameterized.TestCase):
@@ -172,6 +208,95 @@ class ResultTest(absltest.TestCase):
     self.assertIn('VERDICT', report)
 
 
+class MultiRecoveryResultTest(absltest.TestCase):
+  """Aggregation logic, tested against synthetic per-replication results so
+  it does not need a real fit."""
+
+  def _fake_result(self, medians, covered_los, covered_his, r_hat=1.01):
+    config = recovery.RecoveryConfig()
+    channels = tuple(
+        recovery.ChannelRecovery(
+            channel=name, true_roi=true, median=med, ci_low=lo, ci_high=hi
+        )
+        for name, true, med, lo, hi in zip(
+            config.channels, config.true_roi, medians, covered_los,
+            covered_his,
+        )
+    )
+    return recovery.RecoveryResult(
+        config=config, channels=channels, max_r_hat=r_hat
+    )
+
+  def _multi_result(self, results, ranks=None):
+    config = dataclasses.replace(
+        recovery.RecoveryConfig(), replications=len(results)
+    )
+    ranks = ranks or tuple(
+        (0.5, 0.5, 0.5) for _ in results
+    )
+    return recovery.MultiRecoveryResult(
+        config=config,
+        seeds=tuple(range(len(results))),
+        replications=tuple(results),
+        ranks=ranks,
+    )
+
+  def test_coverage_is_fraction_covered(self):
+    # channel_0 always covers; channel_2 never does.
+    results = [
+        self._fake_result(
+            [1.0, 2.0, 10.0], [0.5, 1.5, 9.0], [1.5, 2.5, 9.5]
+        )
+        for _ in range(4)
+    ]
+    multi = self._multi_result(results)
+    summaries = {s.channel: s for s in multi.channel_summaries()}
+    self.assertEqual(summaries['channel_0'].coverage, 1.0)
+    self.assertEqual(summaries['channel_2'].coverage, 0.0)
+
+  def test_coverage_ci_widens_with_fewer_replications(self):
+    two = self._multi_result([
+        self._fake_result([1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5])
+        for _ in range(2)
+    ])
+    twenty = self._multi_result([
+        self._fake_result([1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5])
+        for _ in range(20)
+    ])
+    two_summary = two.channel_summaries()[0]
+    twenty_summary = twenty.channel_summaries()[0]
+    two_width = two_summary.coverage_ci_high - two_summary.coverage_ci_low
+    twenty_width = (
+        twenty_summary.coverage_ci_high - twenty_summary.coverage_ci_low
+    )
+    self.assertGreater(two_width, twenty_width)
+
+  def test_all_converged_requires_every_replication(self):
+    results = [
+        self._fake_result([1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5]),
+        self._fake_result(
+            [1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5], r_hat=1.9
+        ),
+    ]
+    multi = self._multi_result(results)
+    self.assertFalse(multi.all_converged)
+    self.assertFalse(multi.passed)
+
+  def test_report_and_frame_cover_every_channel(self):
+    results = [
+        self._fake_result([1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5])
+        for _ in range(3)
+    ]
+    multi = self._multi_result(results)
+    frame = multi.to_frame()
+    self.assertLen(frame, 3)
+    report = multi.format_report()
+    for channel in multi.config.channels:
+      self.assertIn(channel, report)
+    self.assertIn('replications=3', report)
+    self.assertIn('VERDICT', report)
+
+
 class EndToEndTest(absltest.TestCase):
   """One very small fit, purely to prove the pipeline runs."""
 
@@ -195,6 +320,42 @@ class EndToEndTest(absltest.TestCase):
       self.assertLessEqual(channel.median, channel.ci_high)
     # Too few draws to assert recovery; only that the report is well formed.
     self.assertIn('VERDICT', result.format_report())
+
+  def test_run_recovery_replications_produces_a_result(self):
+    config = recovery.RecoveryConfig(
+        n_geos=2,
+        n_times=25,
+        max_lag=0,
+        true_roi=(1.0, 3.0),
+        spend_scale=(3_000.0, 2_000.0),
+        n_chains=2,
+        n_adapt=40,
+        n_burnin=40,
+        n_keep=40,
+        replications=2,
+    )
+    progress_lines = []
+    multi = recovery.run_recovery_replications(
+        config, progress=progress_lines.append
+    )
+    self.assertEqual(multi.n, 2)
+    self.assertLen(multi.seeds, 2)
+    self.assertNotEqual(multi.seeds[0], multi.seeds[1])
+    self.assertLen(multi.ranks, 2)
+    for rep_ranks in multi.ranks:
+      self.assertLen(rep_ranks, 2)
+      for rank in rep_ranks:
+        self.assertBetween(rank, 0.0, 1.0)
+    for summary in multi.channel_summaries():
+      self.assertBetween(summary.coverage, 0.0, 1.0)
+      self.assertBetween(summary.coverage_ci_low, 0.0, summary.coverage)
+      self.assertBetween(
+          summary.coverage_ci_high, summary.coverage, 1.0
+      )
+    # A real, non-empty progress trail, including the runtime estimate.
+    self.assertTrue(progress_lines)
+    self.assertIn('replication 2/2', progress_lines[-1])
+    self.assertIn('VERDICT', multi.format_report())
 
 
 if __name__ == '__main__':

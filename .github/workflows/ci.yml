@@ -4,9 +4,27 @@
 name: CI  # For unit tests and build
 
 on:
+  # `push` is restricted to `main` (rather than `'**'`) so that a branch
+  # pushed within this repository does not trigger CI twice -- once for the
+  # `push` and once for the `pull_request` opened from it. A push to any
+  # other branch still gets CI coverage through the `pull_request` trigger
+  # below once a PR is opened; a push to `main` itself (e.g. a merge) is
+  # covered here directly.
   push:
     branches:
-      - '**'
+      - main
+  # Gives an external contributor's PR (pushed from their own fork, so no
+  # `push` event ever fires in this repository) CI coverage. Restricted to
+  # PRs targeting `main`, matching the `push` trigger above.
+  pull_request:
+    branches:
+      - main
+
+# Least-privilege default: only `contents: read` is needed to check out and
+# test the code. Jobs that need more (e.g. `publish.yml`'s tag/publish steps)
+# declare their own broader `permissions` already and are unaffected by this.
+permissions:
+  contents: read
 
 env:
   USE_PYTHON_VERSION: "3.11"
