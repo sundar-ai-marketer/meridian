@@ -258,6 +258,16 @@ class ModelSpec:
   enable_aks: bool = False
 
   def __post_init__(self):
+    # Validate prior. `prior` has a default factory, so an explicit `None`
+    # (easy to pass from `spec.ModelSpec(prior=maybe_prior)`) silently replaces
+    # it and surfaces much later as
+    # `AttributeError: 'NoneType' object has no attribute 'beta_m'` from deep
+    # inside ModelContext.
+    if self.prior is None:
+      raise ValueError(
+          "`prior` must be a `PriorDistribution`, not None. Omit the argument"
+          " to use the default priors."
+      )
     # Validate media_effects_dist.
     if self.media_effects_dist not in constants.MEDIA_EFFECTS_DISTRIBUTIONS:
       raise ValueError(
