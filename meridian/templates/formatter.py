@@ -29,6 +29,7 @@ import immutabledict
 import jinja2
 from markupsafe import Markup
 from meridian import constants as c
+from meridian.templates import report_assets
 
 __all__ = [
     'CardSpec',
@@ -265,6 +266,8 @@ def create_template_env() -> jinja2.Environment:
           enabled_extensions=('html', 'htm', 'xml', 'jinja')
       ),
   )
+  template_env.globals['report_asset'] = report_assets.data_uri
+  template_env.globals['report_asset_licenses'] = report_assets.licenses
   return template_env
 
 

@@ -40,8 +40,8 @@ $green_800: #137333;
 $yellow_50: #fef7e0;
 $yellow_900: #b06000;
 
-$google_sans: 'Google Sans Display', 'Google Sans', sans-serif;
-$roboto: Roboto;
+$google_sans: 'Google Sans Display', 'Google Sans', Arial, sans-serif;
+$roboto: Roboto, Arial, sans-serif;
 
 body {
   background: #fafbfb;
@@ -66,6 +66,7 @@ body {
 }
 
 .title {
+  margin: 0;
   color: $title_dark_grey;
   font-family: $google_sans;
   font-size: 36px;

@@ -51,8 +51,11 @@ build-backend = "setuptools.build_meta"
 [tool.unified_schema_builder]
 proto_root=""
 github_includes=[
-  "https://github.com/googleapis/googleapis.git@master",  # No version tag available.
-  "https://github.com/tensorflow/tensorflow.git@v2.18.0",
+  # googleapis master resolved to this commit on 2026-09-16; no version tag is
+  # available for the include tree.
+  "https://github.com/googleapis/googleapis.git@2820f045329fc1d000570aee6a39226c3382b2e2",
+  # TensorFlow v2.18.0 resolved to this commit on 2026-09-16.
+  "https://github.com/tensorflow/tensorflow.git@6550e4bd80223cdb8be6c3afd1f81e86a4d433c3",
 ]
 
 [tool.setuptools]

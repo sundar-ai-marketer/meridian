@@ -12,14 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
+
 """Backend Abstraction Layer for Meridian."""
 
 import abc
+from collections.abc import Mapping
 import functools
 import os
 from typing import Any, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 import warnings
 
+from immutabledict import immutabledict
 from meridian.backend import config
 import numpy as np
 from typing_extensions import Literal
@@ -967,7 +973,19 @@ if _BACKEND == config.Backend.JAX:
     kwargs["seed"] = random.prng_key(kwargs["seed"])
     return experimental.mcmc.windowed_adaptive_nuts(**kwargs)
 
-  xla_windowed_adaptive_nuts = _jax_xla_windowed_adaptive_nuts
+  def xla_windowed_adaptive_nuts(**kwargs):
+    """Runs JAX NUTS after making static dual-averaging options hashable.
+
+    ``dual_averaging_kwargs`` is necessarily static for the JIT-compiled TFP
+    sampler.  Public callers naturally pass a mutable ``dict``; normalize a
+    mapping copy at this boundary so JAX can hash it without mutating the
+    caller's input.
+    """
+    dual_averaging_kwargs = kwargs.get("dual_averaging_kwargs")
+    if isinstance(dual_averaging_kwargs, Mapping):
+      kwargs = kwargs.copy()
+      kwargs["dual_averaging_kwargs"] = immutabledict(dual_averaging_kwargs)
+    return _jax_xla_windowed_adaptive_nuts(**kwargs)
 
   def _jax_adstock_process_conv(
       media: "_jax.Array", weights: "_jax.Array", n_times_output: int

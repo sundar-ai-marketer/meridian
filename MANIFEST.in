@@ -2,11 +2,13 @@
 # See the NOTICE file at the repository root for details.
 
 include meridian/templates/*
+recursive-include meridian/templates/assets *
 # Apache 2.0 section 4(d): a redistribution has to carry the NOTICE file.
 # TRIAGE.md is what the NOTICE points at for what changed and why.
 include NOTICE
 include TRIAGE.md
 include AUDIT.md
+recursive-include docs/validation *.json
 # Must come last. MANIFEST.in directives are applied in order, so an earlier
 # global-exclude is undone by the `include meridian/templates/*` above, which
 # is how meridian/templates/formatter_test.py used to reach the wheel.

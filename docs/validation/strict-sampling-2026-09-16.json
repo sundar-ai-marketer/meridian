@@ -1,0 +1,4169 @@
+{
+  "audit_context": {
+    "analysis_periods": 148,
+    "backend": "JAX",
+    "date": "2026-09-16",
+    "history_periods": 8,
+    "knots": 13,
+    "limitations": "One bundled-example fit; not holdout validation, SBC, causal identification, or universal reproducibility guarantee.",
+    "media_periods": 156,
+    "n_adapt": 2000,
+    "n_burnin": 500,
+    "n_chains": 4,
+    "n_channels": 4,
+    "n_geos": 20,
+    "n_keep": 4000,
+    "precision": "float64",
+    "prior": "Same prior as examples/quickstart.py; LogNormal(0.2, 0.9) ROI.",
+    "sampling_seconds": 818.0265405829996,
+    "seed": 1,
+    "source_base_commit": "277c7e5c2d7032b972a4378dbf1294b384d7d40d",
+    "source_note": "Follow-up hardening working tree; see git history for the commit introducing this artifact.",
+    "target_accept_prob": 0.99
+  },
+  "blocking_issues": [],
+  "divergences": {
+    "n_divergences": 0,
+    "per_chain": [
+      {
+        "chain": 0,
+        "n_divergences": 0
+      },
+      {
+        "chain": 1,
+        "n_divergences": 0
+      },
+      {
+        "chain": 2,
+        "n_divergences": 0
+      },
+      {
+        "chain": 3,
+        "n_divergences": 0
+      }
+    ],
+    "rate": 0.0,
+    "reported": true,
+    "status": "pass"
+  },
+  "limitations": [
+    "Passing sampling diagnostics does not establish causal identification, model adequacy, prior appropriateness, or decision validity."
+  ],
+  "parameters": [
+    {
+      "bulk_ess": 11622.434434259083,
+      "coordinates": {
+        "media_channel": "Channel0"
+      },
+      "id": "alpha_m[media_channel=\"Channel0\"]",
+      "parameter": "alpha_m",
+      "rank_normalized_rhat": 1.0000537455957716,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8551.66820534101
+    },
+    {
+      "bulk_ess": 4748.9691609170695,
+      "coordinates": {
+        "media_channel": "Channel1"
+      },
+      "id": "alpha_m[media_channel=\"Channel1\"]",
+      "parameter": "alpha_m",
+      "rank_normalized_rhat": 1.0006116239154514,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 4526.9677821695805
+    },
+    {
+      "bulk_ess": 5898.545195310661,
+      "coordinates": {
+        "media_channel": "Channel2"
+      },
+      "id": "alpha_m[media_channel=\"Channel2\"]",
+      "parameter": "alpha_m",
+      "rank_normalized_rhat": 1.000373547584171,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 7760.365237389417
+    },
+    {
+      "bulk_ess": 3602.401745513733,
+      "coordinates": {
+        "media_channel": "Channel3"
+      },
+      "id": "alpha_m[media_channel=\"Channel3\"]",
+      "parameter": "alpha_m",
+      "rank_normalized_rhat": 1.0008053803087291,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 7019.613979066599
+    },
+    {
+      "bulk_ess": 16112.935000692763,
+      "coordinates": {
+        "geo": "Geo0",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo0\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0002094397871002,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11941.778286294884
+    },
+    {
+      "bulk_ess": 7778.651936159282,
+      "coordinates": {
+        "geo": "Geo0",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo0\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000547436963717,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8420.474604429746
+    },
+    {
+      "bulk_ess": 7281.036654088227,
+      "coordinates": {
+        "geo": "Geo0",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo0\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000270787187713,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5538.909376333736
+    },
+    {
+      "bulk_ess": 5622.006687049867,
+      "coordinates": {
+        "geo": "Geo0",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo0\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001324275750354,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9017.646358968468
+    },
+    {
+      "bulk_ess": 13080.097289628664,
+      "coordinates": {
+        "geo": "Geo1",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo1\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0000464181098874,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12138.51469915073
+    },
+    {
+      "bulk_ess": 7787.291911846522,
+      "coordinates": {
+        "geo": "Geo1",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo1\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 0.9999336383943023,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9054.656830082435
+    },
+    {
+      "bulk_ess": 8001.385750661397,
+      "coordinates": {
+        "geo": "Geo1",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo1\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0011732952964625,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5343.505332795878
+    },
+    {
+      "bulk_ess": 6109.462839433359,
+      "coordinates": {
+        "geo": "Geo1",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo1\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001917299123475,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9685.045714927632
+    },
+    {
+      "bulk_ess": 16794.181665178243,
+      "coordinates": {
+        "geo": "Geo2",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo2\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000013131207132,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 13503.865558483609
+    },
+    {
+      "bulk_ess": 8334.40018095666,
+      "coordinates": {
+        "geo": "Geo2",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo2\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001502475243613,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8629.332734751415
+    },
+    {
+      "bulk_ess": 7311.034484339658,
+      "coordinates": {
+        "geo": "Geo2",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo2\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000226644024091,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5713.120954722071
+    },
+    {
+      "bulk_ess": 5861.9420025557565,
+      "coordinates": {
+        "geo": "Geo2",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo2\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003071096620573,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9718.877322352242
+    },
+    {
+      "bulk_ess": 14950.020247492565,
+      "coordinates": {
+        "geo": "Geo3",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo3\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0002666485563472,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11773.634025166182
+    },
+    {
+      "bulk_ess": 7867.101108988201,
+      "coordinates": {
+        "geo": "Geo3",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo3\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001268004565202,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8595.707996037801
+    },
+    {
+      "bulk_ess": 7720.7641635453565,
+      "coordinates": {
+        "geo": "Geo3",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo3\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0008634555054636,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6122.557961059528
+    },
+    {
+      "bulk_ess": 5199.209117883549,
+      "coordinates": {
+        "geo": "Geo3",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo3\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0005084540017601,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9664.224233136152
+    },
+    {
+      "bulk_ess": 17236.97834078344,
+      "coordinates": {
+        "geo": "Geo4",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo4\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0000085026162513,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 13178.693569208259
+    },
+    {
+      "bulk_ess": 8015.910327646598,
+      "coordinates": {
+        "geo": "Geo4",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo4\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003138717915554,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8582.798262131679
+    },
+    {
+      "bulk_ess": 8189.696853861095,
+      "coordinates": {
+        "geo": "Geo4",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo4\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0007211789793238,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6191.311391667281
+    },
+    {
+      "bulk_ess": 5565.008683387981,
+      "coordinates": {
+        "geo": "Geo4",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo4\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0004238842143007,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10994.41821286379
+    },
+    {
+      "bulk_ess": 11385.146708633378,
+      "coordinates": {
+        "geo": "Geo5",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo5\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 0.9999759986440127,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12203.90928039959
+    },
+    {
+      "bulk_ess": 8031.012719463869,
+      "coordinates": {
+        "geo": "Geo5",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo5\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0000263711321618,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8359.875814451882
+    },
+    {
+      "bulk_ess": 8506.052886754336,
+      "coordinates": {
+        "geo": "Geo5",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo5\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0004236192350036,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6574.37236669469
+    },
+    {
+      "bulk_ess": 5207.724177267665,
+      "coordinates": {
+        "geo": "Geo5",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo5\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001845784405128,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10833.728889647427
+    },
+    {
+      "bulk_ess": 11085.613899854276,
+      "coordinates": {
+        "geo": "Geo6",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo6\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000155983404562,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12063.607060190732
+    },
+    {
+      "bulk_ess": 8077.074559442048,
+      "coordinates": {
+        "geo": "Geo6",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo6\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0000953479524215,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 7736.618176013072
+    },
+    {
+      "bulk_ess": 7326.084312024924,
+      "coordinates": {
+        "geo": "Geo6",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo6\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003333693342653,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5706.2459556253725
+    },
+    {
+      "bulk_ess": 5330.489685508632,
+      "coordinates": {
+        "geo": "Geo6",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo6\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003148179450252,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9844.420439245328
+    },
+    {
+      "bulk_ess": 12099.230737902055,
+      "coordinates": {
+        "geo": "Geo7",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo7\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 0.9999159104994927,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11807.036367029668
+    },
+    {
+      "bulk_ess": 7867.618551357476,
+      "coordinates": {
+        "geo": "Geo7",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo7\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000450240092705,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8050.865237013947
+    },
+    {
+      "bulk_ess": 6761.129138937557,
+      "coordinates": {
+        "geo": "Geo7",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo7\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000469561977983,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5490.334758233389
+    },
+    {
+      "bulk_ess": 5746.928402385969,
+      "coordinates": {
+        "geo": "Geo7",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo7\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003695736662748,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10511.700363196896
+    },
+    {
+      "bulk_ess": 12418.654864364105,
+      "coordinates": {
+        "geo": "Geo8",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo8\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0004106200568534,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11355.946955561027
+    },
+    {
+      "bulk_ess": 7720.377277061383,
+      "coordinates": {
+        "geo": "Geo8",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo8\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0002342169921743,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8400.598985162495
+    },
+    {
+      "bulk_ess": 6956.6194287402195,
+      "coordinates": {
+        "geo": "Geo8",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo8\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0006598692764126,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5304.908312925758
+    },
+    {
+      "bulk_ess": 5391.638348855113,
+      "coordinates": {
+        "geo": "Geo8",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo8\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001122171966201,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9123.736786718906
+    },
+    {
+      "bulk_ess": 16403.13137767495,
+      "coordinates": {
+        "geo": "Geo9",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo9\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003640706483472,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12259.001209585025
+    },
+    {
+      "bulk_ess": 8159.418666639604,
+      "coordinates": {
+        "geo": "Geo9",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo9\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000058138441594,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8044.583085288508
+    },
+    {
+      "bulk_ess": 7013.3576599529515,
+      "coordinates": {
+        "geo": "Geo9",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo9\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000244440361013,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5328.813405322463
+    },
+    {
+      "bulk_ess": 5969.494784770627,
+      "coordinates": {
+        "geo": "Geo9",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo9\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001405249528343,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10090.909436461785
+    },
+    {
+      "bulk_ess": 17510.480810708203,
+      "coordinates": {
+        "geo": "Geo10",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo10\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 0.9999443225642654,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12824.838111207358
+    },
+    {
+      "bulk_ess": 7750.668098535802,
+      "coordinates": {
+        "geo": "Geo10",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo10\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001816382169524,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 7976.474305804132
+    },
+    {
+      "bulk_ess": 8355.17623504783,
+      "coordinates": {
+        "geo": "Geo10",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo10\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003103336812345,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6031.418987920428
+    },
+    {
+      "bulk_ess": 5813.763020995589,
+      "coordinates": {
+        "geo": "Geo10",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo10\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001938351650705,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10008.83730455749
+    },
+    {
+      "bulk_ess": 14875.060038766267,
+      "coordinates": {
+        "geo": "Geo11",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo11\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001665949915224,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 13486.242725218113
+    },
+    {
+      "bulk_ess": 7049.701735269487,
+      "coordinates": {
+        "geo": "Geo11",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo11\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000278751852243,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6288.959106912607
+    },
+    {
+      "bulk_ess": 6913.5411180279925,
+      "coordinates": {
+        "geo": "Geo11",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo11\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0007262140313864,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5346.062307146147
+    },
+    {
+      "bulk_ess": 5961.917239778409,
+      "coordinates": {
+        "geo": "Geo11",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo11\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001232905069242,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10626.609061709301
+    },
+    {
+      "bulk_ess": 18307.672838998726,
+      "coordinates": {
+        "geo": "Geo12",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo12\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0000705779453298,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 13913.456607501583
+    },
+    {
+      "bulk_ess": 7197.3525674158545,
+      "coordinates": {
+        "geo": "Geo12",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo12\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003393393080036,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 7471.646986839894
+    },
+    {
+      "bulk_ess": 7621.619211518191,
+      "coordinates": {
+        "geo": "Geo12",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo12\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0007433044822895,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5803.624558869022
+    },
+    {
+      "bulk_ess": 5386.457002495815,
+      "coordinates": {
+        "geo": "Geo12",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo12\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003725632277702,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9972.140572998333
+    },
+    {
+      "bulk_ess": 8777.500527422208,
+      "coordinates": {
+        "geo": "Geo13",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo13\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0000342319505664,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11665.367060372279
+    },
+    {
+      "bulk_ess": 6609.6627379577985,
+      "coordinates": {
+        "geo": "Geo13",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo13\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0002131683392512,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 7457.363910558453
+    },
+    {
+      "bulk_ess": 8241.172007873147,
+      "coordinates": {
+        "geo": "Geo13",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo13\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0005317383336547,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6119.638676535511
+    },
+    {
+      "bulk_ess": 5739.48591845254,
+      "coordinates": {
+        "geo": "Geo13",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo13\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001492476128413,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10130.052430169726
+    },
+    {
+      "bulk_ess": 10787.365373839955,
+      "coordinates": {
+        "geo": "Geo14",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo14\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001188972811361,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11292.341720121529
+    },
+    {
+      "bulk_ess": 7485.366791498678,
+      "coordinates": {
+        "geo": "Geo14",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo14\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0004026386705223,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8925.218787822272
+    },
+    {
+      "bulk_ess": 7202.909095726327,
+      "coordinates": {
+        "geo": "Geo14",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo14\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0004631837215718,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5538.968002607222
+    },
+    {
+      "bulk_ess": 5443.469358994978,
+      "coordinates": {
+        "geo": "Geo14",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo14\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0004144791024359,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9795.58694404951
+    },
+    {
+      "bulk_ess": 17180.569773765466,
+      "coordinates": {
+        "geo": "Geo15",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo15\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001297840723902,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12527.898327068679
+    },
+    {
+      "bulk_ess": 7368.719428779661,
+      "coordinates": {
+        "geo": "Geo15",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo15\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0006762905264488,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9202.647600674993
+    },
+    {
+      "bulk_ess": 8148.453297748841,
+      "coordinates": {
+        "geo": "Geo15",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo15\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000387944121144,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6109.073714332102
+    },
+    {
+      "bulk_ess": 5415.320512678256,
+      "coordinates": {
+        "geo": "Geo15",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo15\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001230757646764,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8702.004710946318
+    },
+    {
+      "bulk_ess": 16897.827413579183,
+      "coordinates": {
+        "geo": "Geo16",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo16\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 0.9998648833858698,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12771.135832276508
+    },
+    {
+      "bulk_ess": 8586.827157362915,
+      "coordinates": {
+        "geo": "Geo16",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo16\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0002154101343548,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9852.012048268985
+    },
+    {
+      "bulk_ess": 8334.44252671598,
+      "coordinates": {
+        "geo": "Geo16",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo16\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001213313729707,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5849.772913722885
+    },
+    {
+      "bulk_ess": 5748.898890288599,
+      "coordinates": {
+        "geo": "Geo16",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo16\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001983126471652,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10743.251756401336
+    },
+    {
+      "bulk_ess": 7139.088861608889,
+      "coordinates": {
+        "geo": "Geo17",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo17\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000909950441813,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8874.972953950271
+    },
+    {
+      "bulk_ess": 2805.1554476269016,
+      "coordinates": {
+        "geo": "Geo17",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo17\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0019031647177319,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 2866.0955171387677
+    },
+    {
+      "bulk_ess": 5304.9873926607,
+      "coordinates": {
+        "geo": "Geo17",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo17\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0004255600712568,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5140.11254034046
+    },
+    {
+      "bulk_ess": 3613.1018898530615,
+      "coordinates": {
+        "geo": "Geo17",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo17\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0009009306380876,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6541.628488507332
+    },
+    {
+      "bulk_ess": 15694.226116104577,
+      "coordinates": {
+        "geo": "Geo18",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo18\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0000707185480049,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12812.002635687966
+    },
+    {
+      "bulk_ess": 6931.598506624814,
+      "coordinates": {
+        "geo": "Geo18",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo18\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0002440028072759,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8565.045459698633
+    },
+    {
+      "bulk_ess": 6847.923254696939,
+      "coordinates": {
+        "geo": "Geo18",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo18\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.000653341105558,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5394.868070075749
+    },
+    {
+      "bulk_ess": 5864.468785277055,
+      "coordinates": {
+        "geo": "Geo18",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo18\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0001657900147154,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10043.468727858579
+    },
+    {
+      "bulk_ess": 17245.152064949565,
+      "coordinates": {
+        "geo": "Geo19",
+        "media_channel": "Channel0"
+      },
+      "id": "beta_gm[geo=\"Geo19\", media_channel=\"Channel0\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 0.9999899396352522,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 13469.988319073804
+    },
+    {
+      "bulk_ess": 8479.441938189168,
+      "coordinates": {
+        "geo": "Geo19",
+        "media_channel": "Channel1"
+      },
+      "id": "beta_gm[geo=\"Geo19\", media_channel=\"Channel1\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0000882287320743,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8197.833553867016
+    },
+    {
+      "bulk_ess": 6914.289126089591,
+      "coordinates": {
+        "geo": "Geo19",
+        "media_channel": "Channel2"
+      },
+      "id": "beta_gm[geo=\"Geo19\", media_channel=\"Channel2\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0003238329822173,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5603.295907780723
+    },
+    {
+      "bulk_ess": 5642.038783152013,
+      "coordinates": {
+        "geo": "Geo19",
+        "media_channel": "Channel3"
+      },
+      "id": "beta_gm[geo=\"Geo19\", media_channel=\"Channel3\"]",
+      "parameter": "beta_gm",
+      "rank_normalized_rhat": 1.0002074699071506,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 10424.028214024796
+    },
+    {
+      "bulk_ess": 17537.013460244976,
+      "coordinates": {
+        "media_channel": "Channel0"
+      },
+      "id": "beta_m[media_channel=\"Channel0\"]",
+      "parameter": "beta_m",
+      "rank_normalized_rhat": 1.0002116470277962,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 13287.152922618781
+    },
+    {
+      "bulk_ess": 6435.215498221246,
+      "coordinates": {
+        "media_channel": "Channel1"
+      },
+      "id": "beta_m[media_channel=\"Channel1\"]",
+      "parameter": "beta_m",
+      "rank_normalized_rhat": 1.0002582753719718,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6806.39059218113
+    },
+    {
+      "bulk_ess": 5811.265604502207,
+      "coordinates": {
+        "media_channel": "Channel2"
+      },
+      "id": "beta_m[media_channel=\"Channel2\"]",
+      "parameter": "beta_m",
+      "rank_normalized_rhat": 1.0004718100556877,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 4764.400181271935
+    },
+    {
+      "bulk_ess": 4900.21223756666,
+      "coordinates": {
+        "media_channel": "Channel3"
+      },
+      "id": "beta_m[media_channel=\"Channel3\"]",
+      "parameter": "beta_m",
+      "rank_normalized_rhat": 1.0002737257991545,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9469.41173916397
+    },
+    {
+      "bulk_ess": 11172.556445329037,
+      "coordinates": {
+        "media_channel": "Channel0"
+      },
+      "id": "ec_m[media_channel=\"Channel0\"]",
+      "parameter": "ec_m",
+      "rank_normalized_rhat": 0.999969477352226,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 9097.883480407845
+    },
+    {
+      "bulk_ess": 4116.5046788871105,
+      "coordinates": {
+        "media_channel": "Channel1"
+      },
+      "id": "ec_m[media_channel=\"Channel1\"]",
+      "parameter": "ec_m",
+      "rank_normalized_rhat": 1.0004746386929408,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 3483.1303879769553
+    },
+    {
+      "bulk_ess": 2647.459701279625,
+      "coordinates": {
+        "media_channel": "Channel2"
+      },
+      "id": "ec_m[media_channel=\"Channel2\"]",
+      "parameter": "ec_m",
+      "rank_normalized_rhat": 1.0002066665450717,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1997.254475812601
+    },
+    {
+      "bulk_ess": 7207.734916760742,
+      "coordinates": {
+        "media_channel": "Channel3"
+      },
+      "id": "ec_m[media_channel=\"Channel3\"]",
+      "parameter": "ec_m",
+      "rank_normalized_rhat": 1.0005023402224673,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6246.207199756379
+    },
+    {
+      "bulk_ess": 3957.991163653438,
+      "coordinates": {
+        "media_channel": "Channel0"
+      },
+      "id": "eta_m[media_channel=\"Channel0\"]",
+      "parameter": "eta_m",
+      "rank_normalized_rhat": 1.0005939264485968,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5542.667839188446
+    },
+    {
+      "bulk_ess": 4520.730559014372,
+      "coordinates": {
+        "media_channel": "Channel1"
+      },
+      "id": "eta_m[media_channel=\"Channel1\"]",
+      "parameter": "eta_m",
+      "rank_normalized_rhat": 1.001191351938276,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6553.244750465927
+    },
+    {
+      "bulk_ess": 6692.529210904237,
+      "coordinates": {
+        "media_channel": "Channel2"
+      },
+      "id": "eta_m[media_channel=\"Channel2\"]",
+      "parameter": "eta_m",
+      "rank_normalized_rhat": 1.0009629337194148,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6518.728406859553
+    },
+    {
+      "bulk_ess": 5580.787935134311,
+      "coordinates": {
+        "media_channel": "Channel3"
+      },
+      "id": "eta_m[media_channel=\"Channel3\"]",
+      "parameter": "eta_m",
+      "rank_normalized_rhat": 1.0006682510620561,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 6860.974529943542
+    },
+    {
+      "bulk_ess": 2119.2001562318137,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control"
+      },
+      "id": "gamma_c[control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_c",
+      "rank_normalized_rhat": 1.0019825844673733,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 4383.784904649704
+    },
+    {
+      "bulk_ess": 2826.6512931294574,
+      "coordinates": {
+        "control_variable": "sentiment_score_control"
+      },
+      "id": "gamma_c[control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_c",
+      "rank_normalized_rhat": 1.0007338248161028,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5266.954235904917
+    },
+    {
+      "bulk_ess": 25935.16744646247,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo0"
+      },
+      "id": "gamma_gc[geo=\"Geo0\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0011489048566198,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12215.430455151567
+    },
+    {
+      "bulk_ess": 25249.03510347074,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo0"
+      },
+      "id": "gamma_gc[geo=\"Geo0\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0003806643173672,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12182.243434708827
+    },
+    {
+      "bulk_ess": 26107.407013492128,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo1"
+      },
+      "id": "gamma_gc[geo=\"Geo1\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0004383084299788,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12586.558251257933
+    },
+    {
+      "bulk_ess": 24718.69113223057,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo1"
+      },
+      "id": "gamma_gc[geo=\"Geo1\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.000464131113358,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11972.276230848205
+    },
+    {
+      "bulk_ess": 27301.48200118297,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo2"
+      },
+      "id": "gamma_gc[geo=\"Geo2\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 0.9998833359867235,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12318.914349476181
+    },
+    {
+      "bulk_ess": 22637.544291339123,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo2"
+      },
+      "id": "gamma_gc[geo=\"Geo2\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0006331849364705,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12763.791570643485
+    },
+    {
+      "bulk_ess": 28248.34803074382,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo3"
+      },
+      "id": "gamma_gc[geo=\"Geo3\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0004777392753148,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12770.871344223338
+    },
+    {
+      "bulk_ess": 19134.121558055725,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo3"
+      },
+      "id": "gamma_gc[geo=\"Geo3\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0001043961592686,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 13090.721964220205
+    },
+    {
+      "bulk_ess": 28157.96280388657,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo4"
+      },
+      "id": "gamma_gc[geo=\"Geo4\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0000750965802905,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11633.702248495727
+    },
+    {
+      "bulk_ess": 25954.47103015507,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo4"
+      },
+      "id": "gamma_gc[geo=\"Geo4\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0001836239202913,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12585.212733865083
+    },
+    {
+      "bulk_ess": 28700.627747480663,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo5"
+      },
+      "id": "gamma_gc[geo=\"Geo5\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0002772508722841,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12280.233513186466
+    },
+    {
+      "bulk_ess": 21063.259154230564,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo5"
+      },
+      "id": "gamma_gc[geo=\"Geo5\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0001289232521056,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12912.473875830803
+    },
+    {
+      "bulk_ess": 25924.635794819857,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo6"
+      },
+      "id": "gamma_gc[geo=\"Geo6\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0002583490858135,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12862.859735120806
+    },
+    {
+      "bulk_ess": 22170.998624237818,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo6"
+      },
+      "id": "gamma_gc[geo=\"Geo6\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0007548360334144,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12851.94609133402
+    },
+    {
+      "bulk_ess": 26474.822811218666,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo7"
+      },
+      "id": "gamma_gc[geo=\"Geo7\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0000176417080577,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12696.153891542746
+    },
+    {
+      "bulk_ess": 26635.075933066117,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo7"
+      },
+      "id": "gamma_gc[geo=\"Geo7\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0003034913422362,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12431.185838708801
+    },
+    {
+      "bulk_ess": 26609.126694946845,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo8"
+      },
+      "id": "gamma_gc[geo=\"Geo8\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0000169739088516,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 13087.576927597802
+    },
+    {
+      "bulk_ess": 27092.319650583235,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo8"
+      },
+      "id": "gamma_gc[geo=\"Geo8\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.000120857202151,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12569.282834677853
+    },
+    {
+      "bulk_ess": 24281.7968268157,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo9"
+      },
+      "id": "gamma_gc[geo=\"Geo9\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.000075994433156,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12809.725999619486
+    },
+    {
+      "bulk_ess": 24305.874852150882,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo9"
+      },
+      "id": "gamma_gc[geo=\"Geo9\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 0.9998918279415224,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12173.671675821863
+    },
+    {
+      "bulk_ess": 27766.600298888312,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo10"
+      },
+      "id": "gamma_gc[geo=\"Geo10\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0000895612625693,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12488.534591360207
+    },
+    {
+      "bulk_ess": 25426.864962572457,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo10"
+      },
+      "id": "gamma_gc[geo=\"Geo10\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0003614584898946,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12607.97482254761
+    },
+    {
+      "bulk_ess": 28460.16554617303,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo11"
+      },
+      "id": "gamma_gc[geo=\"Geo11\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.001025688445977,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12324.589310792218
+    },
+    {
+      "bulk_ess": 26314.326243527394,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo11"
+      },
+      "id": "gamma_gc[geo=\"Geo11\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0005524410645836,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12830.531242079825
+    },
+    {
+      "bulk_ess": 26888.83466065493,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo12"
+      },
+      "id": "gamma_gc[geo=\"Geo12\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0001522935143428,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12817.11420980908
+    },
+    {
+      "bulk_ess": 25115.956517824066,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo12"
+      },
+      "id": "gamma_gc[geo=\"Geo12\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0001099532149262,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12646.57032907694
+    },
+    {
+      "bulk_ess": 28456.828061245782,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo13"
+      },
+      "id": "gamma_gc[geo=\"Geo13\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.000399911915085,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12503.606768459893
+    },
+    {
+      "bulk_ess": 26336.40603502691,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo13"
+      },
+      "id": "gamma_gc[geo=\"Geo13\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0000760943941243,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11935.464141033612
+    },
+    {
+      "bulk_ess": 28823.587800459376,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo14"
+      },
+      "id": "gamma_gc[geo=\"Geo14\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0000709570249555,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12585.605684097793
+    },
+    {
+      "bulk_ess": 20250.286179236442,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo14"
+      },
+      "id": "gamma_gc[geo=\"Geo14\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 0.999954821188868,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11517.099998301974
+    },
+    {
+      "bulk_ess": 27893.922621198337,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo15"
+      },
+      "id": "gamma_gc[geo=\"Geo15\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0002018028913917,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 13401.891800422596
+    },
+    {
+      "bulk_ess": 23117.595436736345,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo15"
+      },
+      "id": "gamma_gc[geo=\"Geo15\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0006166526137752,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12236.939530461983
+    },
+    {
+      "bulk_ess": 28252.55364425015,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo16"
+      },
+      "id": "gamma_gc[geo=\"Geo16\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0006623982003198,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11386.240243394472
+    },
+    {
+      "bulk_ess": 22821.54376315945,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo16"
+      },
+      "id": "gamma_gc[geo=\"Geo16\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0000323702166232,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12226.051569184066
+    },
+    {
+      "bulk_ess": 25969.651282161845,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo17"
+      },
+      "id": "gamma_gc[geo=\"Geo17\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 0.9999700250285347,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 11571.574587285892
+    },
+    {
+      "bulk_ess": 23473.524128580804,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo17"
+      },
+      "id": "gamma_gc[geo=\"Geo17\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.000209921374225,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12620.3815471731
+    },
+    {
+      "bulk_ess": 26314.588581610908,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo18"
+      },
+      "id": "gamma_gc[geo=\"Geo18\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0000937651946984,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12643.687316263104
+    },
+    {
+      "bulk_ess": 24643.2335971723,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo18"
+      },
+      "id": "gamma_gc[geo=\"Geo18\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0005063328195518,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12840.550441888627
+    },
+    {
+      "bulk_ess": 27479.34916190471,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control",
+        "geo": "Geo19"
+      },
+      "id": "gamma_gc[geo=\"Geo19\", control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.0007701017798052,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12945.12171444302
+    },
+    {
+      "bulk_ess": 21821.85437172964,
+      "coordinates": {
+        "control_variable": "sentiment_score_control",
+        "geo": "Geo19"
+      },
+      "id": "gamma_gc[geo=\"Geo19\", control_variable=\"sentiment_score_control\"]",
+      "parameter": "gamma_gc",
+      "rank_normalized_rhat": 1.000107747733874,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12618.821518493764
+    },
+    {
+      "bulk_ess": 720.081665394911,
+      "coordinates": {
+        "knots": 0
+      },
+      "id": "knot_values[knots=0]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0032681926035463,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 804.5904806319724
+    },
+    {
+      "bulk_ess": 695.048959279235,
+      "coordinates": {
+        "knots": 1
+      },
+      "id": "knot_values[knots=1]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0036806231231468,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 819.8419882541596
+    },
+    {
+      "bulk_ess": 711.7320050166356,
+      "coordinates": {
+        "knots": 2
+      },
+      "id": "knot_values[knots=2]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0034343602865883,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 790.5084041369441
+    },
+    {
+      "bulk_ess": 700.0531121136328,
+      "coordinates": {
+        "knots": 3
+      },
+      "id": "knot_values[knots=3]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0035844202448958,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 812.1627779009233
+    },
+    {
+      "bulk_ess": 689.3519909860676,
+      "coordinates": {
+        "knots": 4
+      },
+      "id": "knot_values[knots=4]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0033223335250823,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 784.5390552136283
+    },
+    {
+      "bulk_ess": 713.3700631208384,
+      "coordinates": {
+        "knots": 5
+      },
+      "id": "knot_values[knots=5]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0034122295022856,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 795.0268314985291
+    },
+    {
+      "bulk_ess": 679.7837408972914,
+      "coordinates": {
+        "knots": 6
+      },
+      "id": "knot_values[knots=6]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0034946996872214,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 813.97143650103
+    },
+    {
+      "bulk_ess": 718.0012937309774,
+      "coordinates": {
+        "knots": 7
+      },
+      "id": "knot_values[knots=7]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0032306122957957,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 812.5063833168398
+    },
+    {
+      "bulk_ess": 705.0846008136779,
+      "coordinates": {
+        "knots": 8
+      },
+      "id": "knot_values[knots=8]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0037095450079379,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 818.1284553620683
+    },
+    {
+      "bulk_ess": 683.6096300819605,
+      "coordinates": {
+        "knots": 9
+      },
+      "id": "knot_values[knots=9]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0034128164011904,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 806.8803827669153
+    },
+    {
+      "bulk_ess": 705.8740312499679,
+      "coordinates": {
+        "knots": 10
+      },
+      "id": "knot_values[knots=10]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0034462066156788,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 800.0331915304359
+    },
+    {
+      "bulk_ess": 697.066005766162,
+      "coordinates": {
+        "knots": 11
+      },
+      "id": "knot_values[knots=11]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0032763955879507,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 813.70317349396
+    },
+    {
+      "bulk_ess": 728.3178114682148,
+      "coordinates": {
+        "knots": 12
+      },
+      "id": "knot_values[knots=12]",
+      "parameter": "knot_values",
+      "rank_normalized_rhat": 1.0032644081641455,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 794.0009624757403
+    },
+    {
+      "bulk_ess": 720.081665394911,
+      "coordinates": {
+        "time": "2021-03-22"
+      },
+      "id": "mu_t[time=\"2021-03-22\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0032681926035463,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 804.5904806319724
+    },
+    {
+      "bulk_ess": 714.964795810895,
+      "coordinates": {
+        "time": "2021-03-29"
+      },
+      "id": "mu_t[time=\"2021-03-29\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033189928418178,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 794.5443699606951
+    },
+    {
+      "bulk_ess": 710.6173884374349,
+      "coordinates": {
+        "time": "2021-04-05"
+      },
+      "id": "mu_t[time=\"2021-04-05\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033655352589723,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 784.9237106705378
+    },
+    {
+      "bulk_ess": 706.8518234790523,
+      "coordinates": {
+        "time": "2021-04-12"
+      },
+      "id": "mu_t[time=\"2021-04-12\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034153957433787,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 784.854566079585
+    },
+    {
+      "bulk_ess": 702.3553037705412,
+      "coordinates": {
+        "time": "2021-04-19"
+      },
+      "id": "mu_t[time=\"2021-04-19\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003463286370107,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 784.2693638446747
+    },
+    {
+      "bulk_ess": 698.7055754813678,
+      "coordinates": {
+        "time": "2021-04-26"
+      },
+      "id": "mu_t[time=\"2021-04-26\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003504603728822,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 776.073105612035
+    },
+    {
+      "bulk_ess": 695.7469831175573,
+      "coordinates": {
+        "time": "2021-05-03"
+      },
+      "id": "mu_t[time=\"2021-05-03\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035400634901104,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 780.4422836405497
+    },
+    {
+      "bulk_ess": 693.7125077299357,
+      "coordinates": {
+        "time": "2021-05-10"
+      },
+      "id": "mu_t[time=\"2021-05-10\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003575534668191,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 794.3764520839848
+    },
+    {
+      "bulk_ess": 692.4573266035395,
+      "coordinates": {
+        "time": "2021-05-17"
+      },
+      "id": "mu_t[time=\"2021-05-17\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036105023288129,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 805.0784724352958
+    },
+    {
+      "bulk_ess": 692.1811861380583,
+      "coordinates": {
+        "time": "2021-05-24"
+      },
+      "id": "mu_t[time=\"2021-05-24\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036314960187518,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 804.5209676627551
+    },
+    {
+      "bulk_ess": 692.695905819215,
+      "coordinates": {
+        "time": "2021-05-31"
+      },
+      "id": "mu_t[time=\"2021-05-31\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036530457189108,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 807.8739919610579
+    },
+    {
+      "bulk_ess": 693.5653139309435,
+      "coordinates": {
+        "time": "2021-06-07"
+      },
+      "id": "mu_t[time=\"2021-06-07\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.00366772593606,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 807.8976551229064
+    },
+    {
+      "bulk_ess": 695.048959279235,
+      "coordinates": {
+        "time": "2021-06-14"
+      },
+      "id": "mu_t[time=\"2021-06-14\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036806231231468,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 819.8419882541596
+    },
+    {
+      "bulk_ess": 694.0200408312287,
+      "coordinates": {
+        "time": "2021-06-21"
+      },
+      "id": "mu_t[time=\"2021-06-21\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036709837007924,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 812.969436569648
+    },
+    {
+      "bulk_ess": 692.9471562382485,
+      "coordinates": {
+        "time": "2021-06-28"
+      },
+      "id": "mu_t[time=\"2021-06-28\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036635854337381,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 806.3685713682816
+    },
+    {
+      "bulk_ess": 692.412399649608,
+      "coordinates": {
+        "time": "2021-07-05"
+      },
+      "id": "mu_t[time=\"2021-07-05\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036524954090462,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 791.6688195564363
+    },
+    {
+      "bulk_ess": 692.1838964240026,
+      "coordinates": {
+        "time": "2021-07-12"
+      },
+      "id": "mu_t[time=\"2021-07-12\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036395344403215,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 791.1742243662743
+    },
+    {
+      "bulk_ess": 692.412599811082,
+      "coordinates": {
+        "time": "2021-07-19"
+      },
+      "id": "mu_t[time=\"2021-07-19\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036249297613746,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 792.2964912783157
+    },
+    {
+      "bulk_ess": 693.2536265403281,
+      "coordinates": {
+        "time": "2021-07-26"
+      },
+      "id": "mu_t[time=\"2021-07-26\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036089553986325,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 797.8171600062025
+    },
+    {
+      "bulk_ess": 694.659598114585,
+      "coordinates": {
+        "time": "2021-08-02"
+      },
+      "id": "mu_t[time=\"2021-08-02\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035874417801613,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 798.5215807078529
+    },
+    {
+      "bulk_ess": 696.9795604813597,
+      "coordinates": {
+        "time": "2021-08-09"
+      },
+      "id": "mu_t[time=\"2021-08-09\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035629947627236,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 794.0940317979705
+    },
+    {
+      "bulk_ess": 699.7853599036827,
+      "coordinates": {
+        "time": "2021-08-16"
+      },
+      "id": "mu_t[time=\"2021-08-16\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035327081539172,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 782.4961559036444
+    },
+    {
+      "bulk_ess": 703.1260932391774,
+      "coordinates": {
+        "time": "2021-08-23"
+      },
+      "id": "mu_t[time=\"2021-08-23\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035023017871,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 781.6440149980934
+    },
+    {
+      "bulk_ess": 707.0293899044156,
+      "coordinates": {
+        "time": "2021-08-30"
+      },
+      "id": "mu_t[time=\"2021-08-30\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003471068353574,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 791.5346617688346
+    },
+    {
+      "bulk_ess": 711.7320050166356,
+      "coordinates": {
+        "time": "2021-09-06"
+      },
+      "id": "mu_t[time=\"2021-09-06\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034343602865883,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 790.5084041369441
+    },
+    {
+      "bulk_ess": 708.1053895757016,
+      "coordinates": {
+        "time": "2021-09-13"
+      },
+      "id": "mu_t[time=\"2021-09-13\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034629318460666,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 796.6923453773634
+    },
+    {
+      "bulk_ess": 704.9227329735265,
+      "coordinates": {
+        "time": "2021-09-20"
+      },
+      "id": "mu_t[time=\"2021-09-20\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034897277435928,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 799.8835513332526
+    },
+    {
+      "bulk_ess": 702.4640525598617,
+      "coordinates": {
+        "time": "2021-09-27"
+      },
+      "id": "mu_t[time=\"2021-09-27\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003515751901002,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 812.749002566614
+    },
+    {
+      "bulk_ess": 700.3580584337132,
+      "coordinates": {
+        "time": "2021-10-04"
+      },
+      "id": "mu_t[time=\"2021-10-04\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003533585607545,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 813.6287607521455
+    },
+    {
+      "bulk_ess": 698.85539622592,
+      "coordinates": {
+        "time": "2021-10-11"
+      },
+      "id": "mu_t[time=\"2021-10-11\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003551702939733,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 820.5903706255564
+    },
+    {
+      "bulk_ess": 697.7990239102298,
+      "coordinates": {
+        "time": "2021-10-18"
+      },
+      "id": "mu_t[time=\"2021-10-18\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003565740949404,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 811.7178917317923
+    },
+    {
+      "bulk_ess": 697.238496314446,
+      "coordinates": {
+        "time": "2021-10-25"
+      },
+      "id": "mu_t[time=\"2021-10-25\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035784041609197,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 812.3493430474412
+    },
+    {
+      "bulk_ess": 696.9926515231457,
+      "coordinates": {
+        "time": "2021-11-01"
+      },
+      "id": "mu_t[time=\"2021-11-01\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035883164350317,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 814.4404961738512
+    },
+    {
+      "bulk_ess": 697.1022966217059,
+      "coordinates": {
+        "time": "2021-11-08"
+      },
+      "id": "mu_t[time=\"2021-11-08\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035949526381298,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 815.8798203068612
+    },
+    {
+      "bulk_ess": 697.7749434698424,
+      "coordinates": {
+        "time": "2021-11-15"
+      },
+      "id": "mu_t[time=\"2021-11-15\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035940345678884,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 814.6920549890409
+    },
+    {
+      "bulk_ess": 698.433709751154,
+      "coordinates": {
+        "time": "2021-11-22"
+      },
+      "id": "mu_t[time=\"2021-11-22\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035873046065196,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 817.4457832753973
+    },
+    {
+      "bulk_ess": 700.0531121136328,
+      "coordinates": {
+        "time": "2021-11-29"
+      },
+      "id": "mu_t[time=\"2021-11-29\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035844202448958,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 812.1627779009233
+    },
+    {
+      "bulk_ess": 696.1849685963996,
+      "coordinates": {
+        "time": "2021-12-06"
+      },
+      "id": "mu_t[time=\"2021-12-06\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035827896330756,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 813.1938640296293
+    },
+    {
+      "bulk_ess": 693.1069454760698,
+      "coordinates": {
+        "time": "2021-12-13"
+      },
+      "id": "mu_t[time=\"2021-12-13\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035757170776711,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 812.9168477165928
+    },
+    {
+      "bulk_ess": 690.6964479537808,
+      "coordinates": {
+        "time": "2021-12-20"
+      },
+      "id": "mu_t[time=\"2021-12-20\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003566194933032,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 805.4801983905014
+    },
+    {
+      "bulk_ess": 688.4084518795809,
+      "coordinates": {
+        "time": "2021-12-27"
+      },
+      "id": "mu_t[time=\"2021-12-27\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035549875350136,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 802.1245456133717
+    },
+    {
+      "bulk_ess": 686.7029285050395,
+      "coordinates": {
+        "time": "2022-01-03"
+      },
+      "id": "mu_t[time=\"2022-01-03\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.00353773027725,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 802.7797192909798
+    },
+    {
+      "bulk_ess": 685.0970199520317,
+      "coordinates": {
+        "time": "2022-01-10"
+      },
+      "id": "mu_t[time=\"2022-01-10\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035231326316407,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 799.7127221239439
+    },
+    {
+      "bulk_ess": 684.1893375903229,
+      "coordinates": {
+        "time": "2022-01-17"
+      },
+      "id": "mu_t[time=\"2022-01-17\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035040077592365,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 793.4853441014318
+    },
+    {
+      "bulk_ess": 683.8840272927793,
+      "coordinates": {
+        "time": "2022-01-24"
+      },
+      "id": "mu_t[time=\"2022-01-24\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034797624284015,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 808.5843729233591
+    },
+    {
+      "bulk_ess": 683.723362192187,
+      "coordinates": {
+        "time": "2022-01-31"
+      },
+      "id": "mu_t[time=\"2022-01-31\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034531229248813,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 808.4127069589592
+    },
+    {
+      "bulk_ess": 684.5217296941287,
+      "coordinates": {
+        "time": "2022-02-07"
+      },
+      "id": "mu_t[time=\"2022-02-07\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003424753468025,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 809.3521870990083
+    },
+    {
+      "bulk_ess": 685.5089702090349,
+      "coordinates": {
+        "time": "2022-02-14"
+      },
+      "id": "mu_t[time=\"2022-02-14\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033924782616963,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 799.2070607110505
+    },
+    {
+      "bulk_ess": 687.2191667288034,
+      "coordinates": {
+        "time": "2022-02-21"
+      },
+      "id": "mu_t[time=\"2022-02-21\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003359150276553,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 794.1995810442382
+    },
+    {
+      "bulk_ess": 689.3519909860676,
+      "coordinates": {
+        "time": "2022-02-28"
+      },
+      "id": "mu_t[time=\"2022-02-28\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033223335250823,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 784.5390552136283
+    },
+    {
+      "bulk_ess": 688.6396000775998,
+      "coordinates": {
+        "time": "2022-03-07"
+      },
+      "id": "mu_t[time=\"2022-03-07\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003347436027934,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 795.8486709158116
+    },
+    {
+      "bulk_ess": 688.6741779625087,
+      "coordinates": {
+        "time": "2022-03-14"
+      },
+      "id": "mu_t[time=\"2022-03-14\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033642102784057,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 801.5656585684541
+    },
+    {
+      "bulk_ess": 689.0383042255208,
+      "coordinates": {
+        "time": "2022-03-21"
+      },
+      "id": "mu_t[time=\"2022-03-21\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033812501784356,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 804.8866084169224
+    },
+    {
+      "bulk_ess": 689.8399430963176,
+      "coordinates": {
+        "time": "2022-03-28"
+      },
+      "id": "mu_t[time=\"2022-03-28\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033954437644592,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 802.0801509353147
+    },
+    {
+      "bulk_ess": 691.2103526601129,
+      "coordinates": {
+        "time": "2022-04-04"
+      },
+      "id": "mu_t[time=\"2022-04-04\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034073158293857,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 806.2339693485212
+    },
+    {
+      "bulk_ess": 693.3770684891782,
+      "coordinates": {
+        "time": "2022-04-11"
+      },
+      "id": "mu_t[time=\"2022-04-11\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034149912457027,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 802.8273656163607
+    },
+    {
+      "bulk_ess": 696.1804274563643,
+      "coordinates": {
+        "time": "2022-04-18"
+      },
+      "id": "mu_t[time=\"2022-04-18\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034209156085,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 794.0759006716568
+    },
+    {
+      "bulk_ess": 698.9962334729163,
+      "coordinates": {
+        "time": "2022-04-25"
+      },
+      "id": "mu_t[time=\"2022-04-25\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003426158496312,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 796.040011931614
+    },
+    {
+      "bulk_ess": 702.5554018769665,
+      "coordinates": {
+        "time": "2022-05-02"
+      },
+      "id": "mu_t[time=\"2022-05-02\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034236850555769,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 796.1064590930708
+    },
+    {
+      "bulk_ess": 706.4368002389226,
+      "coordinates": {
+        "time": "2022-05-09"
+      },
+      "id": "mu_t[time=\"2022-05-09\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034228849422138,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 789.5337007198244
+    },
+    {
+      "bulk_ess": 710.4588573150183,
+      "coordinates": {
+        "time": "2022-05-16"
+      },
+      "id": "mu_t[time=\"2022-05-16\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003418096561121,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 799.9611548519587
+    },
+    {
+      "bulk_ess": 713.3700631208384,
+      "coordinates": {
+        "time": "2022-05-23"
+      },
+      "id": "mu_t[time=\"2022-05-23\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034122295022856,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 795.0268314985291
+    },
+    {
+      "bulk_ess": 709.8941102911538,
+      "coordinates": {
+        "time": "2022-05-30"
+      },
+      "id": "mu_t[time=\"2022-05-30\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034335882579897,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 806.2848792891775
+    },
+    {
+      "bulk_ess": 705.097725261119,
+      "coordinates": {
+        "time": "2022-06-06"
+      },
+      "id": "mu_t[time=\"2022-06-06\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003452696115331,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 801.2077330910085
+    },
+    {
+      "bulk_ess": 700.6557665825386,
+      "coordinates": {
+        "time": "2022-06-13"
+      },
+      "id": "mu_t[time=\"2022-06-13\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003468156271842,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 800.228374213025
+    },
+    {
+      "bulk_ess": 696.6637509695842,
+      "coordinates": {
+        "time": "2022-06-20"
+      },
+      "id": "mu_t[time=\"2022-06-20\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003481682483841,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 796.8133517340856
+    },
+    {
+      "bulk_ess": 692.439603266384,
+      "coordinates": {
+        "time": "2022-06-27"
+      },
+      "id": "mu_t[time=\"2022-06-27\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003491558464026,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 794.1838261994312
+    },
+    {
+      "bulk_ess": 689.2313929158961,
+      "coordinates": {
+        "time": "2022-07-04"
+      },
+      "id": "mu_t[time=\"2022-07-04\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035001011412383,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 796.6773905485284
+    },
+    {
+      "bulk_ess": 686.1814891820151,
+      "coordinates": {
+        "time": "2022-07-11"
+      },
+      "id": "mu_t[time=\"2022-07-11\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035041471601576,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 801.6384457164728
+    },
+    {
+      "bulk_ess": 684.1971358873094,
+      "coordinates": {
+        "time": "2022-07-18"
+      },
+      "id": "mu_t[time=\"2022-07-18\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035043700192905,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 800.5184438229054
+    },
+    {
+      "bulk_ess": 682.3306734505205,
+      "coordinates": {
+        "time": "2022-07-25"
+      },
+      "id": "mu_t[time=\"2022-07-25\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035057634404534,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 794.2937483995884
+    },
+    {
+      "bulk_ess": 681.2462419135401,
+      "coordinates": {
+        "time": "2022-08-01"
+      },
+      "id": "mu_t[time=\"2022-08-01\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035045918765158,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 796.3450612014192
+    },
+    {
+      "bulk_ess": 680.281856399053,
+      "coordinates": {
+        "time": "2022-08-08"
+      },
+      "id": "mu_t[time=\"2022-08-08\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003501082295705,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 803.228579663729
+    },
+    {
+      "bulk_ess": 679.7837408972914,
+      "coordinates": {
+        "time": "2022-08-15"
+      },
+      "id": "mu_t[time=\"2022-08-15\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034946996872214,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 813.97143650103
+    },
+    {
+      "bulk_ess": 680.1167909855666,
+      "coordinates": {
+        "time": "2022-08-22"
+      },
+      "id": "mu_t[time=\"2022-08-22\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034859432503356,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 805.3982984677024
+    },
+    {
+      "bulk_ess": 681.3182846177629,
+      "coordinates": {
+        "time": "2022-08-29"
+      },
+      "id": "mu_t[time=\"2022-08-29\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034756477038655,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 799.4918622591438
+    },
+    {
+      "bulk_ess": 682.5488356933074,
+      "coordinates": {
+        "time": "2022-09-05"
+      },
+      "id": "mu_t[time=\"2022-09-05\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034626632644184,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 802.3552235957026
+    },
+    {
+      "bulk_ess": 684.6094938454028,
+      "coordinates": {
+        "time": "2022-09-12"
+      },
+      "id": "mu_t[time=\"2022-09-12\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034470565092872,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 803.9687470759172
+    },
+    {
+      "bulk_ess": 687.1102372443166,
+      "coordinates": {
+        "time": "2022-09-19"
+      },
+      "id": "mu_t[time=\"2022-09-19\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034294743328989,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 800.830911802915
+    },
+    {
+      "bulk_ess": 689.917256328273,
+      "coordinates": {
+        "time": "2022-09-26"
+      },
+      "id": "mu_t[time=\"2022-09-26\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034101587730218,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 803.8512916919497
+    },
+    {
+      "bulk_ess": 693.3102341946158,
+      "coordinates": {
+        "time": "2022-10-03"
+      },
+      "id": "mu_t[time=\"2022-10-03\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033842034556077,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 796.3606333678309
+    },
+    {
+      "bulk_ess": 697.504941769292,
+      "coordinates": {
+        "time": "2022-10-10"
+      },
+      "id": "mu_t[time=\"2022-10-10\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033580746939053,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 792.3357869062917
+    },
+    {
+      "bulk_ess": 701.8231814258386,
+      "coordinates": {
+        "time": "2022-10-17"
+      },
+      "id": "mu_t[time=\"2022-10-17\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033311515681813,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 791.2441259088564
+    },
+    {
+      "bulk_ess": 706.7892995361086,
+      "coordinates": {
+        "time": "2022-10-24"
+      },
+      "id": "mu_t[time=\"2022-10-24\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033002086951317,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 802.2373357387662
+    },
+    {
+      "bulk_ess": 711.8932057137735,
+      "coordinates": {
+        "time": "2022-10-31"
+      },
+      "id": "mu_t[time=\"2022-10-31\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0032674719610437,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 799.2178879860834
+    },
+    {
+      "bulk_ess": 718.0012937309774,
+      "coordinates": {
+        "time": "2022-11-07"
+      },
+      "id": "mu_t[time=\"2022-11-07\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0032306122957957,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 812.5063833168398
+    },
+    {
+      "bulk_ess": 714.1263710128045,
+      "coordinates": {
+        "time": "2022-11-14"
+      },
+      "id": "mu_t[time=\"2022-11-14\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0032826775612722,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 796.5378932901665
+    },
+    {
+      "bulk_ess": 711.1801379327642,
+      "coordinates": {
+        "time": "2022-11-21"
+      },
+      "id": "mu_t[time=\"2022-11-21\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033319902285278,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 787.870511968002
+    },
+    {
+      "bulk_ess": 708.310004963781,
+      "coordinates": {
+        "time": "2022-11-28"
+      },
+      "id": "mu_t[time=\"2022-11-28\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003373722166596,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 784.8519429423133
+    },
+    {
+      "bulk_ess": 705.9232758917441,
+      "coordinates": {
+        "time": "2022-12-05"
+      },
+      "id": "mu_t[time=\"2022-12-05\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.00342031335748,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 781.8678610578635
+    },
+    {
+      "bulk_ess": 704.0942685714361,
+      "coordinates": {
+        "time": "2022-12-12"
+      },
+      "id": "mu_t[time=\"2022-12-12\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.00346106439225,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 787.6509639536563
+    },
+    {
+      "bulk_ess": 702.7251213157635,
+      "coordinates": {
+        "time": "2022-12-19"
+      },
+      "id": "mu_t[time=\"2022-12-19\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035012617822476,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 788.7865363033803
+    },
+    {
+      "bulk_ess": 701.7568281500271,
+      "coordinates": {
+        "time": "2022-12-26"
+      },
+      "id": "mu_t[time=\"2022-12-26\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003539424909998,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 788.6312200711623
+    },
+    {
+      "bulk_ess": 701.170098750882,
+      "coordinates": {
+        "time": "2023-01-02"
+      },
+      "id": "mu_t[time=\"2023-01-02\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035716147938694,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 790.7982736198445
+    },
+    {
+      "bulk_ess": 700.9960124421934,
+      "coordinates": {
+        "time": "2023-01-09"
+      },
+      "id": "mu_t[time=\"2023-01-09\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036062237392078,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 802.489062971615
+    },
+    {
+      "bulk_ess": 701.5932026946388,
+      "coordinates": {
+        "time": "2023-01-16"
+      },
+      "id": "mu_t[time=\"2023-01-16\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036326876015176,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 806.0976934512178
+    },
+    {
+      "bulk_ess": 702.3336585151148,
+      "coordinates": {
+        "time": "2023-01-23"
+      },
+      "id": "mu_t[time=\"2023-01-23\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036599101324353,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 812.3769176589914
+    },
+    {
+      "bulk_ess": 703.7193222853132,
+      "coordinates": {
+        "time": "2023-01-30"
+      },
+      "id": "mu_t[time=\"2023-01-30\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036858455190736,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 816.6602013246829
+    },
+    {
+      "bulk_ess": 705.0846008136779,
+      "coordinates": {
+        "time": "2023-02-06"
+      },
+      "id": "mu_t[time=\"2023-02-06\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0037095450079379,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 818.1284553620683
+    },
+    {
+      "bulk_ess": 700.8606904320324,
+      "coordinates": {
+        "time": "2023-02-13"
+      },
+      "id": "mu_t[time=\"2023-02-13\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003699893165169,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 819.4406244128843
+    },
+    {
+      "bulk_ess": 696.4944334923568,
+      "coordinates": {
+        "time": "2023-02-20"
+      },
+      "id": "mu_t[time=\"2023-02-20\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003687677155872,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 819.5055146906595
+    },
+    {
+      "bulk_ess": 692.8120592545137,
+      "coordinates": {
+        "time": "2023-02-27"
+      },
+      "id": "mu_t[time=\"2023-02-27\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036744170259704,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 823.871728867713
+    },
+    {
+      "bulk_ess": 690.0774877563,
+      "coordinates": {
+        "time": "2023-03-06"
+      },
+      "id": "mu_t[time=\"2023-03-06\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036559864065966,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 820.9865144836426
+    },
+    {
+      "bulk_ess": 687.457256089163,
+      "coordinates": {
+        "time": "2023-03-13"
+      },
+      "id": "mu_t[time=\"2023-03-13\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036363436290652,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 810.6153587890556
+    },
+    {
+      "bulk_ess": 685.5638637819826,
+      "coordinates": {
+        "time": "2023-03-20"
+      },
+      "id": "mu_t[time=\"2023-03-20\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0036094491861978,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 808.0008709916265
+    },
+    {
+      "bulk_ess": 683.9062417153937,
+      "coordinates": {
+        "time": "2023-03-27"
+      },
+      "id": "mu_t[time=\"2023-03-27\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003581956407773,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 824.1090032264726
+    },
+    {
+      "bulk_ess": 682.5191555705971,
+      "coordinates": {
+        "time": "2023-04-03"
+      },
+      "id": "mu_t[time=\"2023-04-03\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035524013228825,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 824.5084085621979
+    },
+    {
+      "bulk_ess": 681.9221892114793,
+      "coordinates": {
+        "time": "2023-04-10"
+      },
+      "id": "mu_t[time=\"2023-04-10\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0035208400668327,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 816.1812602940686
+    },
+    {
+      "bulk_ess": 681.9817860329383,
+      "coordinates": {
+        "time": "2023-04-17"
+      },
+      "id": "mu_t[time=\"2023-04-17\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034832018697537,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 820.4056777708755
+    },
+    {
+      "bulk_ess": 682.5710056421063,
+      "coordinates": {
+        "time": "2023-04-24"
+      },
+      "id": "mu_t[time=\"2023-04-24\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034507464320894,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 806.6153521865032
+    },
+    {
+      "bulk_ess": 683.6096300819605,
+      "coordinates": {
+        "time": "2023-05-01"
+      },
+      "id": "mu_t[time=\"2023-05-01\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034128164011904,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 806.8803827669153
+    },
+    {
+      "bulk_ess": 682.9104021656964,
+      "coordinates": {
+        "time": "2023-05-08"
+      },
+      "id": "mu_t[time=\"2023-05-08\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.00342893190943,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 810.3448209315213
+    },
+    {
+      "bulk_ess": 682.7193327071981,
+      "coordinates": {
+        "time": "2023-05-15"
+      },
+      "id": "mu_t[time=\"2023-05-15\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034409041234638,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 815.9324905203465
+    },
+    {
+      "bulk_ess": 683.3003629742493,
+      "coordinates": {
+        "time": "2023-05-22"
+      },
+      "id": "mu_t[time=\"2023-05-22\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034539411191645,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 816.2570473802268
+    },
+    {
+      "bulk_ess": 684.4490382163294,
+      "coordinates": {
+        "time": "2023-05-29"
+      },
+      "id": "mu_t[time=\"2023-05-29\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034613714593315,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 797.4043811949276
+    },
+    {
+      "bulk_ess": 685.5687003329383,
+      "coordinates": {
+        "time": "2023-06-05"
+      },
+      "id": "mu_t[time=\"2023-06-05\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003470353352436,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 801.6263703675133
+    },
+    {
+      "bulk_ess": 687.1930789420479,
+      "coordinates": {
+        "time": "2023-06-12"
+      },
+      "id": "mu_t[time=\"2023-06-12\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034784762460605,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 791.0310693614344
+    },
+    {
+      "bulk_ess": 689.24859556498,
+      "coordinates": {
+        "time": "2023-06-19"
+      },
+      "id": "mu_t[time=\"2023-06-19\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034789813062146,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 789.4211501375831
+    },
+    {
+      "bulk_ess": 692.0014305480449,
+      "coordinates": {
+        "time": "2023-06-26"
+      },
+      "id": "mu_t[time=\"2023-06-26\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034775128708622,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 789.3343085773687
+    },
+    {
+      "bulk_ess": 695.4268410507585,
+      "coordinates": {
+        "time": "2023-07-03"
+      },
+      "id": "mu_t[time=\"2023-07-03\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034716785606699,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 796.321920270023
+    },
+    {
+      "bulk_ess": 699.147587285035,
+      "coordinates": {
+        "time": "2023-07-10"
+      },
+      "id": "mu_t[time=\"2023-07-10\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034627586127396,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 791.791580221098
+    },
+    {
+      "bulk_ess": 702.9804221186326,
+      "coordinates": {
+        "time": "2023-07-17"
+      },
+      "id": "mu_t[time=\"2023-07-17\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034564221637174,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 800.904711189057
+    },
+    {
+      "bulk_ess": 705.8740312499679,
+      "coordinates": {
+        "time": "2023-07-24"
+      },
+      "id": "mu_t[time=\"2023-07-24\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034462066156788,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 800.0331915304359
+    },
+    {
+      "bulk_ess": 703.6832977403535,
+      "coordinates": {
+        "time": "2023-07-31"
+      },
+      "id": "mu_t[time=\"2023-07-31\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034473312799383,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 798.0831747060696
+    },
+    {
+      "bulk_ess": 700.8474770199458,
+      "coordinates": {
+        "time": "2023-08-07"
+      },
+      "id": "mu_t[time=\"2023-08-07\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034447052002917,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 793.2976397182246
+    },
+    {
+      "bulk_ess": 698.2049995153833,
+      "coordinates": {
+        "time": "2023-08-14"
+      },
+      "id": "mu_t[time=\"2023-08-14\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003439210409454,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 789.1442118219375
+    },
+    {
+      "bulk_ess": 696.6235168656007,
+      "coordinates": {
+        "time": "2023-08-21"
+      },
+      "id": "mu_t[time=\"2023-08-21\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034344670712847,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 784.679859928714
+    },
+    {
+      "bulk_ess": 695.0285087392234,
+      "coordinates": {
+        "time": "2023-08-28"
+      },
+      "id": "mu_t[time=\"2023-08-28\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.00342748106492,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 789.7504408112221
+    },
+    {
+      "bulk_ess": 693.5739970362364,
+      "coordinates": {
+        "time": "2023-09-04"
+      },
+      "id": "mu_t[time=\"2023-09-04\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034164785413402,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 787.2194555667016
+    },
+    {
+      "bulk_ess": 692.7691409193524,
+      "coordinates": {
+        "time": "2023-09-11"
+      },
+      "id": "mu_t[time=\"2023-09-11\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0034001865568754,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 788.9377470660089
+    },
+    {
+      "bulk_ess": 692.9658744223944,
+      "coordinates": {
+        "time": "2023-09-18"
+      },
+      "id": "mu_t[time=\"2023-09-18\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003379644547558,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 790.2915179698625
+    },
+    {
+      "bulk_ess": 693.5286459646906,
+      "coordinates": {
+        "time": "2023-09-25"
+      },
+      "id": "mu_t[time=\"2023-09-25\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033567440501752,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 802.2999860783689
+    },
+    {
+      "bulk_ess": 694.1161665739661,
+      "coordinates": {
+        "time": "2023-10-02"
+      },
+      "id": "mu_t[time=\"2023-10-02\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033336242070885,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 805.3869502185788
+    },
+    {
+      "bulk_ess": 695.3667482514588,
+      "coordinates": {
+        "time": "2023-10-09"
+      },
+      "id": "mu_t[time=\"2023-10-09\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033071670422387,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 801.3707740407866
+    },
+    {
+      "bulk_ess": 697.066005766162,
+      "coordinates": {
+        "time": "2023-10-16"
+      },
+      "id": "mu_t[time=\"2023-10-16\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0032763955879507,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 813.70317349396
+    },
+    {
+      "bulk_ess": 696.8989253853523,
+      "coordinates": {
+        "time": "2023-10-23"
+      },
+      "id": "mu_t[time=\"2023-10-23\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0032935298470371,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 803.7408288777706
+    },
+    {
+      "bulk_ess": 697.0280133431943,
+      "coordinates": {
+        "time": "2023-10-30"
+      },
+      "id": "mu_t[time=\"2023-10-30\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033092777752373,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 808.6293301462306
+    },
+    {
+      "bulk_ess": 697.7998047814613,
+      "coordinates": {
+        "time": "2023-11-06"
+      },
+      "id": "mu_t[time=\"2023-11-06\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033209598654915,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 808.557159941776
+    },
+    {
+      "bulk_ess": 698.8235942633535,
+      "coordinates": {
+        "time": "2023-11-13"
+      },
+      "id": "mu_t[time=\"2023-11-13\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033291708601888,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 805.4732064328199
+    },
+    {
+      "bulk_ess": 700.6220905803784,
+      "coordinates": {
+        "time": "2023-11-20"
+      },
+      "id": "mu_t[time=\"2023-11-20\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033354241290446,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 797.766458470886
+    },
+    {
+      "bulk_ess": 703.4688136830064,
+      "coordinates": {
+        "time": "2023-11-27"
+      },
+      "id": "mu_t[time=\"2023-11-27\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033354509062038,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 795.5505121930216
+    },
+    {
+      "bulk_ess": 706.5109300128464,
+      "coordinates": {
+        "time": "2023-12-04"
+      },
+      "id": "mu_t[time=\"2023-12-04\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033348314322292,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 790.6196250225346
+    },
+    {
+      "bulk_ess": 709.7687972139782,
+      "coordinates": {
+        "time": "2023-12-11"
+      },
+      "id": "mu_t[time=\"2023-12-11\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033278847378206,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 781.4842437998303
+    },
+    {
+      "bulk_ess": 712.4984978249544,
+      "coordinates": {
+        "time": "2023-12-18"
+      },
+      "id": "mu_t[time=\"2023-12-18\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033184536526585,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 784.7958485447966
+    },
+    {
+      "bulk_ess": 715.7344513251871,
+      "coordinates": {
+        "time": "2023-12-25"
+      },
+      "id": "mu_t[time=\"2023-12-25\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0033059676909817,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 781.1665815086245
+    },
+    {
+      "bulk_ess": 719.398507146247,
+      "coordinates": {
+        "time": "2024-01-01"
+      },
+      "id": "mu_t[time=\"2024-01-01\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0032956967520956,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 789.3817217428087
+    },
+    {
+      "bulk_ess": 723.4556350191739,
+      "coordinates": {
+        "time": "2024-01-08"
+      },
+      "id": "mu_t[time=\"2024-01-08\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.003284634745024,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 789.3278357960123
+    },
+    {
+      "bulk_ess": 728.3178114682148,
+      "coordinates": {
+        "time": "2024-01-15"
+      },
+      "id": "mu_t[time=\"2024-01-15\"]",
+      "parameter": "mu_t",
+      "rank_normalized_rhat": 1.0032644081641455,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 794.0009624757403
+    },
+    {
+      "bulk_ess": 7433.075303219688,
+      "coordinates": {
+        "media_channel": "Channel0"
+      },
+      "id": "roi_m[media_channel=\"Channel0\"]",
+      "parameter": "roi_m",
+      "rank_normalized_rhat": 1.0002288948672782,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 8003.636765588017
+    },
+    {
+      "bulk_ess": 2320.2771875755434,
+      "coordinates": {
+        "media_channel": "Channel1"
+      },
+      "id": "roi_m[media_channel=\"Channel1\"]",
+      "parameter": "roi_m",
+      "rank_normalized_rhat": 1.0009212076741159,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 2675.7550479599
+    },
+    {
+      "bulk_ess": 2090.308349421793,
+      "coordinates": {
+        "media_channel": "Channel2"
+      },
+      "id": "roi_m[media_channel=\"Channel2\"]",
+      "parameter": "roi_m",
+      "rank_normalized_rhat": 1.0006901694974344,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1851.383999324983
+    },
+    {
+      "bulk_ess": 2778.264879833059,
+      "coordinates": {
+        "media_channel": "Channel3"
+      },
+      "id": "roi_m[media_channel=\"Channel3\"]",
+      "parameter": "roi_m",
+      "rank_normalized_rhat": 1.0007275585556494,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 4100.526089359977
+    },
+    {
+      "bulk_ess": 18575.36957003402,
+      "coordinates": {},
+      "id": "sigma",
+      "parameter": "sigma",
+      "rank_normalized_rhat": 1.000219875437845,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 12160.56795981497
+    },
+    {
+      "bulk_ess": null,
+      "coordinates": {
+        "media_channel": "Channel0"
+      },
+      "deterministic_metadata": {
+        "source": "model_context.prior_broadcast.has_deterministic_param"
+      },
+      "id": "slope_m[media_channel=\"Channel0\"]",
+      "parameter": "slope_m",
+      "rank_normalized_rhat": null,
+      "reasons": [],
+      "status": "excluded",
+      "tail_ess": null
+    },
+    {
+      "bulk_ess": null,
+      "coordinates": {
+        "media_channel": "Channel1"
+      },
+      "deterministic_metadata": {
+        "source": "model_context.prior_broadcast.has_deterministic_param"
+      },
+      "id": "slope_m[media_channel=\"Channel1\"]",
+      "parameter": "slope_m",
+      "rank_normalized_rhat": null,
+      "reasons": [],
+      "status": "excluded",
+      "tail_ess": null
+    },
+    {
+      "bulk_ess": null,
+      "coordinates": {
+        "media_channel": "Channel2"
+      },
+      "deterministic_metadata": {
+        "source": "model_context.prior_broadcast.has_deterministic_param"
+      },
+      "id": "slope_m[media_channel=\"Channel2\"]",
+      "parameter": "slope_m",
+      "rank_normalized_rhat": null,
+      "reasons": [],
+      "status": "excluded",
+      "tail_ess": null
+    },
+    {
+      "bulk_ess": null,
+      "coordinates": {
+        "media_channel": "Channel3"
+      },
+      "deterministic_metadata": {
+        "source": "model_context.prior_broadcast.has_deterministic_param"
+      },
+      "id": "slope_m[media_channel=\"Channel3\"]",
+      "parameter": "slope_m",
+      "rank_normalized_rhat": null,
+      "reasons": [],
+      "status": "excluded",
+      "tail_ess": null
+    },
+    {
+      "bulk_ess": 1398.293632295152,
+      "coordinates": {
+        "geo": "Geo0"
+      },
+      "id": "tau_g[geo=\"Geo0\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0055361795834388,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1914.8525747223296
+    },
+    {
+      "bulk_ess": 1470.6865777566632,
+      "coordinates": {
+        "geo": "Geo1"
+      },
+      "id": "tau_g[geo=\"Geo1\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.006544902866512,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1528.8259331715117
+    },
+    {
+      "bulk_ess": 1423.249202217233,
+      "coordinates": {
+        "geo": "Geo2"
+      },
+      "id": "tau_g[geo=\"Geo2\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0061531302917222,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1204.7748844626744
+    },
+    {
+      "bulk_ess": 1351.0098311172796,
+      "coordinates": {
+        "geo": "Geo3"
+      },
+      "id": "tau_g[geo=\"Geo3\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.006055454465937,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1581.2769902727825
+    },
+    {
+      "bulk_ess": 1642.570820083012,
+      "coordinates": {
+        "geo": "Geo4"
+      },
+      "id": "tau_g[geo=\"Geo4\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0052241777461675,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1720.360356366726
+    },
+    {
+      "bulk_ess": 1661.6702724041882,
+      "coordinates": {
+        "geo": "Geo5"
+      },
+      "id": "tau_g[geo=\"Geo5\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0054707664239961,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1511.3413083029009
+    },
+    {
+      "bulk_ess": 1529.3162652535134,
+      "coordinates": {
+        "geo": "Geo6"
+      },
+      "id": "tau_g[geo=\"Geo6\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0042306762700228,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1506.5498109241225
+    },
+    {
+      "bulk_ess": 1715.0490080104332,
+      "coordinates": {
+        "geo": "Geo7"
+      },
+      "id": "tau_g[geo=\"Geo7\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0057511197368523,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1453.284268137749
+    },
+    {
+      "bulk_ess": 1444.2760497918887,
+      "coordinates": {
+        "geo": "Geo8"
+      },
+      "id": "tau_g[geo=\"Geo8\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0051850467527217,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1423.6167867223796
+    },
+    {
+      "bulk_ess": 1506.5979625143534,
+      "coordinates": {
+        "geo": "Geo9"
+      },
+      "id": "tau_g[geo=\"Geo9\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0048352696513487,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1466.0239767224052
+    },
+    {
+      "bulk_ess": 1640.826238569841,
+      "coordinates": {
+        "geo": "Geo10"
+      },
+      "id": "tau_g[geo=\"Geo10\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0047598575610206,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1606.0269275065878
+    },
+    {
+      "bulk_ess": 1448.6031400134175,
+      "coordinates": {
+        "geo": "Geo11"
+      },
+      "id": "tau_g[geo=\"Geo11\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.005595458948639,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1720.079286790605
+    },
+    {
+      "bulk_ess": 1611.6753073708064,
+      "coordinates": {
+        "geo": "Geo12"
+      },
+      "id": "tau_g[geo=\"Geo12\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.005239730345646,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1690.4507620240922
+    },
+    {
+      "bulk_ess": 1823.342807056405,
+      "coordinates": {
+        "geo": "Geo13"
+      },
+      "id": "tau_g[geo=\"Geo13\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0051225013134601,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1948.4222106700304
+    },
+    {
+      "bulk_ess": 1609.4232003973616,
+      "coordinates": {
+        "geo": "Geo14"
+      },
+      "id": "tau_g[geo=\"Geo14\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0044067467402187,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1528.05424870373
+    },
+    {
+      "bulk_ess": 1644.9241853549256,
+      "coordinates": {
+        "geo": "Geo15"
+      },
+      "id": "tau_g[geo=\"Geo15\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.0074427415515987,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1722.4230348114886
+    },
+    {
+      "bulk_ess": 1361.8918731350388,
+      "coordinates": {
+        "geo": "Geo16"
+      },
+      "id": "tau_g[geo=\"Geo16\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.006391118553018,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1303.9155289337284
+    },
+    {
+      "bulk_ess": null,
+      "coordinates": {
+        "geo": "Geo17"
+      },
+      "deterministic_metadata": {
+        "source": "model_context.baseline_geo_idx + posterior_sampler._compute_tau_g"
+      },
+      "id": "tau_g[geo=\"Geo17\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": null,
+      "reasons": [],
+      "status": "excluded",
+      "tail_ess": null
+    },
+    {
+      "bulk_ess": 1609.9821760205061,
+      "coordinates": {
+        "geo": "Geo18"
+      },
+      "id": "tau_g[geo=\"Geo18\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.00575074607532,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1700.8024554608828
+    },
+    {
+      "bulk_ess": 1544.194988730179,
+      "coordinates": {
+        "geo": "Geo19"
+      },
+      "id": "tau_g[geo=\"Geo19\"]",
+      "parameter": "tau_g",
+      "rank_normalized_rhat": 1.004474518920866,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 1883.7379249586756
+    },
+    {
+      "bulk_ess": 2921.375902317684,
+      "coordinates": {
+        "control_variable": "competitor_activity_score_control"
+      },
+      "id": "xi_c[control_variable=\"competitor_activity_score_control\"]",
+      "parameter": "xi_c",
+      "rank_normalized_rhat": 1.0005634550112745,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 5649.973041600589
+    },
+    {
+      "bulk_ess": 4395.186193274658,
+      "coordinates": {
+        "control_variable": "sentiment_score_control"
+      },
+      "id": "xi_c[control_variable=\"sentiment_score_control\"]",
+      "parameter": "xi_c",
+      "rank_normalized_rhat": 1.0005102988831298,
+      "reasons": [],
+      "status": "pass",
+      "tail_ess": 7559.396925427569
+    }
+  ],
+  "sample": {
+    "draws_per_chain": 4000,
+    "n_chains": 4,
+    "n_excluded_deterministic_cells": 5,
+    "n_parameter_cells": 330,
+    "n_stochastic_parameter_cells": 325,
+    "total_post_warmup_draws": 16000
+  },
+  "sampling_passed": true,
+  "schema_version": 1,
+  "status": "pass",
+  "thresholds": {
+    "bulk_ess_gte": 400,
+    "minimum_ess_rule": "max(400, 100 * n_chains)",
+    "post_warmup_divergences_eq": 0,
+    "rank_normalized_rhat_lt": 1.01,
+    "rank_normalized_rhat_method": "arviz.rhat(method='rank')",
+    "tail_ess_gte": 400
+  },
+  "warnings": [
+    "rank_normalized_rhat: RuntimeWarning: invalid value encountered in scalar divide"
+  ]
+}

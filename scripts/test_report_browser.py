@@ -18,7 +18,8 @@
 
 """Run a focused browser regression against a generated Meridian report.
 
-The report is opened as a local file and checked at phone and desktop widths.
+The report is opened as a local file with the network disabled and checked at
+phone and desktop widths. External resource requests fail the check.
 The check waits for the rendered Vega visualizations, records browser errors,
 checks for horizontal document overflow, and exercises keyboard panning on an
 actually overflowing chart when one is present.
@@ -194,10 +195,20 @@ def run_browser_regression(
         context = browser.new_context(
             viewport={'width': width, 'height': height},
             device_scale_factor=1,
+            offline=True,
         )
         page = context.new_page()
         page_errors: list[str] = []
         console_errors: list[str] = []
+        external_requests: list[str] = []
+        page.on(
+            'request',
+            lambda request, requests=external_requests: (
+                requests.append(request.url)
+                if request.url.startswith(('https://', 'http://'))
+                else None
+            ),
+        )
         page.on(
             'pageerror',
             lambda error, errors=page_errors: errors.append(str(error)),
@@ -212,6 +223,8 @@ def run_browser_regression(
           page.goto(report_html.as_uri())
 
           expect(page.locator('.header .title')).to_be_visible()
+          expect(page.get_by_role('heading', level=1)).to_be_visible()
+          expect(page.get_by_role('main')).to_be_visible()
           page.wait_for_function(
               """() => {
                 const charts = Array.from(
@@ -232,11 +245,13 @@ def run_browser_regression(
                 'No rendered Vega chart found '
                 f'({chart_count=}, {rendered_count=}).'
             )
-          if page_errors or console_errors:
+          if page_errors or console_errors or external_requests:
             raise AssertionError(
                 f'Browser errors while rendering report: '
-                f'{page_errors=}, {console_errors=}'
+                f'{page_errors=}, {console_errors=}, {external_requests=}'
             )
+
+          page.evaluate('() => document.fonts.ready.then(() => true)')
 
           overflow = _assert_no_horizontal_overflow(page)
 
@@ -273,6 +288,7 @@ def run_browser_regression(
                   'rendered_count': rendered_count,
                   'page_errors': page_errors,
                   'console_errors': console_errors,
+                  'external_requests': external_requests,
                   'overflow': overflow,
                   'keyboard_scroll': keyboard,
                   'desktop': desktop,
@@ -286,6 +302,7 @@ def run_browser_regression(
 
   return {
       'status': 'PASS',
+      'network': 'disabled',
       'report': str(report_html),
       'viewports': results,
   }

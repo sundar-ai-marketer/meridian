@@ -19,7 +19,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 # Apache 2.0 section 4(d) requires redistributions to carry the NOTICE file.
 # Without it here, neither the wheel nor the sdist contains one.
-license-files = ["LICENSE", "NOTICE"]
+license-files = ["LICENSE", "NOTICE", "meridian/templates/assets/*LICENSE.txt"]
 authors = [
   {name = "The Meridian Authors", email="no-reply@google.com"},
 ]
@@ -82,6 +82,8 @@ documentation = "https://developers.google.com/meridian"
 # Development deps (unittest, linting, formating,...)
 # Installed through `pip install -e .[dev]`
 dev = [
+  # Keep the installer seeded by venv inside the audited tooling contract.
+  "pip==26.2.1",
   "pytest>=8.0.0",
   "pytest-xdist",
   "pylint>=2.6.0",
@@ -163,3 +165,20 @@ exclude = ["*test"]
 
 [tool.setuptools.dynamic]
 version = {attr = "meridian.version.__version__"}
+
+# uv-only source override for the checkout's sibling schema package. This is
+# intentionally kept out of published metadata: pip and package consumers
+# continue to see the declared `mmm-proto-schema` requirement, while the
+# repository's frozen uv workflow always installs the matching local source.
+[tool.uv]
+# Build isolation is separate from the runtime lock. Keep the build backend
+# and the proto compiler deterministic as well; these constraints apply when
+# uv builds either this project or the local `proto` source.
+build-constraint-dependencies = [
+  "grpcio-tools==1.69.0",
+  "libsass==0.23.0",
+  "setuptools==84.0.0",
+]
+
+[tool.uv.sources]
+mmm-proto-schema = { path = "proto", editable = true }

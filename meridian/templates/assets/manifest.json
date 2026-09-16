@@ -1,0 +1,86 @@
+{
+  "vega-6.4.0.min.js": {
+    "source": "https://registry.npmjs.org/vega/-/vega-6.4.0.tgz",
+    "archive_integrity": "sha512-rHXCq2LpEWCLMjXBEj7hocY9G0/i5TGYRayGGSj06VTF4+l2IG2Z7oeZKCjWbUh/7hTE/mVhbaOPB72wCElh6g==",
+    "archive_member": "package/build/vega.min.js",
+    "sha256": "8f6a3587cf8d4f42c7e08120e3eb05d067e746d554e39d2dcf52acc0bd5ba28f",
+    "mime": "text/javascript",
+    "license": "BSD-3-Clause"
+  },
+  "vega-LICENSE.txt": {
+    "source": "https://registry.npmjs.org/vega/-/vega-6.4.0.tgz",
+    "archive_integrity": "sha512-rHXCq2LpEWCLMjXBEj7hocY9G0/i5TGYRayGGSj06VTF4+l2IG2Z7oeZKCjWbUh/7hTE/mVhbaOPB72wCElh6g==",
+    "archive_member": "package/LICENSE",
+    "sha256": "63727832aaf62004a2b249c933e327f3c90caf49e41a72f4bf436edf632cbda8",
+    "mime": "text/plain",
+    "license": "BSD-3-Clause"
+  },
+  "vega-lite-6.4.1.min.js": {
+    "source": "https://registry.npmjs.org/vega-lite/-/vega-lite-6.4.1.tgz",
+    "archive_integrity": "sha512-KO3ybHNouRK4A0al/+2fN9UqgTEfxrd/ntGLY933Hg5UOYotDVQdshR3zn7OfXwQ7uj0W96Vfa5R+QxO8am3IQ==",
+    "archive_member": "package/build/vega-lite.min.js",
+    "sha256": "6d5035fdd429b4bc6f91f3754426c3f516f3dbd8e08b105cfc2496bed4ebd254",
+    "mime": "text/javascript",
+    "license": "BSD-3-Clause"
+  },
+  "vega-lite-LICENSE.txt": {
+    "source": "https://registry.npmjs.org/vega-lite/-/vega-lite-6.4.1.tgz",
+    "archive_integrity": "sha512-KO3ybHNouRK4A0al/+2fN9UqgTEfxrd/ntGLY933Hg5UOYotDVQdshR3zn7OfXwQ7uj0W96Vfa5R+QxO8am3IQ==",
+    "archive_member": "package/LICENSE",
+    "sha256": "f618900fd0d64046963b29f40590cdd1e341a2f41449f99110d82fd81fea808c",
+    "mime": "text/plain",
+    "license": "BSD-3-Clause"
+  },
+  "vega-embed-7.0.2.min.js": {
+    "source": "https://registry.npmjs.org/vega-embed/-/vega-embed-7.0.2.tgz",
+    "archive_integrity": "sha512-ZHQPWSs9mUTGJPZ5yQVhHV+OLDCoTIjR//De93vG6igZX1MQCVo03ePWlfWCUAnPV1IsKfeJLqA3K/Qd11bAFQ==",
+    "archive_member": "package/build/vega-embed.min.js",
+    "sha256": "c7111a41190080938b14c1de00074d9bda16ef2199e2919dd038cddf97d87354",
+    "mime": "text/javascript",
+    "license": "BSD-3-Clause"
+  },
+  "vega-embed-LICENSE.txt": {
+    "source": "https://registry.npmjs.org/vega-embed/-/vega-embed-7.0.2.tgz",
+    "archive_integrity": "sha512-ZHQPWSs9mUTGJPZ5yQVhHV+OLDCoTIjR//De93vG6igZX1MQCVo03ePWlfWCUAnPV1IsKfeJLqA3K/Qd11bAFQ==",
+    "archive_member": "package/LICENSE",
+    "sha256": "32df67148f0fc3db0eb9e263a7b75d07f1eb14c61955005a4a39c6918d10d137",
+    "mime": "text/plain",
+    "license": "BSD-3-Clause"
+  },
+  "material-icons-outlined.otf": {
+    "source": "https://fonts.gstatic.com/s/materialiconsoutlined/v110/gok-H7zzDkdnRel8-DQ6KAXJ69wP1tGnf4ZGhUcd.otf",
+    "sha256": "b63fa9edd75e3c20328e04ad31dcc38ce76411f3f9ea1a1ff87f49e5ba874b05",
+    "mime": "font/otf",
+    "license": "Apache-2.0"
+  },
+  "info.svg": {
+    "source": "https://www.gstatic.com/images/icons/material/system/svg/info_outline_24px.svg",
+    "sha256": "f3d6e717a2d6fa6caec61221fb4b838663abbd1a58933dd7d2824b408932d3fe",
+    "mime": "image/svg+xml",
+    "license": "Apache-2.0"
+  },
+  "warning.svg": {
+    "source": "https://www.gstatic.com/images/icons/material/system/svg/warning_amber_24px.svg",
+    "sha256": "111cabb102d440f99bdbf0fa88d950abd8b9eacf6017bc977452df21bb2f14f5",
+    "mime": "image/svg+xml",
+    "license": "Apache-2.0"
+  },
+  "error.svg": {
+    "source": "https://www.gstatic.com/images/icons/material/system/svg/error_outline_24px.svg",
+    "sha256": "bc2d656a0626a5859f6bce73e972e8f841b5c0f3cf43502e2bf4a1137704581a",
+    "mime": "image/svg+xml",
+    "license": "Apache-2.0"
+  },
+  "insights.svg": {
+    "source": "https://www.gstatic.com/images/icons/material/system/svg/insights_24px.svg",
+    "sha256": "651c3459dd7f98e5422baecdcf65908d3cb30057ccb192f930fbfdace0a1bc3e",
+    "mime": "image/svg+xml",
+    "license": "Apache-2.0"
+  },
+  "material-icons-LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/google/material-design-icons/master/LICENSE",
+    "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+    "mime": "text/plain",
+    "license": "Apache-2.0"
+  }
+}

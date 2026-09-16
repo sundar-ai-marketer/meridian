@@ -12,10 +12,11 @@ This repository is a fork of google/meridian and contains modifications.
 Modifications Copyright 2026 Sundar Ramesh Kumar.
 Licensed under the Apache License, Version 2.0 (the same terms as the original).
 
-In accordance with section 4(b) of the Apache License, every file changed from
-the original source carries a notice in its header stating that it was
-modified, and every file that does not exist upstream carries a notice stating
-that it is new. TRIAGE.md records what changed and why, per upstream issue.
+In accordance with section 4(b) of the Apache License, files changed from the
+original source carry a notice stating that they were modified. New first-party
+source and configuration files carry a fork notice. Unmodified vendored assets
+retain their upstream licenses and are identified separately below. TRIAGE.md
+records what changed and why, per upstream issue.
 
 Files modified from the original google/meridian source:
 
@@ -26,11 +27,13 @@ Files modified from the original google/meridian source:
   meridian/analysis/summarizer_test.py
   meridian/analysis/summary_text.py
   meridian/analysis/visualizer.py
+  meridian/analysis/visualizer_test.py
   meridian/analysis/review/checks.py
   meridian/analysis/review/checks_test.py
   meridian/analysis/review/results.py
   meridian/analysis/review/results_test.py
   meridian/analysis/weekly_optimization_grid_test.py
+  meridian/analysis/test_utils.py
   meridian/constants.py
   meridian/templates/summary.html.jinja
   meridian/templates/chart.html.jinja
@@ -40,8 +43,11 @@ Files modified from the original google/meridian source:
   meridian/templates/formatter.py
   meridian/templates/formatter_test.py
   meridian/templates/table.html.jinja
+  meridian/templates/card.html.jinja
+  meridian/templates/findings.html.jinja
   meridian/templates/style.scss
   meridian/backend/backend_test.py
+  meridian/backend/__init__.py
   meridian/backend/test_utils.py
   meridian/data/data_frame_input_data_builder.py
   meridian/data/data_frame_input_data_builder_test.py
@@ -88,6 +94,13 @@ Files added by this fork:
   meridian/analysis/prior_predictive_test.py
   meridian/analysis/sampling_diagnostics.py
   meridian/analysis/sampling_diagnostics_test.py
+  meridian/analysis/sampling_quality.py
+  meridian/analysis/sampling_quality_test.py
+  meridian/analysis/quickstart_test.py
+  meridian/templates/report_assets.py
+  meridian/templates/report_assets_test.py
+  meridian/templates/assets/manifest.json
+  meridian/templates/assets/README.md
   Makefile
   Dockerfile
   .dockerignore
@@ -106,6 +119,15 @@ Files added by this fork:
   scripts/test_end_to_end.py
   scripts/test_report_browser.py
   scripts/test_proto_build.py
+  scripts/run_tests.py
+  scripts/test_run_tests.py
+  scripts/run_recovery_study.py
+  scripts/test_run_recovery_study.py
+  scripts/test_mlflow_integration.py
+  docs/validation/recovery-2026-09-16.json
+  docs/validation/strict-sampling-2026-09-16.json
+  uv.lock
+  .github/dependabot.yml
   .github/actions/version-check/check_version.sh
   .github/actions/version-check/check_version_test.sh
   examples/quickstart.py
@@ -134,8 +156,8 @@ Summary of behavioural changes to existing code:
     instead of falling back to Vega-Lite's default scheme.
   * The budget-allocation chart is a labelled bar rather than a pie whose
     values were reachable only on hover.
-  * The report loads versioned Vega CDN URLs instead of unversioned URLs.
-    Charts and web fonts still require internet access.
+  * Reports embed pinned, integrity-checked chart libraries, icons and an icon
+    font with their licenses. Standard generated reports render offline.
   * Mobile report charts use keyboard-accessible scroll regions rather than
     clipping wide charts inside narrow cards.
   * Report text values are HTML-escaped, while explicitly rendered fragments
@@ -147,6 +169,27 @@ Summary of behavioural changes to existing code:
   * Setup handles custom environment paths; Docker permits non-root output
     writes; CI includes Scenario Planner and a real fit-to-report smoke test.
   * Version checks support a repository's first release without existing tags.
+  * Strict sampling assessments distinguish rank-normalized R-hat, bulk/tail
+    ESS, divergences, missing signals and metadata-confirmed deterministic
+    parameters. Passing those checks does not establish causal validity.
+  * Ordinary sampler-option mappings are normalized before JAX's static JIT
+    boundary. Local and CI suites use the same bounded-memory test phases.
+  * The frozen setup uses a dependency lock; schema source dependencies and
+    GitHub Actions use full commit pins.
+
+Third-party report assets, unmodified and redistributed with their licenses:
+
+  meridian/templates/assets/vega-6.4.0.min.js
+  meridian/templates/assets/vega-lite-6.4.1.min.js
+  meridian/templates/assets/vega-embed-7.0.2.min.js
+    BSD-3-Clause; see the respective *-LICENSE.txt files in that directory.
+  meridian/templates/assets/material-icons-outlined.otf
+  meridian/templates/assets/{info,warning,error,insights}.svg
+    Google Material Icons, Apache-2.0; see material-icons-LICENSE.txt.
+
+The asset manifest records original sources and content hashes. Every generated
+standalone report also carries these licenses in its third-party-licenses
+template element.
 
 This fork's distribution is named `meridian-mmm-fork`, not `google-meridian`.
 The import path is unchanged (`import meridian`), but the published package is

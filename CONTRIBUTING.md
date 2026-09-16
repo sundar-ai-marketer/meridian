@@ -38,11 +38,14 @@ upstream.
     backend is deprecated upstream but still exercised in CI:
 
     ```sh
-    pytest meridian scenarioplanner -q -n 8
-    MERIDIAN_BACKEND=tensorflow pytest meridian scenarioplanner -q -n 8
+    make test
+    make test-tf
     ```
 
-    Run `make test-e2e` for the real fit-to-report integration check.
+    These use the same process-isolated phases as CI, with two workers by
+    default. Use `TEST_WORKERS=1` on smaller machines. All phases run even if
+    a test fails; the final exit code preserves failure. Run `make test-e2e`
+    for the real fit-to-report integration check.
     Report changes also need a browser check against the generated HTML:
 
     ```sh
@@ -55,7 +58,9 @@ upstream.
     For an optimization report, add `--min-desktop-chart-width 500` to reflect
     its two-column desktop layout. The default 600px check applies to the
     model-summary and EDA reports; mobile overflow and keyboard checks remain
-    the same for all three.
+    the same for all three. The browser check disables networking and rejects
+    external resource requests, so an accidentally reintroduced CDN dependency
+    fails the check.
 
     Use `backend.tfd` and `backend.np_float_dtype` rather than importing a TFP
     substrate directly, or your code will only work on one backend.
@@ -88,6 +93,10 @@ Match the surrounding code: two-space indent, Google-style docstrings,
 2. For dependency updates, check compatibility with both numerical backends.
    Run the full suites, integration check, package builds, and a clean Docker
    build; review GitHub's Python-version matrix before releasing.
+   Keep the frozen dependency lock and its package metadata consistent. GitHub
+   Actions and schema includes use full commit pins; update them deliberately
+   and verify source provenance. Report assets have their own source and hash
+   manifest in `meridian/templates/assets/` and must retain their licenses.
 3. For reports, run the browser check above. For sampling or diagnostic changes,
    inspect convergence, effective sample size, divergences, and recovery results
    as appropriate. Do not loosen thresholds just to obtain a passing result.
