@@ -83,7 +83,7 @@ Severity describes the consequence of the defect, not exploitability.
 | Low | Copied upstream publishing workflows performed unnecessary fork builds despite disabled publishing jobs. | Guard those jobs and correct the missing Python-version input. Automatic PyPI publication remains disabled. |
 | Low | Benchmark records did not clearly identify the active computation backend and precision. | Record the resolved runtime backend and precision, with tests. |
 | Medium | Backend initialization tests restored the module cache but left the parent package pointing at a temporary backend module, making later benchmark metadata depend on test order. | Restore the package alias during test cleanup. The failing initialization-then-metadata sequence and a package-alias regression now pass. |
-| Medium | Parallel scientific-test workers exhausted hosted-runner memory. Four workers reached 15,227 MiB used and 2,031 MiB swap; two workers later exhausted nearly all swap when real-fit suites accumulated compiled graphs together. | Run analysis, model, and non-fit remaining tests in separate two-worker sessions. Run benchmark, recovery, mathematical-invariant, and upstream-regression suites each in a fresh serial process. Preserve all six backend/version combinations and record resource usage in the live log. |
+| Medium | Parallel scientific-test workers exhausted hosted-runner memory. Four workers reached 15,227 MiB used and 2,031 MiB swap; two workers later exhausted nearly all swap when real-fit suites accumulated compiled graphs together. Even a passing combined analysis run nearly exhausted RAM and swap. | Run analyzer, optimizer, remaining analysis, model, and non-fit remaining tests in separate two-worker sessions. Run benchmark, recovery, mathematical-invariant, and upstream-regression suites each in a fresh serial process. Preserve all six backend/version combinations and record resource usage in the live log. |
 | Low | Importing the benchmark failed on platforms without the Unix `resource` module. | Treat peak memory as unavailable when that platform API is absent; do not invent a comparable measurement. |
 
 ## Verification
@@ -202,7 +202,8 @@ Additional verification:
   modules passed 853 tests on each backend. The original failing ordered
   initialization/metadata sequence also passed.
 - CI test partitioning was checked against full-suite collection: analysis
-  (1,706), model (2,166), non-fit remaining modules (1,779), benchmark (29),
+  (1,706 across three fresh processes), model (2,166), non-fit remaining
+  modules (1,779), benchmark (29),
   recovery (59), mathematical invariants (21), and upstream regressions (19)
   cover all 5,779 test identifiers exactly once. Every phase runs even if an
   earlier phase fails; any failed phase fails the job.
