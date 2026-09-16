@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTICE: This file was modified from the original google/meridian source.
+# See NOTICE at the repository root.
+
 import os
 import warnings
 
@@ -3025,7 +3028,7 @@ class MediaSummaryTest(parameterized.TestCase):
         plot.title.text, summary_text.ROI_EFFECTIVENESS_CHART_TITLE
     )
     self.assertEqual(plot.title.anchor, "start")
-    self.assertEqual(plot.title.font, "Google Sans Display")
+    self.assertEqual(plot.title.font, "Google Sans Display, Arial, sans-serif")
     self.assertEqual(plot.title.fontSize, 18)
     self.assertEqual(plot.title.fontWeight, "normal")
     self.assertEqual(plot.title.offset, 10)

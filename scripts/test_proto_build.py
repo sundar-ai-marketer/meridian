@@ -100,6 +100,88 @@ class ProtoBuildContractTest(unittest.TestCase):
           ],
       )
 
+  def test_pinned_git_revision_is_fetched_and_verified(self):
+    revision = '0123456789abcdef0123456789abcdef01234567'
+    builder = _new_builder()
+    builder._deps = {
+        'googleapis': ('https://example.invalid/googleapis.git', revision),
+    }
+    completed = subprocess.CompletedProcess([], 0, stdout='', stderr='')
+    verified = subprocess.CompletedProcess(
+        [], 0, stdout=f'{revision}\n', stderr=''
+    )
+    with tempfile.TemporaryDirectory(prefix='proto pinned build ') as temp_dir:
+      root = Path(temp_dir) / 'dependency root with spaces'
+      with mock.patch.object(
+          _PROTO_SETUP.subprocess,
+          'run',
+          side_effect=[completed, completed, completed, completed, verified],
+      ) as run:
+        self.assertEqual(builder._pull_deps(root), 0)
+
+      self.assertEqual(
+          [call.args[0] for call in run.call_args_list],
+          [
+              ['git', 'init', '--quiet', str(root / 'googleapis')],
+              [
+                  'git',
+                  '-C',
+                  str(root / 'googleapis'),
+                  'remote',
+                  'add',
+                  'origin',
+                  'https://example.invalid/googleapis.git',
+              ],
+              [
+                  'git',
+                  '-C',
+                  str(root / 'googleapis'),
+                  'fetch',
+                  '--quiet',
+                  '--depth=1',
+                  '--no-tags',
+                  'origin',
+                  revision,
+              ],
+              [
+                  'git',
+                  '-C',
+                  str(root / 'googleapis'),
+                  'checkout',
+                  '--quiet',
+                  '--detach',
+                  'FETCH_HEAD',
+              ],
+              [
+                  'git',
+                  '-C',
+                  str(root / 'googleapis'),
+                  'rev-parse',
+                  '--verify',
+                  'HEAD',
+              ],
+          ],
+      )
+
+  def test_pinned_git_revision_mismatch_fails(self):
+    revision = '0123456789abcdef0123456789abcdef01234567'
+    builder = _new_builder()
+    builder._deps = {
+        'googleapis': ('https://example.invalid/googleapis.git', revision),
+    }
+    completed = subprocess.CompletedProcess([], 0, stdout='', stderr='')
+    mismatch = subprocess.CompletedProcess(
+        [], 0, stdout='fedcba9876543210fedcba9876543210fedcba98\n', stderr=''
+    )
+    with tempfile.TemporaryDirectory(prefix='proto pinned build ') as temp_dir:
+      with mock.patch.object(
+          _PROTO_SETUP.subprocess,
+          'run',
+          side_effect=[completed, completed, completed, completed, mismatch],
+      ):
+        with self.assertRaisesRegex(RuntimeError, 'expected'):
+          builder._pull_deps(Path(temp_dir) / 'deps')
+
   def test_protoc_failure_is_propagated_and_paths_stay_one_argument(self):
     failure = subprocess.CalledProcessError(
         1,

@@ -81,11 +81,14 @@ make quickstart
 ```
 
 One command: it finds a supported Python, builds an isolated environment,
-removes `tensorflow-metal` if present, installs this checkout with every
-extra, compiles the report stylesheet, verifies the result, then runs a real
+removes `tensorflow-metal` if present, installs this checkout with its supported
+CPU extras from `uv.lock`, compiles the report stylesheet, verifies the result,
+then runs a real
 end-to-end analysis on the bundled sample data. Installation and sampling can
 take several minutes each. Setup can be rerun and exits with an error if its
-environment checks fail.
+environment checks fail. A pinned uv installer is bootstrapped inside the target
+environment when needed. `MERIDIAN_INSTALL_MODE=pip make setup` is an explicit
+unlocked fallback; it does not reproduce the audited lock.
 
 `make help` lists everything:
 
@@ -100,11 +103,36 @@ environment checks fail.
 | `make build` | wheel + sdist |
 | `make clean` | build artifacts and generated output. Never touches your venv. |
 
-The demo builds input data, sets an ROI prior, checks the prior against the
-data *before* fitting, fits, checks convergence, reads ROI, optimizes a budget,
-and saves the model. The short run took about 12 minutes during this audit.
-Pass `--full` for longer sampling, then review the diagnostics; additional
-draws do not guarantee convergence. Runtime depends on hardware and load.
+The demo builds input data, checks an ROI prior against the data before fitting,
+saves the fitted model and `sampling-quality.json`, then produces exploratory
+ROI, budget and HTML outputs. The first eight observed media weeks provide
+carryover history; the following 148 weeks form the analysis window. The HTML
+carries an exploratory-use note when shared. Runtime depends on hardware and
+sampling settings; allow several minutes for a real fit.
+
+For a stricter workflow, the following settings passed the sampling gate on the
+bundled example during the audit (about 14 minutes for sampling on the audited
+machine):
+
+```sh
+.venv/bin/python examples/quickstart.py --full --knots 13 \
+  --n-chains 4 --n-adapt 2000 --n-burnin 500 --n-keep 4000 \
+  --target-accept-prob 0.99 --sampling-mode strict \
+  --output-dir quickstart_output/strict
+```
+
+Strict mode refuses to reuse a directory containing an earlier summary, so a
+failed rerun cannot leave a stale report beside new diagnostic evidence.
+
+Strict mode requires rank-normalized R-hat below 1.01, bulk and tail effective
+sample sizes of at least `max(400, 100 × chains)`, and zero divergences. Missing
+or non-finite diagnostics block the gate. Failure preserves the model and JSON
+evidence and exits before ROI, optimization or HTML generation. Passing these
+checks still requires a separate review of priors, causal assumptions and model
+adequacy. The 13-knot specification is an explicit example choice, not a
+universal setting. [The audit](AUDIT.md#strict-sampling-reference) records all
+three trials, including the two that failed; longer sampling alone is no
+guarantee.
 
 ### Without installing anything locally
 
@@ -134,9 +162,10 @@ integration check, run `docker run --rm meridian python scripts/test_end_to_end.
 ```sh
 python3.11 -m venv .venv
 source .venv/bin/activate
-python -m pip install -U pip setuptools wheel
-pip install -e proto --config-settings editable_mode=strict
-pip install -e ".[dev,colab,schema,mlflow,geox,scenarioplanner]"
+python -m venv .venv/.meridian-uv
+.venv/.meridian-uv/bin/python -m pip install pip==26.2.1 uv==0.11.14
+.venv/.meridian-uv/bin/uv sync --frozen --no-default-groups --extra dev --extra colab \
+  --extra schema --extra mlflow --extra geox --extra scenarioplanner
 python scripts/compile_report_css.py     # see "Report stylesheet" below
 python scripts/verify_environment.py     # must end with RESULT: PASS
 ```
@@ -352,8 +381,11 @@ Changes to the generated HTML report:
 *   Budget allocation is a labelled bar, not a pie. The old pie put its
     percentages in hover tooltips only, in a file whose whole purpose is being
     exported and sent to someone.
-*   Vega libraries load from versioned CDN URLs. Report charts and web fonts
-    require internet access; these reports are not self-contained offline files.
+*   Generated reports are self-contained: pinned chart libraries, icons and the
+    icon font are embedded with their license notices. Charts render without
+    internet access. Desktop/mobile browser tests disable networking and reject
+    external resource requests. Documentation links still need a connection
+    when followed.
 *   On small screens, wide charts stay readable in keyboard-accessible scroll
     regions instead of being clipped inside a narrow card.
 

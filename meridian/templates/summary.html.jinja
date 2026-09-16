@@ -25,52 +25,44 @@ what changed and why.
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {#
-    Versioned jsDelivr npm paths, replacing unversioned
-    gstatic/external_hosted URLs, so an archived report keeps rendering the
-    same way months later instead of silently changing -- or breaking, if the
-    unversioned path is retired -- when the hosted libraries change upstream.
-    These are the URLs the Vega project itself documents.
-
-    Versions are taken from the installed Altair, not guessed:
-      vega-lite 6.4.1  -- `altair.vegalite.v6.display.VEGALITE_VERSION`, and
-                          the `$schema` the generated specs actually carry.
-      vega-embed 7.0.2 -- pinned in Altair's own bundled `jupyter/js/index.js`.
-      vega 6           -- major only. Altair declares `VEGA_VERSION == "6"`
-                          and names no patch, and major is the right pinning
-                          level here anyway: Vega-Lite 6 compiles to the Vega
-                          6 spec, so compatibility is a major-version
-                          contract. Inventing a patch number nobody verified
-                          would risk a 404, which fails silently -- the
-                          scripts simply do not load and no chart renders.
-
-    Subresource Integrity hashes are not set: computing them means fetching
-    the files, which needs network access this build does not have. A fully
-    self-contained, offline-renderable report would mean vendoring these
-    three files into the repo rather than loading them from a CDN at all --
-    a bigger change than pinning, and not done here.
-    #}
-    <script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-embed@7.0.2"></script>
+    {# Pinned packaged assets make saved reports independent of CDNs. #}
+    <script src="{{ report_asset('vega-6.4.0.min.js') }}"></script>
+    <script src="{{ report_asset('vega-lite-6.4.1.min.js') }}"></script>
+    <script src="{{ report_asset('vega-embed-7.0.2.min.js') }}"></script>
     <title>
       {{ title }}
     </title>
-    <link href="https://fonts.googleapis.com/css?family=Google+Sans:400,500,700&amp;subset=cyrillic,cyrillic-ext,latin-ext"
-          rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
-          rel="stylesheet" />
     <style>
+      @font-face {
+        font-family: 'Material Icons Outlined';
+        font-style: normal;
+        font-weight: 400;
+        font-display: block;
+        src: url("{{ report_asset('material-icons-outlined.otf') }}") format('opentype');
+      }
+      .material-icons-outlined {
+        font-family: 'Material Icons Outlined';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+      }
       {% include "style.css" ignore missing %}
     </style>
   </head>
 
   <body>
-    <div class="header">
+    <div class="header" role="banner">
       <div class="logo">
         {% include "logo.html" ignore missing %}
       </div>
-      <div class="title">
+      <div class="title" role="heading" aria-level="1">
         {{ title }}
       </div>
     </div>
@@ -79,11 +71,17 @@ what changed and why.
       {% include "chips.html.jinja" %}
     {% endif %}
 
-    <cards>
+    <cards role="main">
+      {% if report_note %}
+        <div class="advisory-warning-banner" role="note">
+          <p>{{ report_note }}</p>
+        </div>
+      {% endif %}
       {# Each card is laid out in a grid. See; .card display layout. #}
       {% for card in cards %} {# each `card` is a pre-rendered HTML #}
         {{ card }}
       {% endfor %}
     </cards>
+    <template id="third-party-licenses"><pre>{{ report_asset_licenses() }}</pre></template>
   </body>
 </html>

@@ -234,6 +234,142 @@ The full reference fit is substantially slower than the smoke check. Keep
 performance timings together with backend, precision, hardware, and sampling
 settings; they are not a service-level promise.
 
+## Additional hardening after the first green public release
+
+Commit `277c7e5` passed all nine hosted CI jobs: Python 3.11–3.13 on both
+JAX and TensorFlow, distribution builds, version checks and Docker. Each JAX
+matrix leg passed 5,735 tests with 44 skips; each TensorFlow leg passed 5,730
+with 49 skips. All six real-fit integration checks preserved ROI exactly
+through serialization. The final memory-isolated TensorFlow runs retained at
+least about 4 GiB of available runner memory and used no swap. These are the
+baseline results, not a substitute for checking CI on subsequent commits.
+
+The follow-up addresses concrete remaining limits:
+
+- Standard generated HTML now embeds exact, SHA-256-checked Vega libraries,
+  icons and an icon font, along with their redistribution licenses. Summary
+  (11 charts), optimization (4) and EDA (9) reports passed at 320/390/1440px
+  with the network disabled, zero external requests, no browser errors and
+  working keyboard panning. A broader report gate passed 400 tests and 272
+  subtests. A later focused test verifies that a shared report's exploratory
+  note remains visible and is safely escaped. The final template, summarizer
+  and visualizer gate passed 246 tests and 18 subtests after the last changes.
+- The local test commands now use the same fresh-process, two-worker phases
+  as CI. Fit-heavy suites remain serial. Six runner contracts cover failed
+  phases, empty collection, collection errors, cancellation and invalid
+  worker counts. All 5,806 currently collected test cases map to exactly one
+  runner phase; no test selection is removed to fit the memory budget.
+- Clean setup from outside the checkout, with spaces in the environment path,
+  passed imports and `pip check`. The universal lock resolves 199 packages;
+  six Linux/macOS and Python 3.11–3.13 resolution dry-runs pass. Python 3.11
+  retains JAX/JAXlib 0.10.2, TensorFlow 2.21.0, NumPy 2.3.5 and ArviZ 0.19.0.
+  Python 3.12/3.13 select JAX/JAXlib 0.11.1 and SciPy 1.18.1 according to their
+  supported-Python metadata; the full hosted matrix checks those actual installs.
+  `uv lock --check` verifies metadata freshness. uv builds constrain setuptools,
+  libsass and the schema compiler; ordinary standalone distribution builds and
+  the explicit pip fallback remain outside this frozen installation contract.
+- Schema includes and GitHub Actions are pinned to full commit IDs. The
+  schema builder verifies the fetched revision and fails on mismatches;
+  seven build contract tests pass. Dependabot proposes action, uv and Docker
+  updates for review.
+- An actual sampler-options call reproduced a JAX error: an ordinary
+  `dual_averaging_kwargs` dictionary was unhashable at the static JIT boundary.
+  The public backend wrapper now copies/freezes the mapping before JIT;
+  tests no longer hide the problem by converting it in their helper.
+- Analysis test utilities now import ElementTree explicitly, removing an
+  import-order dependency in their evaluated type annotations.
+- A temporary local HTTP MLflow service completed a real Meridian fit,
+  optimization, save/load and report workflow. Autologging recorded 73
+  parameters; a metric and JSON artifact survived exact HTTP round trips.
+  This checks a real local service, not cloud authentication or hosted policy.
+  `scripts/test_mlflow_integration.py` retains this regression in CI; its final
+  process-group cleanup revision also passed locally.
+- Both JAX and TensorFlow passed all 20 focused strict-quality/quickstart tests.
+  Four real backend mapping/execution regressions passed. An intentionally
+  inadequate CLI fit saved model and JSON, exited 2 and produced no summary.
+  The passing reference was then exercised through the same positive gate,
+  ROI, optimization and HTML output helpers.
+- Fresh wheel/sdist builds passed metadata checks. The installed wheel
+  completed real fit/optimization/save-load/report E2E with exact ROI
+  serialization, and every embedded asset matched its manifest digest.
+  A read-only source scan reported zero secrets across approximately 20 MB.
+  The exact chart-library versions reported zero npm advisories in the
+  resolved dependency graph on 16 September 2026; this is an advisory scan,
+  not a proof that bundled third-party code has no defects.
+- The final container advisory scan exposed an old `pip` seeded by `venv`.
+  The development lock now includes pip 26.2.1, and setup's isolated uv
+  bootstrap also pins that installer. This prevents successful runtime imports
+  from masking an outdated package-management tool. The clean locked macOS
+  environment then reported zero known advisories; the local fork itself is
+  unpublished on PyPI and is excluded from registry advisory matching. The
+  rebuilt Linux arm64 image also reported zero known advisories in registry
+  dependencies and passed the non-root model-to-report integration again.
+
+### Strict sampling reference
+
+The new `meridian.analysis.sampling_quality` gate assesses every scalar
+stochastic posterior cell using ArviZ rank-normalized R-hat, bulk/tail ESS and
+aligned post-warmup divergence flags. Unavailable, non-finite and unverified
+constant draws block approval. Only constants proved by model metadata are
+excluded. The quickstart always saves the model and standards-compliant JSON
+before this gate; strict mode blocks downstream decision outputs on failure.
+Exploratory reports carry their qualification inside the saved HTML.
+
+The following trials all used the same seed (1), ROI prior, 20 geographies,
+eight observed media-history weeks, 148 analysis weeks, four channels,
+13 time knots, four chains, 2,000 adaptation and 500 burn-in iterations.
+The knot count is an explicit alternative specification. We retained each
+trial rather than discarding failed runs.
+
+| Target acceptance | Retained draws per chain | Max rank R-hat | Min bulk ESS | Min tail ESS | Divergences | Gate |
+|---|---:|---:|---:|---:|---:|---|
+| 0.85 | 2,000 | 1.00737 | 788.84 | 990.22 | 18 | Fail |
+| 0.95 | 2,000 | 1.00537 | 823.38 | 901.79 | 3 | Fail |
+| 0.99 | 4,000 | 1.00744 | 679.78 | 776.07 | 0 | Pass |
+
+The [full per-cell JSON assessment](docs/validation/strict-sampling-2026-09-16.json)
+records the final result. The sampling call took 818 seconds locally and covers
+325 stochastic cells and excludes five metadata-confirmed constants (four
+fixed media slopes and the baseline geography intercept). This is one example
+fit, not calibration certification, held-out predictive validation or evidence
+of causal identification. The gate defaults follow the [Stan diagnostic
+guidance](https://mc-stan.org/learn-stan/diagnostics-warnings.html), checked on
+16 September 2026; comparisons name the ArviZ estimator explicitly.
+
+### Ten-seed fixed-truth recovery
+
+[Machine-readable measurements](docs/validation/recovery-2026-09-16.json)
+include every seed and channel interval. Each fit used a fresh process: JAX
+float64, 5 geographies, 104 periods, three channels with true ROI 1/2/4,
+concave response, no carryover, four chains, 1,000 adaptation, 500 burn-in and
+1,000 retained draws. Seeds derive deterministically from base seed 7.
+
+| Channel | True ROI inside 90% interval | 95% Wilson interval for coverage | Median relative ROI error |
+|---|---:|---:|---:|
+| 0 | 10/10 | 72.25%–100% | +6.5% |
+| 1 | 8/10 | 49.02%–94.33% | −14.4% |
+| 2 | 7/10 | 39.68%–89.22% | −19.7% |
+
+All ten fits recovered channel ordering and passed the legacy finite
+rank-normalized R-hat <1.2 screening threshold. Several did not meet 1.01;
+this experiment did not establish full strict sampling quality. The observed
+interval misses must not be attributed solely to a model defect or to a
+particular source of uncertainty. Fixed-truth coverage is not guaranteed to
+equal nominal Bayesian interval probability. This is a ten-trial recovery
+measurement, not SBC or general calibration certification; no failing seeds
+were discarded and no priors were tuned to obtain coverage.
+
+Reproduce this configuration with fresh processes and retained per-seed evidence:
+
+```sh
+.venv/bin/python scripts/run_recovery_study.py --replications 10 --seed 7 \
+  --output-dir recovery-study
+```
+
+The command records configuration, derived seeds, package versions and source
+hashes. It retains failed subprocess evidence and labels the 1.2 screen and
+fixed-truth coverage limits explicitly.
+
 ## Limits and remaining risks
 
 - Passing software checks does not establish causal identification, valid
@@ -245,21 +381,30 @@ settings; they are not a service-level promise.
   quickstart and recovery tools use ArviZ's rank-normalized R-hat. Always name
   the estimator when comparing results. Neither replaces the other
   diagnostics or proves that a model is correct.
-- The bundled data has no extra media history before the KPI window. With
-  `max_lag=8`, the library explicitly warns about zero-padded carryover at the
-  start. This reference run preserves that existing example configuration.
+- The earlier saved reference used zero-padded carryover because the bundled
+  CSV has no separate history window. The revised quickstart reserves eight
+  observed media periods and models the remaining 148 periods; it does not
+  invent historical observations. Historical fit metrics above retain their
+  original analysis window and must not be compared as identical experiments.
 - The short synthetic integration fixture is not a recovery study. The
-  historical recovery measurements in TRIAGE.md were not rerun across many
-  seeds during this audit; the fixed-truth recovery tool is not SBC.
-- Real Google Sheets/Looker writes, authenticated MLflow services, GPU/CUDA,
-  and hosted Codespaces are outside the live integration checks. Their local
-  unit tests or configuration review must not be described as live validation.
-- Report charts and fonts load external resources and need internet access.
-  Browser checks do not constitute a full assistive-technology audit.
-- Dependencies are bounded but not completely locked. New resolutions can
-  differ from the audited environment; CI detects many, not all, regressions.
-  Schema builds fetch `googleapis` from `master`, and GitHub Actions use major
-  version tags; these external inputs are not immutable.
+  ten-seed experiment above adds measured recovery evidence at one fixed
+  setting. It does not replace simulation-based calibration or validation on
+  a user's own data and modeling assumptions.
+- Real Google Sheets/Looker writes, authenticated cloud MLflow services,
+  GPU/CUDA and hosted Codespaces still require the relevant account, hardware
+  and environment. Local tests are not live validation of those boundaries.
+  MLflow's loopback HTTP tracking/artifact service is now tested end to end.
+- Standard reports render offline. Following documentation links or rendering
+  caller-supplied chart specifications with remote data still needs a network.
+  Embedded assets increase HTML size. Browser and keyboard checks are not a
+  full assistive-technology audit.
+- Checkout setup, Docker and the six backend/version CI legs now use the
+  universal `uv.lock` with a pinned uv installer and constrained build tools.
+  Schema includes and GitHub Actions use verified full commit pins, and Docker
+  pins its base image manifest digest. OS packages and compiler/platform
+  behavior remain external inputs; an explicit pip fallback and ordinary PyPI
+  dependency resolution remain unlocked. These are reproducible dependency
+  selections, not a claim of bit-for-bit numerical results on every machine.
 - [TRIAGE.md](TRIAGE.md) retains unresolved upstream issues and declined
   feature requests. Publication is not a claim that all upstream issues have
   been fixed.

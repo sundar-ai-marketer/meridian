@@ -849,8 +849,10 @@ MARK_CIRCLE_SIZE = 36
 
 
 # Font names.
-FONT_ROBOTO = 'Roboto'
-FONT_GOOGLE_SANS_DISPLAY = 'Google Sans Display'
+# Vega passes these through as CSS font families. Explicit local fallbacks
+# preserve sans-serif charts when a standalone report is opened offline.
+FONT_ROBOTO = 'Roboto, Arial, sans-serif'
+FONT_GOOGLE_SANS_DISPLAY = 'Google Sans Display, Arial, sans-serif'
 
 # Default confidence level for the analysis.
 DEFAULT_CONFIDENCE_LEVEL = 0.9

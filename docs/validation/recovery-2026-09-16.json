@@ -1,0 +1,455 @@
+{
+  "notice": "Measured evidence added by this fork; see NOTICE.",
+  "date": "2026-09-16",
+  "scope": "Ten-seed fixed-truth recovery study; not SBC, a strict sampling pass, or general calibration certification.",
+  "source_base_commit": "277c7e5c2d7032b972a4378dbf1294b384d7d40d",
+  "recovery_source_sha256": "f2759cfa1b587257ee92fed734ca95b458cdcfabb61c46ca97a1a959b24665ec",
+  "execution": "Fresh subprocess per replication; JAX float64; Python3.11.8; macOS arm64. Release hardening changes were present in the working tree.",
+  "config": {
+    "alpha": 0.6,
+    "confidence_level": 0.9,
+    "max_lag": 0,
+    "n_adapt": 1000,
+    "n_burnin": 500,
+    "n_chains": 4,
+    "n_geos": 5,
+    "n_keep": 1000,
+    "n_times": 104,
+    "noise_fraction": 0.05,
+    "prior_roi_median": 2.0,
+    "prior_roi_sigma": 0.7,
+    "replications": 10,
+    "response": "concave",
+    "seed": 7,
+    "spend_scale": [
+      3000.0,
+      6000.0,
+      2000.0
+    ],
+    "true_roi": [
+      1.0,
+      2.0,
+      4.0
+    ]
+  },
+  "seed_derivation": "numpy.random.SeedSequence(7).spawn(10), via derive_replication_seeds",
+  "rhat_screen_threshold": 1.2,
+  "strict_sampling_diagnostics": "Not measured by this legacy recovery API; several fits exceed strict rank R-hat1.01.",
+  "coverage_interval": "95% Wilson interval around empirical coverage at this fixed truth, not an ROI interval.",
+  "channel_summaries": [
+    {
+      "channel": "channel_0",
+      "coverage": 1.0,
+      "coverage_ci_high": 0.9999999999999999,
+      "coverage_ci_low": 0.7224672001371106,
+      "iqr_high": 0.24344633102360272,
+      "iqr_low": -0.00832790415518248,
+      "median_ci_width": 1.8190203530066735,
+      "median_relative_error": 0.06479355447981332,
+      "n": 10,
+      "rank_fraction_iqr_high": 0.506,
+      "rank_fraction_iqr_low": 0.3140625,
+      "rank_fraction_median": 0.44037499999999996
+    },
+    {
+      "channel": "channel_1",
+      "coverage": 0.8,
+      "coverage_ci_high": 0.9433178485456247,
+      "coverage_ci_low": 0.4901624715366418,
+      "iqr_high": -0.09001983311195536,
+      "iqr_low": -0.22681551898646798,
+      "median_ci_width": 1.0159526267015926,
+      "median_relative_error": -0.1438230633745341,
+      "n": 10,
+      "rank_fraction_iqr_high": 0.9149375,
+      "rank_fraction_iqr_low": 0.6696249999999999,
+      "rank_fraction_median": 0.8125
+    },
+    {
+      "channel": "channel_2",
+      "coverage": 0.7,
+      "coverage_ci_high": 0.8922087325936988,
+      "coverage_ci_low": 0.3967781474611453,
+      "iqr_high": -0.14850817256466528,
+      "iqr_low": -0.37184462329492285,
+      "median_ci_width": 3.0707550381868054,
+      "median_relative_error": -0.19702114710395427,
+      "n": 10,
+      "rank_fraction_iqr_high": 0.942125,
+      "rank_fraction_iqr_low": 0.7361875,
+      "rank_fraction_median": 0.776375
+    }
+  ],
+  "replications": [
+    {
+      "replication": 1,
+      "seed": 1989548419,
+      "seconds": 44.469206166999356,
+      "max_rank_rhat": 1.03113521759143,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": true,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.5085,
+        0.603,
+        0.7515
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.458624692628627,
+          "ci_low": 0.4156196359461628,
+          "median": 0.9885179758283773,
+          "true_roi": 0.9999999999999994
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.4923844923811878,
+          "ci_low": 1.4257533197788415,
+          "median": 1.9148543509313316,
+          "true_roi": 2.000000000000004
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 5.177437099640661,
+          "ci_low": 2.014475959955293,
+          "median": 3.3823904113077234,
+          "true_roi": 3.9999999999999916
+        }
+      ]
+    },
+    {
+      "replication": 2,
+      "seed": 265234226,
+      "seconds": 35.9132971250001,
+      "max_rank_rhat": 1.0055857241619517,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": true,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.363,
+        0.789,
+        0.91175
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.3279214328272797,
+          "ci_low": 0.5221233127271717,
+          "median": 1.1688299035115803,
+          "true_roi": 0.9999999999999994
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.3062709959836596,
+          "ci_low": 1.324399309565179,
+          "median": 1.7671516159444045,
+          "true_roi": 2.000000000000002
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 4.360195160919377,
+          "ci_low": 1.194464213781901,
+          "median": 2.51967102991793,
+          "true_roi": 4.000000000000002
+        }
+      ]
+    },
+    {
+      "replication": 3,
+      "seed": 3624956951,
+      "seconds": 42.861657208002725,
+      "max_rank_rhat": 1.0122458320796288,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": false,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.4075,
+        0.953,
+        0.63425
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.2030666099928835,
+          "ci_low": 0.49861843699718156,
+          "median": 1.09869396206897,
+          "true_roi": 0.9999999999999999
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 1.9853133699226342,
+          "ci_low": 0.9787979722244069,
+          "median": 1.4056912724712258,
+          "true_roi": 2.0000000000000013
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 5.945681310355938,
+          "ci_low": 1.9882797936393364,
+          "median": 3.563356810076221,
+          "true_roi": 4.000000000000002
+        }
+      ]
+    },
+    {
+      "replication": 4,
+      "seed": 1136058432,
+      "seconds": 35.172568000001775,
+      "max_rank_rhat": 1.0262423465371366,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": true,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.53425,
+        0.836,
+        0.75025
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.122794800716055,
+          "ci_low": 0.39982076368923614,
+          "median": 0.9571602491648556,
+          "true_roi": 0.9999999999999983
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.2568043913746134,
+          "ci_low": 1.2514630151716777,
+          "median": 1.679298341927315,
+          "true_roi": 2.0000000000000004
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 4.921905112707309,
+          "ci_low": 2.0949505654839666,
+          "median": 3.413826275885878,
+          "true_roi": 4.0000000000000036
+        }
+      ]
+    },
+    {
+      "replication": 5,
+      "seed": 1928285899,
+      "seconds": 33.03875574999984,
+      "max_rank_rhat": 1.0143526298554741,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": false,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.47325,
+        0.99475,
+        0.7315
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.2602450890015366,
+          "ci_low": 0.42800250308829757,
+          "median": 1.0308931468906577,
+          "true_roi": 1.000000000000001
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 1.772027828843127,
+          "ci_low": 0.9721420828539911,
+          "median": 1.3455420648210785,
+          "true_roi": 1.999999999999999
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 5.543020231591876,
+          "ci_low": 1.7654093760219018,
+          "median": 3.2413509841338204,
+          "true_roi": 3.9999999999999956
+        }
+      ]
+    },
+    {
+      "replication": 6,
+      "seed": 1536365717,
+      "seconds": 29.87925458400059,
+      "max_rank_rhat": 1.012557466361487,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": false,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.51325,
+        0.757,
+        0.95225
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 1.9988851502099303,
+          "ci_low": 0.43648442415244765,
+          "median": 0.9869815235954905,
+          "true_roi": 1.000000000000002
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.376185073667968,
+          "ci_low": 1.1944638644411343,
+          "median": 1.745409404574549,
+          "true_roi": 2.0
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 3.968061270074677,
+          "ci_low": 0.8152531274506415,
+          "median": 2.0036474888542206,
+          "true_roi": 4.0000000000000036
+        }
+      ]
+    },
+    {
+      "replication": 7,
+      "seed": 3444878106,
+      "seconds": 30.910835750000842,
+      "max_rank_rhat": 1.0074493077723583,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": true,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.4985,
+        0.893,
+        0.80125
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 1.9920336735641646,
+          "ci_low": 0.4399963567457217,
+          "median": 1.0011344558941364,
+          "true_roi": 0.9999999999999999
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.1349761431890513,
+          "ci_low": 1.1095862874840934,
+          "median": 1.5790183603470596,
+          "true_roi": 2.0000000000000004
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 4.84427342361245,
+          "ci_low": 1.8555714898628752,
+          "median": 3.1824798390345426,
+          "true_roi": 4.000000000000001
+        }
+      ]
+    },
+    {
+      "replication": 8,
+      "seed": 2491681587,
+      "seconds": 32.213483125000494,
+      "max_rank_rhat": 1.0067295723102365,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": true,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.29775,
+        0.92225,
+        0.3875
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.4182958393196072,
+          "ci_low": 0.5683782744677498,
+          "median": 1.2683184735276116,
+          "true_roi": 1.0000000000000013
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.075957684683678,
+          "ci_low": 1.0920291206417394,
+          "median": 1.5354858292537314,
+          "true_roi": 1.999999999999999
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 5.88402201288315,
+          "ci_low": 2.941593744553047,
+          "median": 4.255558655969596,
+          "true_roi": 3.9999999999999982
+        }
+      ]
+    },
+    {
+      "replication": 9,
+      "seed": 2601402544,
+      "seconds": 24.36354904199834,
+      "max_rank_rhat": 1.0483927293359743,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": false,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.25375,
+        0.6405,
+        0.9665
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.5469090097915794,
+          "ci_low": 0.6022545965916352,
+          "median": 1.3598233987362085,
+          "true_roi": 0.9999999999999983
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.744152882007998,
+          "ci_low": 1.2153011882050022,
+          "median": 1.8375632397199833,
+          "true_roi": 1.9999999999999982
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 3.809404186269342,
+          "ci_low": 1.2185784038640997,
+          "median": 2.341962878697287,
+          "true_roi": 3.9999999999999933
+        }
+      ]
+    },
+    {
+      "replication": 10,
+      "seed": 1878638934,
+      "seconds": 32.04488829100228,
+      "max_rank_rhat": 1.0777768223356803,
+      "rhat_lt_1_2": true,
+      "all_channel_truths_covered": false,
+      "channel_ordering_recovered": true,
+      "rank_fractions": [
+        0.13125,
+        0.3225,
+        0.96025
+      ],
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.7671234249840797,
+          "ci_low": 0.7944595986623479,
+          "median": 1.5398995630162653,
+          "true_roi": 0.9999999999999979
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.757221500564492,
+          "ci_low": 1.643968755637374,
+          "median": 2.1390070707237183,
+          "true_roi": 2.0
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 3.902199598062909,
+          "ci_low": 1.5109009509035563,
+          "median": 2.5102716657877684,
+          "true_roi": 4.0
+        }
+      ]
+    }
+  ]
+}

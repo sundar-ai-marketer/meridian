@@ -41,6 +41,7 @@ env/
 
 # Output of examples/quickstart.py (default --output-dir).
 /quickstart_output/
+/recovery-study/
 
 # Generated from meridian/templates/style.scss by scripts/compile_report_css.py
 # (or by setup.py's compile_scss during a non-editable build).

@@ -17,10 +17,11 @@
 # original google/meridian source.
 #
 # One-command setup: build an isolated environment, install this checkout with
-# every extra, and verify the result actually works.
+# the supported CPU extras from uv.lock, and verify the result actually works.
 #
 #   ./scripts/setup.sh                 # venv at ./.venv
 #   ./scripts/setup.sh ~/.venvs/mmm    # venv somewhere else
+#   MERIDIAN_INSTALL_MODE=pip ./scripts/setup.sh  # explicit unlocked fallback
 #
 # Safe to re-run. Exits non-zero if the environment does not come out usable.
 
@@ -29,9 +30,16 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV="${1:-$REPO_ROOT/.venv}"
 EXTRAS='[dev,colab,schema,mlflow,geox,scenarioplanner]'
+UV_VERSION="${MERIDIAN_UV_VERSION:-0.11.14}"
+INSTALL_MODE="${MERIDIAN_INSTALL_MODE:-uv}"
 
 say() { printf '\n\033[1m==> %s\033[0m\n' "$1"; }
 die() { printf '\nERROR: %s\n' "$1" >&2; exit 1; }
+
+case "$INSTALL_MODE" in
+  uv|pip) ;;
+  *) die "MERIDIAN_INSTALL_MODE must be uv (default) or pip (explicit unlocked fallback)." ;;
+esac
 
 say "Finding a supported Python (3.11, 3.12 or 3.13)"
 PYTHON=""
@@ -69,8 +77,33 @@ fi
 VENV_PY="$VENV/bin/python"
 [ -x "$VENV_PY" ] || die "venv looks broken: no interpreter at $VENV_PY"
 
-say "Upgrading pip tooling"
-"$VENV_PY" -m pip install -q -U pip setuptools wheel
+UV=""
+if [ "$INSTALL_MODE" = uv ]; then
+  # Prefer an already-installed uv only when it is the version used to create
+  # this lock. Otherwise keep the bootstrap inside the task-owned target tree;
+  # installing uv into the target venv would let `uv sync` remove its own
+  # package as an extraneous dependency.
+  if command -v uv >/dev/null 2>&1 \
+      && [ "$(uv --version 2>/dev/null || true)" = "uv $UV_VERSION" ]; then
+    UV="$(command -v uv)"
+  else
+    UV_BOOTSTRAP_VENV="$VENV/.meridian-uv"
+    UV_BOOTSTRAP_PY="$UV_BOOTSTRAP_VENV/bin/python"
+    if [ ! -x "$UV_BOOTSTRAP_PY" ]; then
+      say "Creating the pinned uv bootstrap environment at $UV_BOOTSTRAP_VENV"
+      "$PYTHON" -m venv "$UV_BOOTSTRAP_VENV"
+    fi
+    if ! "$UV_BOOTSTRAP_PY" -c \
+        'import importlib.metadata as m, sys; sys.exit(m.version("uv") != sys.argv[1] or m.version("pip") != "26.2.1")' \
+        "$UV_VERSION" >/dev/null 2>&1; then
+      say "Installing uv $UV_VERSION in the task-owned bootstrap environment"
+      "$UV_BOOTSTRAP_PY" -m pip install -q --disable-pip-version-check \
+        --no-cache-dir 'pip==26.2.1' "uv==$UV_VERSION"
+    fi
+    UV="$UV_BOOTSTRAP_VENV/bin/uv"
+  fi
+  [ -x "$UV" ] || die "uv $UV_VERSION bootstrap failed; re-run with network access."
+fi
 
 # tensorflow-metal is the single most confusing failure: it makes
 # `import meridian` die inside libmetal_plugin.dylib with a symbol error that
@@ -80,13 +113,43 @@ if "$VENV_PY" -m pip show tensorflow-metal >/dev/null 2>&1; then
   "$VENV_PY" -m pip uninstall -y tensorflow-metal
 fi
 
-say "Installing this checkout with all extras (several minutes)"
 cd "$REPO_ROOT"
-# Install the sibling schema package first. Without this explicit local install,
-# pip satisfies the root package's `mmm-proto-schema` extra from PyPI and the
-# checkout silently runs against a different schema build.
-"$VENV_PY" -m pip install -e proto --config-settings editable_mode=strict
-"$VENV_PY" -m pip install -e ".$EXTRAS"
+if [ -n "$UV" ]; then
+  printf '    using %s (%s)\n' "$UV" "$("$UV" --version)"
+  say "Installing this checkout from uv.lock (selected extras; several minutes)"
+  # uv.lock is universal and includes the optional dependency metadata needed
+  # for every declared extra. Install only the supported CPU extras here:
+  # `and-cuda` is intentionally excluded because it has no Apple Silicon
+  # wheels and is not part of the supported all-extras setup.
+  UV_PROJECT_ENVIRONMENT="$VENV" "$UV" sync \
+    --python "$VENV_PY" \
+    --frozen \
+    --no-default-groups \
+    --extra dev \
+    --extra colab \
+    --extra schema \
+    --extra mlflow \
+    --extra geox \
+    --extra scenarioplanner
+else
+  say "Upgrading pip tooling (explicit pip fallback; dependency resolution is UNLOCKED)"
+  "$VENV_PY" -m pip install -q -U pip setuptools wheel
+
+  say "Installing this checkout with selected extras (pip fallback; UNLOCKED)"
+  # Install the sibling schema package first. Without this explicit local
+  # install, pip satisfies the root package's `mmm-proto-schema` extra from
+  # PyPI and the checkout silently runs against a different schema build.
+  "$VENV_PY" -m pip install -e proto --config-settings editable_mode=strict
+  "$VENV_PY" -m pip install -e ".$EXTRAS"
+fi
+
+# `python -m venv` normally seeds pip, but uv is allowed to remove packages it
+# does not find in the lock. Restore it if a future uv version treats pip as
+# extraneous so the diagnostic below remains available on every run.
+if ! "$VENV_PY" -m pip --version >/dev/null 2>&1; then
+  say "Restoring pip for dependency checks"
+  "$VENV_PY" -m ensurepip --upgrade >/dev/null
+fi
 
 # An editable install never runs setup.py's `build`, so the `compile_scss`
 # command that generates the report stylesheet never fires. The report template
@@ -99,6 +162,7 @@ say "Verifying the environment"
 if ! "$VENV_PY" scripts/verify_environment.py; then
   die "Environment verification failed. Fix the items marked FAIL above."
 fi
+"$VENV_PY" -m pip check
 
 # These commands are meant to be copied into a shell. Quote paths for that
 # shell, including custom environment paths and checkouts containing spaces.
@@ -113,6 +177,6 @@ Setup complete.
   Repository: cd $REPO_COMMAND_PATH
   Activate:   source $ACTIVATE_COMMAND_PATH
   Try it:     $PYTHON_COMMAND_PATH examples/quickstart.py
-  Run tests:  $PYTHON_COMMAND_PATH -m pytest meridian scenarioplanner -q -n 8 --dist=worksteal
+  Run tests:  $PYTHON_COMMAND_PATH scripts/run_tests.py
 
 EOF

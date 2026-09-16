@@ -2226,12 +2226,6 @@ class XlaWindowedAdaptiveNutsTest(BackendTest):
       self.assertIsInstance(kernel_seed, backend.Tensor)
       self.assertLen(kernel_seed.shape, 1)
 
-    if backend_name == _JAX:
-      if "dual_averaging_kwargs" in kwargs:
-        kwargs["dual_averaging_kwargs"] = immutabledict.immutabledict(
-            kwargs["dual_averaging_kwargs"]
-        )
-
     draws, trace = backend.xla_windowed_adaptive_nuts(
         joint_dist=model,
         n_chains=n_chains,
@@ -2244,7 +2238,7 @@ class XlaWindowedAdaptiveNutsTest(BackendTest):
 
   @parameterized.named_parameters(("tensorflow", _TF), ("jax", _JAX))
   def test_execution_and_shapes(self, backend_name):
-    """Verifies execution, static arg handling (immutabledict), and output shapes."""
+    """Verifies execution, static argument normalization, and output shapes."""
     self._set_backend_for_test(backend_name)
 
     dims = 3
@@ -2276,6 +2270,46 @@ class XlaWindowedAdaptiveNutsTest(BackendTest):
     self.assertEqual(tuple(trace["step_size"].shape), expected_trace_shape)
     final_step_size = trace["step_size"][-1]
     self.assertEqual(tuple(final_step_size.shape), ())
+
+  @parameterized.named_parameters(("tensorflow", _TF), ("jax", _JAX))
+  def test_plain_dual_averaging_mapping_matches_immutable_mapping(
+      self, backend_name
+  ):
+    """Accepts a caller dict without mutation on both backends.
+
+    The JAX wrapper needs an immutable static argument for ``jax.jit``.  This
+    checks the public call boundary rather than making the test helper hide the
+    conversion, and verifies it has the same sampling contract as an explicitly
+    immutable mapping.
+    """
+    self._set_backend_for_test(backend_name)
+    model = self._get_test_model(dims=2)
+    plain_kwargs = {"target_accept_prob": 0.8}
+
+    plain_draws, plain_trace = self._run_sampling(
+        backend_name=backend_name,
+        model=model,
+        seed_int=123,
+        n_chains=2,
+        n_draws=5,
+        num_adaptation_steps=3,
+        dual_averaging_kwargs=plain_kwargs,
+    )
+    self.assertEqual(plain_kwargs, {"target_accept_prob": 0.8})
+
+    immutable_draws, immutable_trace = self._run_sampling(
+        backend_name=backend_name,
+        model=model,
+        seed_int=123,
+        n_chains=2,
+        n_draws=5,
+        num_adaptation_steps=3,
+        dual_averaging_kwargs=immutabledict.immutabledict(plain_kwargs),
+    )
+    test_utils.assert_allclose(plain_draws["x"], immutable_draws["x"])
+    test_utils.assert_allclose(
+        plain_trace["step_size"], immutable_trace["step_size"]
+    )
 
   @parameterized.named_parameters(("tensorflow", _TF), ("jax", _JAX))
   def test_reproducibility(self, backend_name):

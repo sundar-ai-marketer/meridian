@@ -264,6 +264,15 @@ class SummarizerTest(parameterized.TestCase):
     self.assertIsNotNone(title_text)
     self.assertEqual(title_text.strip(), summary_text.MODEL_RESULTS_TITLE)
 
+  def test_report_note_is_visible_literal_text(self):
+    note = 'Exploratory only: <script>unsafe()</script> & review required.'
+    report = summarizer.Summarizer(self.mock_meridian_revenue, report_note=note)
+    root = self._get_output_model_results_summary_html_dom(report)
+    banner = root.find('body/cards/div[@role="note"]/p')
+    self.assertIsNotNone(banner)
+    self.assertEqual(banner.text, note)
+    self.assertEmpty(banner.findall('script'))
+
   def test_output_header_section(self):
     summary_html_dom = self._get_output_model_results_summary_html_dom(
         summarizer_outcome=self.summarizer_revenue,

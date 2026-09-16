@@ -3,7 +3,7 @@
 # Assumes that the local repo is already fetched.
 
 name: Install Meridian
-description: Install the local schema and Meridian checkout with selected extras.
+description: Install the local schema and checkout from the audited universal lock.
 
 inputs:
   python_version:
@@ -13,18 +13,38 @@ inputs:
   extras:
     description: Optional dependencies to install, in the format '[extra1,extra2]'.
     required: false
-    default: '[dev,jax,mlflow,schema,scenarioplanner,geox]'
+    default: '[dev,colab,mlflow,schema,scenarioplanner,geox]'
 
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
       with:
         python-version: ${{ inputs.python_version }}
         cache: pip
-        cache-dependency-path: '**/pyproject.toml'
+        cache-dependency-path: uv.lock
     - shell: bash
+      env:
+        MERIDIAN_EXTRAS: ${{ inputs.extras }}
       run: |
-        pip install -e proto --config-settings editable_mode=strict
-        pip install -e .${{ inputs.extras }} --config-settings editable_mode=strict
-        pip freeze
+        python -m pip install 'uv==0.11.14'
+        environment="$RUNNER_TEMP/meridian-ci"
+        python -m venv "$environment"
+        uv lock --check
+        extra_args=(--extra schema)
+        extras="${MERIDIAN_EXTRAS#[}"
+        extras="${extras%]}"
+        IFS=',' read -r -a selected_extras <<< "$extras"
+        for extra in "${selected_extras[@]}"; do
+          extra="${extra//[[:space:]]/}"
+          [ -z "$extra" ] && continue
+          [[ "$extra" =~ ^[a-zA-Z0-9_-]+$ ]] || exit 1
+          extra_args+=(--extra "$extra")
+        done
+        UV_PROJECT_ENVIRONMENT="$environment" uv sync \
+          --python "$environment/bin/python" --frozen --no-default-groups \
+          "${extra_args[@]}"
+        "$environment/bin/python" -m ensurepip --upgrade
+        "$environment/bin/python" -m pip check
+        "$environment/bin/python" -m pip freeze
+        echo "$environment/bin" >> "$GITHUB_PATH"

@@ -2,24 +2,29 @@
 # google/meridian source.
 #
 # Container for someone who would rather not touch their local Python install.
-# The Python minor version is fixed, while the base image, apt packages and
-# dependency resolution remain platform- and time-dependent. Two stages:
+# The Python minor version and uv installer are fixed, while the base image and
+# apt packages remain platform-dependent. Two stages:
 # `builder` has compilers in case a pinned
 # dependency needs to build from source, `runtime` copies out only the venv
 # and the source tree (editable install needs the source at runtime, not
 # just at build time) so those compilers do not end up in the shipped image.
 #
 # Image size depends on the target platform and the dependency wheels selected
-# by pip. Measure the image for the platform you intend to deploy.
+# by uv. Measure the image for the platform you intend to deploy.
 #
 # Verify after changes with:
 #
 #   docker build -t meridian .
 #   docker run --rm meridian                       # runs the quickstart demo
-#   docker run --rm meridian python -m pytest meridian scenarioplanner -q -n auto --dist=worksteal
+#   docker run --rm meridian python scripts/run_tests.py
 #   docker run --rm -it meridian bash               # interactive shell
 
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534 AS builder
+
+# Keep the resolver itself stable across rebuilds. The lockfile still records
+# the package artifacts and hashes; this version only controls how that lock
+# is interpreted and installed.
+ARG UV_VERSION=0.11.14
 
 # build-essential: some pinned scientific-python dependency versions may not
 # ship a wheel for every platform this gets built on, and fall back to
@@ -34,7 +39,8 @@ RUN apt-get update \
 ENV PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-RUN python -m venv /opt/venv
+RUN python -m pip install --no-cache-dir "uv==${UV_VERSION}" \
+    && python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"
 
 WORKDIR /app
@@ -45,19 +51,33 @@ WORKDIR /app
 # exist at runtime too, not just here at build time.
 COPY . /app
 
-# Use the same extras as scripts/setup.sh and the README, with the local schema
-# package installed first so this image cannot silently use a different build.
-RUN python -m pip install --upgrade pip setuptools wheel \
-    && pip install -e proto --config-settings editable_mode=strict \
-    && pip install -e ".[dev,colab,schema,mlflow,geox,scenarioplanner]"
+# Setuptools' proto build recursively discovers every `*.proto` below its
+# source root. Remove host build artifacts before the isolated build so a
+# previous local editable install cannot be mistaken for source input.
+RUN rm -rf /app/build /app/proto/build /app/dist /app/proto/dist
+
+# Install from the universal lock and select the supported CPU extras. The
+# lock contains metadata for the optional CUDA extra, but it is intentionally
+# not selected here because it has no Apple Silicon wheels.
+RUN UV_PROJECT_ENVIRONMENT=/opt/venv uv sync \
+    --python /opt/venv/bin/python \
+    --frozen \
+    --no-default-groups \
+    --extra dev \
+    --extra colab \
+    --extra schema \
+    --extra mlflow \
+    --extra geox \
+    --extra scenarioplanner
 
 # An editable install never runs setup.py's `build`, so the `compile_scss`
 # step that generates the report stylesheet never fires and every rendered
 # report comes out unstyled (see scripts/compile_report_css.py for the full
 # explanation). Compile it explicitly, same as scripts/setup.sh does.
 RUN python scripts/compile_report_css.py
+RUN python -m pip check
 
-FROM python:3.11-slim AS runtime
+FROM python:3.11-slim@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534 AS runtime
 
 RUN useradd --create-home --uid 1000 meridian
 
@@ -73,6 +93,6 @@ USER meridian
 
 # Default: the same one-shot demo `make demo` runs, on the bundled sample
 # data. Override the command for anything else, e.g.:
-#   docker run --rm meridian python -m pytest meridian scenarioplanner -q -n auto --dist=worksteal
+#   docker run --rm meridian python scripts/run_tests.py
 #   docker run --rm -it meridian bash
 CMD ["python", "examples/quickstart.py"]

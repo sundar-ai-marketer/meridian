@@ -17,6 +17,7 @@ VENV ?= .venv
 # into a quoted recipe argument, so expand it while evaluating the Makefile.
 override VENV := $(subst ~,$(HOME),$(VENV))
 VENV_PY := $(VENV)/bin/python
+TEST_WORKERS ?= 2
 
 .DEFAULT_GOAL := help
 
@@ -36,7 +37,7 @@ check-venv:
 		exit 1; \
 	fi
 
-## setup: Build the venv, install every extra, compile CSS, verify (wraps scripts/setup.sh).
+## setup: Build the venv, install supported CPU extras, compile CSS, verify (wraps scripts/setup.sh).
 setup:
 	./scripts/setup.sh "$(VENV)"
 
@@ -44,13 +45,13 @@ setup:
 verify: check-venv
 	"$(VENV_PY)" scripts/verify_environment.py
 
-## test: Run the full test suite in parallel with work-stealing.
+## test: Run the full suite in fresh processes with bounded worker memory.
 test: check-venv
-	"$(VENV_PY)" -m pytest meridian scenarioplanner -q -n auto --dist=worksteal
+	"$(VENV_PY)" scripts/run_tests.py --workers "$(TEST_WORKERS)"
 
 ## test-tf: Run the full test suite with the TensorFlow backend forced.
 test-tf: check-venv
-	MERIDIAN_BACKEND=tensorflow "$(VENV_PY)" -m pytest meridian scenarioplanner -q -n auto --dist=worksteal
+	MERIDIAN_BACKEND=tensorflow "$(VENV_PY)" scripts/run_tests.py --workers "$(TEST_WORKERS)"
 
 ## test-e2e: Run the real fit → optimize → serialize → report smoke test.
 test-e2e: check-venv

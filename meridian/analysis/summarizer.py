@@ -67,9 +67,21 @@ class Summarizer:
 
   # TODO: Switch to model_context, model_equations, and
   # inference_data.
-  def __init__(self, meridian: model.Meridian, use_kpi: bool = False):
-    """Initialize the visualizer classes that are not time-dependent."""
+  def __init__(
+      self,
+      meridian: model.Meridian,
+      use_kpi: bool = False,
+      *,
+      report_note: str | None = None,
+  ):
+    """Initialize visualizers and an optional plain-text report note.
+
+    ``report_note`` is displayed prominently in the saved HTML and escaped
+    as text. It can carry exploratory-use or model-review context when the
+    report is shared independently of the workflow that generated it.
+    """
     self._meridian = meridian
+    self._report_note = report_note
     self._use_kpi = analyzer.Analyzer(
         model_context=meridian.model_context,
         inference_data=meridian.inference_data,
@@ -157,7 +169,9 @@ class Summarizer:
     )
 
     return html_template.render(
-        title=summary_text.MODEL_RESULTS_TITLE, cards=cards_htmls
+        title=summary_text.MODEL_RESULTS_TITLE,
+        cards=cards_htmls,
+        report_note=self._report_note,
     )
 
   def _create_cards_htmls(

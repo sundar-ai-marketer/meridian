@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 #}
 
+{# NOTICE: This file was modified from the original google/meridian source. See NOTICE. #}
+
 {% macro render_findings(finding_type, findings, icon_alt, icon_url) %}
   {% if findings %}
     {% for finding in findings %}
@@ -28,6 +30,6 @@ limitations under the License.
   {% endif %}
 {% endmacro %}
 
-{{ render_findings('error', errors, 'error icon', 'https://www.gstatic.com/images/icons/material/system/svg/error_outline_24px.svg') }}
-{{ render_findings('warning', warnings, 'warning icon', 'https://www.gstatic.com/images/icons/material/system/svg/warning_amber_24px.svg') }}
-{{ render_findings('info', infos, 'info icon', 'https://www.gstatic.com/images/icons/material/system/svg/info_outline_24px.svg') }}
+{{ render_findings('error', errors, 'error icon', report_asset('error.svg')) }}
+{{ render_findings('warning', warnings, 'warning icon', report_asset('warning.svg')) }}
+{{ render_findings('info', infos, 'info icon', report_asset('info.svg')) }}

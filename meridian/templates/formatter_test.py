@@ -33,7 +33,7 @@ class FormatterTest(parameterized.TestCase):
         {
             'anchor': 'start',
             'color': '#3C4043',
-            'font': 'Google Sans Display',
+            'font': 'Google Sans Display, Arial, sans-serif',
             'fontSize': 18,
             'fontWeight': 'normal',
             'offset': 10,
