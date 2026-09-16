@@ -102,7 +102,7 @@ jobs:
 
   pytest:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       # Preserve independent backend/version evidence if one runner fails.
       fail-fast: false
@@ -119,9 +119,9 @@ jobs:
       - uses: ./.github/actions/install-meridian
         with:
           python_version: ${{ matrix.python-version }}
-      # Parallel workers keep the full suite practical. Work-stealing assigns
-      # newly available tests to the next worker, which avoids a slow tail when
-      # test durations vary. `pytest -vv` alone is serial and noisy.
+      # Bound worker memory on 16 GB runners. Separate processes release
+      # numerical compilation caches between the three disjoint suites;
+      # work-stealing balances test durations within each suite.
       - name: Run core tests
         run: |
           # Keep lightweight resource evidence in the live log even if the
@@ -137,7 +137,12 @@ jobs:
           ) &
           monitor_pid=$!
           trap 'kill "$monitor_pid" 2>/dev/null || true' EXIT
-          pytest -q -n auto --dist=worksteal meridian scenarioplanner
+          test_status=0
+          pytest -q -n 2 --dist=worksteal meridian/analysis || test_status=1
+          pytest -q -n 2 --dist=worksteal meridian/model || test_status=1
+          pytest -q -n 2 --dist=worksteal meridian scenarioplanner \
+            --ignore=meridian/analysis --ignore=meridian/model || test_status=1
+          exit "$test_status"
         env:
           MERIDIAN_BACKEND: ${{ matrix.meridian-backend }}
 

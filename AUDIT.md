@@ -83,6 +83,7 @@ Severity describes the consequence of the defect, not exploitability.
 | Low | Copied upstream publishing workflows performed unnecessary fork builds despite disabled publishing jobs. | Guard those jobs and correct the missing Python-version input. Automatic PyPI publication remains disabled. |
 | Low | Benchmark records did not clearly identify the active computation backend and precision. | Record the resolved runtime backend and precision, with tests. |
 | Medium | Backend initialization tests restored the module cache but left the parent package pointing at a temporary backend module, making later benchmark metadata depend on test order. | Restore the package alias during test cleanup. The failing initialization-then-metadata sequence and a package-alias regression now pass. |
+| Medium | Four parallel scientific-test workers put a 16 GB hosted runner under substantial memory pressure before shutdown: 15,227 MB used and 2,031 MB of swap used in the final sample. | Limit CI to two workers and run analysis, model, and remaining tests in separate processes to release numerical caches between suites. Preserve all six backend/version combinations and record resource usage in the live log. |
 | Low | Importing the benchmark failed on platforms without the Unix `resource` module. | Treat peak memory as unavailable when that platform API is absent; do not invent a comparable measurement. |
 
 ## Verification
@@ -200,6 +201,10 @@ Additional verification:
 - After correcting backend-test cleanup, the complete backend and benchmark
   modules passed 853 tests on each backend. The original failing ordered
   initialization/metadata sequence also passed.
+- CI test partitioning was checked against full-suite collection: analysis
+  (1,706), model (2,166), and remaining modules (1,907) cover all 5,779 test
+  identifiers exactly once. Every phase runs even if an earlier phase fails;
+  any failed phase fails the job.
 - `pip-audit` checked 173 local and 172 Linux-container dependency versions
   against its public advisory service and reported no known vulnerabilities
   on the audit date. This is a point-in-time advisory check, not proof of zero risk.
