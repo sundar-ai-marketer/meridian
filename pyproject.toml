@@ -70,14 +70,11 @@ dependencies = [
 dynamic = ["version"]
 
 [project.urls]
-# FORK_URL below is a placeholder. Replace every occurrence with this fork's
-# own GitHub URL before publishing, otherwise package metadata routes users
-# to Google for problems Google did not write and cannot support. Upstream is
-# still linked separately, which is where it belongs.
-homepage = "https://github.com/FORK_URL"
-repository = "https://github.com/FORK_URL"
-issues = "https://github.com/FORK_URL/issues"
-changelog = "https://github.com/FORK_URL/blob/main/CHANGELOG.md"
+# Fork support and source URLs; upstream documentation remains linked separately.
+homepage = "https://github.com/sundar-ai-marketer/meridian"
+repository = "https://github.com/sundar-ai-marketer/meridian"
+issues = "https://github.com/sundar-ai-marketer/meridian/issues"
+changelog = "https://github.com/sundar-ai-marketer/meridian/blob/main/CHANGELOG.md"
 upstream = "https://github.com/google/meridian"
 documentation = "https://developers.google.com/meridian"
 
@@ -141,6 +138,7 @@ geox = [
 
 [tool.pyink]
 # Formatting configuration to follow Google style-guide
+target-version = ["py311"]
 line-length = 80
 preview = true
 pyink-indentation = 2
@@ -150,7 +148,7 @@ pyink-use-majority-quotes = true
 # Build system specify which backend is used to build/install the project (flit,
 # poetry, setuptools,...). All backends are supported by `pip install`
 requires = [
-  "setuptools >= 61.0.0",
+  "setuptools >= 77.0.3",
   "libsass",
 ]
 build-backend = "setuptools.build_meta"

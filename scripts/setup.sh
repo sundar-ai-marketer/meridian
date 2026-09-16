@@ -48,6 +48,18 @@ On macOS:  brew install python@3.11
 On Debian: sudo apt install python3.11 python3.11-venv"
 printf '    using %s (%s)\n' "$PYTHON" "$("$PYTHON" --version)"
 
+if ! command -v git >/dev/null 2>&1; then
+  die "Git is required to build the sibling proto package. Install Git and re-run.
+On macOS:  brew install git
+On Debian: sudo apt install git ca-certificates"
+fi
+
+# Resolve the venv path before changing into the repository. Without this,
+# invoking the script from another directory with a relative path creates the
+# venv in the caller's directory, then tries to use that same relative path
+# after `cd "$REPO_ROOT"` and fails to find its interpreter.
+VENV="$($PYTHON -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).expanduser().resolve())' "$VENV")"
+
 say "Creating virtual environment at $VENV"
 if [ -d "$VENV" ]; then
   printf '    already exists, reusing it\n'
@@ -70,6 +82,10 @@ fi
 
 say "Installing this checkout with all extras (several minutes)"
 cd "$REPO_ROOT"
+# Install the sibling schema package first. Without this explicit local install,
+# pip satisfies the root package's `mmm-proto-schema` extra from PyPI and the
+# checkout silently runs against a different schema build.
+"$VENV_PY" -m pip install -e proto --config-settings editable_mode=strict
 "$VENV_PY" -m pip install -e ".$EXTRAS"
 
 # An editable install never runs setup.py's `build`, so the `compile_scss`
@@ -90,6 +106,6 @@ Setup complete.
 
   Activate:   source $VENV/bin/activate
   Try it:     $VENV_PY examples/quickstart.py
-  Run tests:  $VENV_PY -m pytest meridian -q -n 8
+  Run tests:  $VENV_PY -m pytest meridian scenarioplanner -q -n 8 --dist=worksteal
 
 EOF

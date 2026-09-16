@@ -12,12 +12,17 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+NOTICE: This file was modified from the original google/meridian source.
+See the NOTICE file at the repository root, and TRIAGE.md, for what changed
+and why.
 #}
 
 <chart-table id="{{ id }}">
   {% include "findings.html.jinja" %}
   <div class="chart-table-title">{{ title }}</div>
-  <div class="chart-table-content">
+  <div class="chart-table-content" tabindex="0" role="region"
+       aria-label="{{ title }} table">
     <table>
       <tr class="chart-table-column-headers">
       {% for column_header in column_headers %}

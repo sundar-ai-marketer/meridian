@@ -1,4 +1,9 @@
+<!-- NOTICE: This file is new in this fork; see NOTICE at the repository root. -->
+
 # Upstream issue triage
+
+For the fresh public-release audit, additional fixes, and verification limits,
+see [AUDIT.md](AUDIT.md). Measurements below are retained historical evidence.
 
 Disposition for every issue open on [google/meridian](https://github.com/google/meridian/issues)
 as of 2026-09-15 (47 open issues, 63 open PRs), evaluated against this fork at
@@ -144,6 +149,10 @@ is under-sampling, not a defect: r_hat is a diagnostic of chain length, and
 
 This is the direct answer to #1624 and #1446: on v2.0.0 with the JAX backend,
 the demo workload converges cleanly.
+
+The historical run above did not retain an explicit R-hat estimator label.
+Do not compare its value directly with the separately labeled TFP and
+rank-normalized R-hat results in [the release audit](AUDIT.md).
 
 ### Mathematical invariants
 

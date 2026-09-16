@@ -26,9 +26,16 @@ Files modified from the original google/meridian source:
   meridian/analysis/summarizer_test.py
   meridian/analysis/summary_text.py
   meridian/analysis/visualizer.py
+  meridian/analysis/review/checks.py
+  meridian/analysis/review/checks_test.py
+  meridian/analysis/review/results.py
+  meridian/analysis/review/results_test.py
   meridian/analysis/weekly_optimization_grid_test.py
   meridian/constants.py
   meridian/templates/summary.html.jinja
+  meridian/templates/chart.html.jinja
+  meridian/templates/table.html.jinja
+  meridian/templates/style.scss
   meridian/backend/test_utils.py
   meridian/data/data_frame_input_data_builder.py
   meridian/data/data_frame_input_data_builder_test.py
@@ -43,20 +50,30 @@ Files modified from the original google/meridian source:
   meridian/model/prior_distribution_test.py
   meridian/model/spec.py
   meridian/model/spec_test.py
+  meridian/mlflow/autolog_test.py
   .gitignore
   README.md
   CONTRIBUTING.md
   CITATION.cff
   pyproject.toml
+  proto/pyproject.toml
+  proto/setup.py
   MANIFEST.in
   .github/workflows/ci.yml
   .github/workflows/publish.yml
   .github/workflows/proto-publish.yml
+  .github/actions/version-check/action.yml
+  .github/actions/get-proto-version/action.yml
+  .github/actions/build/action.yml
+  .github/actions/install-meridian/action.yml
+  .github/actions/create-version-tag/action.yml
 
 Files added by this fork:
 
   NOTICE
   TRIAGE.md
+  AUDIT.md
+  proto/NOTICE
   meridian/analysis/geo_diagnostics.py
   meridian/analysis/geo_diagnostics_test.py
   meridian/analysis/prior_predictive.py
@@ -78,6 +95,11 @@ Files added by this fork:
   scripts/verify_environment.py
   scripts/setup.sh
   scripts/compile_report_css.py
+  scripts/test_end_to_end.py
+  scripts/test_report_browser.py
+  scripts/test_proto_build.py
+  .github/actions/version-check/check_version.sh
+  .github/actions/version-check/check_version_test.sh
   examples/quickstart.py
   meridian/benchmark/__main__.py
   meridian/validation/__main__.py
@@ -104,8 +126,16 @@ Summary of behavioural changes to existing code:
     instead of falling back to Vega-Lite's default scheme.
   * The budget-allocation chart is a labelled bar rather than a pie whose
     values were reachable only on hover.
-  * The report loads pinned Vega library versions instead of unversioned URLs,
-    so an archived report keeps rendering as it did when it was written.
+  * The report loads versioned Vega CDN URLs instead of unversioned URLs.
+    Charts and web fonts still require internet access.
+  * Mobile report charts use keyboard-accessible scroll regions rather than
+    clipping wide charts inside narrow cards.
+  * Geographic allocation diagnostics consider paid channels only. Sampling
+    diagnostics preserve non-finite failure signals, and fixed-truth recovery
+    ranks are explicitly distinguished from simulation-based calibration.
+  * Setup handles custom environment paths; Docker permits non-root output
+    writes; CI includes Scenario Planner and a real fit-to-report smoke test.
+  * Version checks support a repository's first release without existing tags.
 
 This fork's distribution is named `meridian-mmm-fork`, not `google-meridian`.
 The import path is unchanged (`import meridian`), but the published package is

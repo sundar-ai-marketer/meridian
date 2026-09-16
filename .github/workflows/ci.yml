@@ -43,6 +43,10 @@ jobs:
         with:
           python_version: ${{ env.USE_PYTHON_VERSION }}
           artifact_name: meridian-core-package-distribution
+      - name: Check schema build failure contracts
+        run: |
+          python -m pip install 'setuptools>=77.0.3'
+          python scripts/test_proto_build.py
       - name: Build mmm-proto-schema distribution
         uses: ./.github/actions/build
         with:
@@ -59,18 +63,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Check meridian version
-      - uses: ./.github/actions/install-meridian
+      # Read the literal version module; this metadata gate does not need the
+      # scientific stack or an editable package install.
+      - uses: actions/setup-python@v6
         with:
-          python_version: ${{ env.USE_PYTHON_VERSION }}
-          extras: ''
+          python-version: ${{ env.USE_PYTHON_VERSION }}
 
       - name: Get meridian version
         id: get_meridian_version
         shell: bash
         run: |
-          VERSION=$(python -c "import meridian; print(meridian.__version__)")
-          echo "value=$VERSION" >> $GITHUB_OUTPUT
+          VERSION=$(python -c "import runpy; print(runpy.run_path('meridian/version.py')['__version__'])")
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Check meridian version
         id: meridian_version_check
@@ -79,6 +83,9 @@ jobs:
           python_version: ${{ env.USE_PYTHON_VERSION }}
           semver_prefix: v
           current_version: ${{ steps.get_meridian_version.outputs.value}}
+
+      - name: Test version-check action contracts
+        run: bash .github/actions/version-check/check_version_test.sh
 
       # Check mmm-proto-schema version
       - name: Get mmm-proto-schema version
@@ -107,18 +114,65 @@ jobs:
     name: pytest (python-${{ matrix.python-version }}, backend-${{ matrix.meridian-backend }})
     steps:
       - uses: actions/checkout@v6
-        if: ${{ !contains(github.event.head_commit.message, '#skip-pytest') }}
       - uses: ./.github/actions/install-meridian
-        if: ${{ !contains(github.event.head_commit.message, '#skip-pytest') }}
         with:
           python_version: ${{ matrix.python-version }}
-      # `-n auto` matters. The suite is ~5,500 tests; measured locally it takes
-      # about 7 minutes at `-n 8` and far longer serially, against the 60-minute
-      # job timeout above. `pytest -vv` alone is serial despite the comment that
-      # used to sit here, and also prints a line per test, which makes a failure
-      # hard to find in the log.
+      # Parallel workers keep the full suite practical. Work-stealing assigns
+      # newly available tests to the next worker, which avoids a slow tail when
+      # test durations vary. `pytest -vv` alone is serial and noisy.
       - name: Run core tests
-        if: ${{ !contains(github.event.head_commit.message, '#skip-pytest') }}
-        run: pytest -q -n auto
+        run: pytest -q -n auto --dist=worksteal meridian scenarioplanner
         env:
           MERIDIAN_BACKEND: ${{ matrix.meridian-backend }}
+
+      - name: Compile report stylesheet
+        run: python scripts/compile_report_css.py
+
+      - name: Run end-to-end smoke test
+        run: python scripts/test_end_to_end.py --output-dir "$RUNNER_TEMP/meridian-e2e"
+        env:
+          MERIDIAN_BACKEND: ${{ matrix.meridian-backend }}
+
+      - name: Install browser smoke-test dependencies
+        if: matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Run report browser smoke test
+        if: matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'
+        run: python scripts/test_report_browser.py "$RUNNER_TEMP/meridian-e2e/summary.html"
+
+  # Build the image from the same checkout that passed the Python gates, then
+  # exercise the runtime as its non-root user. This catches Docker context,
+  # editable-install and filesystem ownership regressions that host CI cannot.
+  docker:
+    name: Docker build and smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build runtime image
+        run: docker build --tag meridian:ci .
+
+      - name: Smoke test runtime user and imports
+        run: |
+          docker run --rm --entrypoint python meridian:ci -c '
+          import getpass
+          from pathlib import Path
+          assert getpass.getuser() == "meridian", getpass.getuser()
+          # Match the default examples/quickstart.py output path so ownership
+          # regressions fail before the longer model smoke begins.
+          output = Path("/app/quickstart_output")
+          output.mkdir()
+          (output / "write-check").write_text("ok")
+          import meridian
+          import scenarioplanner
+          print(f"runtime user: {getpass.getuser()}")
+          print(f"meridian: {meridian.__version__}")
+          print(f"scenarioplanner: {scenarioplanner.__name__}")
+          '
+
+      - name: Run model to report smoke test
+        run: docker run --rm --env MERIDIAN_BACKEND=jax --entrypoint python meridian:ci scripts/test_end_to_end.py

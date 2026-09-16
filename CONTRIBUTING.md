@@ -7,10 +7,10 @@ This is a personal fork of
 [google/meridian](https://github.com/google/meridian), maintained by Sundar
 Ramesh Kumar. It is not affiliated with, endorsed by, or supported by Google.
 
-It is published so the fixes are usable and auditable, not to run a community
-project. Issues are welcome; pull requests may or may not be merged, depending
-on whether the change fits how this fork is used. If you need a guarantee,
-fork it yourself — that is what Apache 2.0 is for.
+Reproducible bug reports, documentation improvements, and focused pull requests
+are welcome. Keep changes within the fork's documented scope and include
+evidence that a proposed fix works. Review and response times depend on
+maintainer availability.
 
 **There is no Contributor License Agreement for this fork.** The upstream
 project requires one; this one does not. Anything merged here is under the
@@ -25,8 +25,7 @@ upstream.
 *   **Upstream**, if it is a defect in Google's code unrelated to this fork's
     changes. Reproduce it against a clean `pip install google-meridian` first,
     then report it at [google/meridian](https://github.com/google/meridian/issues).
-    Note that Google states it is not currently accepting external pull
-    requests, so expect to file an issue rather than a patch.
+    Check the upstream contribution policy before proposing a patch.
 *   **Here**, if it is a defect in this fork's own modules
     (`meridian/validation`, `meridian/benchmark`,
     `meridian.analysis.prior_predictive`, `meridian.analysis.geo_diagnostics`),
@@ -39,8 +38,18 @@ upstream.
     backend is deprecated upstream but still exercised in CI:
 
     ```sh
-    pytest meridian -q -n 8
-    MERIDIAN_BACKEND=tensorflow pytest meridian -q -n 8
+    pytest meridian scenarioplanner -q -n 8
+    MERIDIAN_BACKEND=tensorflow pytest meridian scenarioplanner -q -n 8
+    ```
+
+    Run `make test-e2e` for the real fit-to-report integration check.
+    Report changes also need a browser check against the generated HTML:
+
+    ```sh
+    python -m pip install playwright
+    python -m playwright install chromium
+    python scripts/test_end_to_end.py --output-dir /tmp/meridian-e2e
+    python scripts/test_report_browser.py /tmp/meridian-e2e/summary.html
     ```
 
     Use `backend.tfd` and `backend.np_float_dtype` rather than importing a TFP
@@ -65,3 +74,21 @@ upstream.
 
 Match the surrounding code: two-space indent, Google-style docstrings,
 `pyink`/`pylint` are declared in the `[dev]` extra.
+
+## Maintaining a release
+
+1. Reproduce a reported defect before changing behavior, then retain a focused
+   regression test. Keep statistical fixes separate from changes to model
+   assumptions.
+2. For dependency updates, check compatibility with both numerical backends.
+   Run the full suites, integration check, package builds, and a clean Docker
+   build; review GitHub's Python-version matrix before releasing.
+3. For reports, run the browser check above. For sampling or diagnostic changes,
+   inspect convergence, effective sample size, divergences, and recovery results
+   as appropriate. Do not loosen thresholds just to obtain a passing result.
+4. Review dependency advisories and scan the intended Git history for secrets
+   before publication. Record the date, environment, test results, and remaining
+   limits in `AUDIT.md`; update attribution in `NOTICE`.
+5. Keep changes in reviewable commits so a faulty release can be reverted.
+   The inherited PyPI publishing workflows are disabled for this fork; a GitHub
+   push does not publish a Python package to PyPI.

@@ -31,9 +31,75 @@ class RecoveryConfigTest(parameterized.TestCase):
     with self.assertRaisesRegex(ValueError, '`true_roi` has 1 entries'):
       recovery.RecoveryConfig(true_roi=(1.0,), spend_scale=(1.0, 2.0))
 
+  @parameterized.named_parameters(
+      dict(testcase_name='empty', value=()),
+      dict(testcase_name='zero', value=(0.0,)),
+      dict(testcase_name='negative', value=(-1.0,)),
+      dict(testcase_name='nan', value=(float('nan'),)),
+      dict(testcase_name='infinite', value=(float('inf'),)),
+  )
+  def test_rejects_invalid_true_roi(self, value):
+    with self.assertRaisesRegex(ValueError, '`true_roi`'):
+      recovery.RecoveryConfig(true_roi=value, spend_scale=value)
+
+  @parameterized.named_parameters(
+      dict(testcase_name='zero', value=(0.0,)),
+      dict(testcase_name='negative', value=(-1.0,)),
+      dict(testcase_name='nan', value=(float('nan'),)),
+      dict(testcase_name='infinite', value=(float('inf'),)),
+  )
+  def test_rejects_invalid_spend_scale(self, value):
+    with self.assertRaisesRegex(ValueError, '`spend_scale`'):
+      recovery.RecoveryConfig(true_roi=(1.0,), spend_scale=value)
+
+  @parameterized.named_parameters(
+      dict(testcase_name='zero_geos', field='n_geos', value=0),
+      dict(testcase_name='negative_geos', field='n_geos', value=-1),
+      dict(testcase_name='zero_times', field='n_times', value=0),
+      dict(testcase_name='negative_lag', field='max_lag', value=-1),
+      dict(testcase_name='zero_chains', field='n_chains', value=0),
+      dict(testcase_name='negative_adapt', field='n_adapt', value=-1),
+      dict(testcase_name='negative_burnin', field='n_burnin', value=-1),
+      dict(testcase_name='zero_keep', field='n_keep', value=0),
+  )
+  def test_rejects_invalid_sampling_dimensions(self, field, value):
+    with self.assertRaisesRegex(ValueError, f'`{field}`'):
+      recovery.RecoveryConfig(**{field: value})
+
+  @parameterized.named_parameters(
+      dict(testcase_name='negative_alpha', field='alpha', value=-0.1),
+      dict(testcase_name='nan_alpha', field='alpha', value=float('nan')),
+      dict(testcase_name='negative_noise', field='noise_fraction', value=-0.1),
+      dict(
+          testcase_name='infinite_noise',
+          field='noise_fraction',
+          value=float('inf'),
+      ),
+      dict(
+          testcase_name='zero_prior_median',
+          field='prior_roi_median',
+          value=0.0,
+      ),
+      dict(
+          testcase_name='zero_prior_sigma', field='prior_roi_sigma', value=0.0
+      ),
+  )
+  def test_rejects_invalid_numeric_settings(self, field, value):
+    with self.assertRaisesRegex(ValueError, f'`{field}`'):
+      recovery.RecoveryConfig(**{field: value})
+
+  def test_allows_meaningful_zero_settings(self):
+    config = recovery.RecoveryConfig(
+        max_lag=0, noise_fraction=0.0, n_adapt=0, n_burnin=0
+    )
+    self.assertEqual(config.max_lag, 0)
+    self.assertEqual(config.noise_fraction, 0.0)
+
   def test_rejects_unknown_response_shape(self):
     with self.assertRaisesRegex(ValueError, "must be 'linear' or 'concave'"):
-      recovery.RecoveryConfig(response='sigmoid')  # pytype: disable=wrong-arg-types
+      recovery.RecoveryConfig(
+          response='sigmoid'
+      )  # pytype: disable=wrong-arg-types
 
   @parameterized.named_parameters(
       dict(testcase_name='zero', level=0.0),
@@ -61,7 +127,7 @@ class RecoveryConfigTest(parameterized.TestCase):
       dict(testcase_name='negative', replications=-3),
   )
   def test_rejects_non_positive_replications(self, replications):
-    with self.assertRaisesRegex(ValueError, '`replications` must be >= 1'):
+    with self.assertRaisesRegex(ValueError, '`replications`'):
       recovery.RecoveryConfig(replications=replications)
 
 
@@ -141,9 +207,7 @@ class SimulateTest(parameterized.TestCase):
         recovery.RecoveryConfig(response='concave', **base)
     )
     self.assertFalse(
-        np.allclose(
-            linear['revenue'].to_numpy(), concave['revenue'].to_numpy()
-        )
+        np.allclose(linear['revenue'].to_numpy(), concave['revenue'].to_numpy())
     )
 
 
@@ -192,6 +256,16 @@ class ResultTest(absltest.TestCase):
     self.assertFalse(result.converged)
     self.assertFalse(result.passed)
 
+  def test_fails_when_rhat_is_infinite(self):
+    result = self._result(
+        [1.1, 2.1, 3.9],
+        [0.8, 1.8, 3.5],
+        [1.4, 2.4, 4.4],
+        r_hat=float('inf'),
+    )
+    self.assertFalse(result.converged)
+    self.assertFalse(result.passed)
+
   def test_relative_error_signs(self):
     result = self._result([1.5, 1.0, 4.0], [0.1, 0.1, 0.1], [9.0, 9.0, 9.0])
     self.assertAlmostEqual(result.channels[0].relative_error, 0.5)
@@ -219,7 +293,10 @@ class MultiRecoveryResultTest(absltest.TestCase):
             channel=name, true_roi=true, median=med, ci_low=lo, ci_high=hi
         )
         for name, true, med, lo, hi in zip(
-            config.channels, config.true_roi, medians, covered_los,
+            config.channels,
+            config.true_roi,
+            medians,
+            covered_los,
             covered_his,
         )
     )
@@ -231,9 +308,7 @@ class MultiRecoveryResultTest(absltest.TestCase):
     config = dataclasses.replace(
         recovery.RecoveryConfig(), replications=len(results)
     )
-    ranks = ranks or tuple(
-        (0.5, 0.5, 0.5) for _ in results
-    )
+    ranks = ranks or tuple((0.5, 0.5, 0.5) for _ in results)
     return recovery.MultiRecoveryResult(
         config=config,
         seeds=tuple(range(len(results))),
@@ -244,9 +319,7 @@ class MultiRecoveryResultTest(absltest.TestCase):
   def test_coverage_is_fraction_covered(self):
     # channel_0 always covers; channel_2 never does.
     results = [
-        self._fake_result(
-            [1.0, 2.0, 10.0], [0.5, 1.5, 9.0], [1.5, 2.5, 9.5]
-        )
+        self._fake_result([1.0, 2.0, 10.0], [0.5, 1.5, 9.0], [1.5, 2.5, 9.5])
         for _ in range(4)
     ]
     multi = self._multi_result(results)
@@ -255,14 +328,18 @@ class MultiRecoveryResultTest(absltest.TestCase):
     self.assertEqual(summaries['channel_2'].coverage, 0.0)
 
   def test_coverage_ci_widens_with_fewer_replications(self):
-    two = self._multi_result([
-        self._fake_result([1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5])
-        for _ in range(2)
-    ])
-    twenty = self._multi_result([
-        self._fake_result([1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5])
-        for _ in range(20)
-    ])
+    two = self._multi_result(
+        [
+            self._fake_result([1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5])
+            for _ in range(2)
+        ]
+    )
+    twenty = self._multi_result(
+        [
+            self._fake_result([1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5])
+            for _ in range(20)
+        ]
+    )
     two_summary = two.channel_summaries()[0]
     twenty_summary = twenty.channel_summaries()[0]
     two_width = two_summary.coverage_ci_high - two_summary.coverage_ci_low
@@ -295,6 +372,23 @@ class MultiRecoveryResultTest(absltest.TestCase):
       self.assertIn(channel, report)
     self.assertIn('replications=3', report)
     self.assertIn('VERDICT', report)
+
+  def test_rank_fractions_are_descriptive_not_sbc(self):
+    results = [
+        self._fake_result([1.0, 2.0, 4.0], [0.5, 1.5, 3.5], [1.5, 2.5, 4.5])
+        for _ in range(3)
+    ]
+    multi = self._multi_result(
+        results, ranks=((0.1, 0.2, 0.3), (0.5, 0.4, 0.2), (0.9, 0.6, 0.1))
+    )
+    summary = multi.channel_summaries()[0]
+    self.assertAlmostEqual(summary.rank_fraction_median, 0.5)
+    self.assertTrue(np.isnan(summary.rank_ks_threshold))
+
+    report = multi.format_report()
+    self.assertIn('rank fraction', report)
+    self.assertIn('not SBC', report)
+    self.assertNotIn('SBC KS', report)
 
 
 class EndToEndTest(absltest.TestCase):
@@ -349,9 +443,7 @@ class EndToEndTest(absltest.TestCase):
     for summary in multi.channel_summaries():
       self.assertBetween(summary.coverage, 0.0, 1.0)
       self.assertBetween(summary.coverage_ci_low, 0.0, summary.coverage)
-      self.assertBetween(
-          summary.coverage_ci_high, summary.coverage, 1.0
-      )
+      self.assertBetween(summary.coverage_ci_high, summary.coverage, 1.0)
     # A real, non-empty progress trail, including the runtime estimate.
     self.assertTrue(progress_lines)
     self.assertIn('replication 2/2', progress_lines[-1])

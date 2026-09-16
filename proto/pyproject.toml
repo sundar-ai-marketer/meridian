@@ -1,3 +1,6 @@
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
 [project]
 name = "mmm-proto-schema"
 description = """\
@@ -5,7 +8,7 @@ description = """\
   """
 readme = "README.md"
 requires-python = ">=3.10"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE"]
 authors = [
   {name = "The Meridian Authors", email="no-reply@google.com"},
 ]
@@ -39,7 +42,7 @@ documentation = "https://developers.google.com/meridian/docs/user-guide/mmm-unif
 # Build system specify which backend is used to build/install the project (flit,
 # poetry, setuptools,...). All backends are supported by `pip install`
 requires = [
-  "setuptools >= 61.0.0",
+  "setuptools >= 77.0.3",
   "tomli; python_version < '3.11'",
   "grpcio-tools >= 1.66.0, < 1.70.0",
 ]

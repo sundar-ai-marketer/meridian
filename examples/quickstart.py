@@ -64,6 +64,42 @@ def banner(step: str, started: float) -> None:
   print(f'\n[{time.time() - started:6.1f}s] {step}', flush=True)
 
 
+def _max_rhat(r_hat) -> float:
+  """Returns the worst ArviZ R-hat, ignoring undefined deterministic parameters.
+
+  ArviZ represents deterministic parameters with `NaN`. They do not make a
+  convergence check fail, but an infinite R-hat does: treating both as generic
+  non-finite values can make a failed fit look converged.
+  """
+  per_variable = []
+  for name in r_hat.data_vars:
+    values = np.asarray(r_hat[name].values, dtype=float)
+    non_nan = values[~np.isnan(values)]
+    if non_nan.size:
+      per_variable.append(float(non_nan.max()))
+  return max(per_variable) if per_variable else float('nan')
+
+
+def report_sampling_quality(mmm) -> None:
+  """Shows sampling diagnostics without turning one threshold into approval."""
+  import arviz as az
+
+  from meridian.analysis import sampling_diagnostics
+
+  worst = _max_rhat(az.rhat(mmm.inference_data.posterior, method='rank'))
+  if not np.isfinite(worst) or worst >= 1.2:
+    verdict = 'does not pass the 1.2 threshold, or is unavailable'
+  elif worst >= 1.01:
+    verdict = 'passes 1.2, but misses the stricter 1.01 target'
+  else:
+    verdict = 'passes the 1.01 R-hat target'
+  print(f'    max rank-normalized r_hat = {worst:.4f} -> {verdict}')
+  print(f'    {sampling_diagnostics.SamplingDiagnostics(mmm).verdict}')
+  print(
+      '    These checks assess sampling; they do not establish causal validity.'
+  )
+
+
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(
       prog='python examples/quickstart.py',
@@ -72,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
   parser.add_argument(
       '--full',
       action='store_true',
-      help="Use the demo's MCMC settings. Much slower, properly converged.",
+      help="Use the demo's longer MCMC settings; still inspect convergence.",
   )
   parser.add_argument(
       '--output-dir',
@@ -99,8 +135,10 @@ def main(argv: list[str] | None = None) -> int:
   # ---- Replace this DataFrame with your own -------------------------------
   df = pd.read_csv(SAMPLE_CSV)
   # -------------------------------------------------------------------------
-  print(f'    {len(df):,} rows, {df["geo"].nunique()} geos,'
-        f' {df["time"].nunique()} periods')
+  print(
+      f'    {len(df):,} rows, {df["geo"].nunique()} geos,'
+      f' {df["time"].nunique()} periods'
+  )
 
   banner('2. Building InputData', started)
   data = (
@@ -173,7 +211,7 @@ def main(argv: list[str] | None = None) -> int:
   else:
     chains, adapt, burnin, keep = 4, 400, 400, 500
     print('    Small MCMC for speed. Expect r_hat above 1.2 -- that is')
-    print('    under-sampling, not a broken model. Use --full for a real fit.')
+    print('    under-sampling. Use --full for longer sampling, then recheck.')
   fit_started = time.time()
   mmm.sample_posterior(
       n_chains=chains, n_adapt=adapt, n_burnin=burnin, n_keep=keep, seed=1
@@ -181,17 +219,7 @@ def main(argv: list[str] | None = None) -> int:
   print(f'    fitted in {time.time() - fit_started:.0f}s')
 
   banner('6. Convergence', started)
-  import arviz as az
-
-  r_hat = az.rhat(mmm.inference_data.posterior)
-  worst = 0.0
-  for name in r_hat.data_vars:
-    values = np.asarray(r_hat[name].values, dtype=float)
-    finite = values[np.isfinite(values)]
-    if finite.size:
-      worst = max(worst, float(finite.max()))
-  verdict = 'converged' if worst < 1.2 else 'NOT converged (r_hat >= 1.2)'
-  print(f'    max r_hat = {worst:.4f}  -> {verdict}')
+  report_sampling_quality(mmm)
 
   banner('7. ROI by channel', started)
   analyzer = analyzer_module.Analyzer(
@@ -202,8 +230,10 @@ def main(argv: list[str] | None = None) -> int:
   print(f'    {"channel":<12}{"median":>9}{"90% interval":>22}')
   for i, channel in enumerate(CHANNELS):
     lo, hi = np.quantile(draws[:, i], [0.05, 0.95])
-    print(f'    {channel:<12}{np.median(draws[:, i]):9.3f}'
-          f'  [{lo:8.3f},{hi:8.3f}]')
+    print(
+        f'    {channel:<12}{np.median(draws[:, i]):9.3f}'
+        f'  [{lo:8.3f},{hi:8.3f}]'
+    )
   print('    Intervals cover parameter uncertainty only -- not error in the')
   print('    assumed saturation shape. See "Reading ROI intervals honestly".')
 

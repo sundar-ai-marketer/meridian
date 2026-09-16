@@ -67,7 +67,7 @@ the default). That cannot separate systematic misspecification bias from a
 single unlucky draw -- it is a sizing exercise at your own data's shape, not a
 calibration statement.
 
-## Turning the sizing exercise into a calibration statement
+## Turning the sizing exercise into an empirical recovery study
 
 Pass `--replications N` to simulate and fit N independent datasets, each from
 a seed deterministically derived from `--seed` via
@@ -76,28 +76,31 @@ per channel:
 
   * the median and interquartile range of relative ROI error;
   * **empirical coverage** -- the fraction of replications where the true ROI
-    fell inside the nominal credible interval. This is the headline number:
-    for a well-calibrated model under a correctly specified response shape,
-    coverage should sit near the nominal `--confidence-level` (0.9 by
-    default). Coverage measurably below that is the quantitative version of
-    "the interval does not cover this kind of error" -- the qualitative claim
-    the single-run table above can only gesture at.
+    fell inside the nominal credible interval at this configured truth, data
+    shape, prior, and response. It describes recovery at that setting; it is
+    not a general guarantee that Bayesian interval coverage equals the nominal
+    `--confidence-level` (0.9 by default), even when the response shape is
+    correctly specified. Compare relevant truths and configurations rather
+    than treating one point estimate as a universal calibration result.
   * a 95% Wilson score interval on that coverage estimate. With N
     replications the coverage estimate is itself noisy (binomial with only N
     trials); report the interval, not a point estimate, and do not treat N=20
     as enough to resolve 0.90 from 0.80.
 
-It also reports a simulation-based-calibration (SBC) rank statistic per
-channel: the fraction of posterior ROI draws that fall below the true value
-in each replication. Under a calibrated model these fractions are uniform on
-[0, 1] across replications; the report includes a one-sample
-Kolmogorov-Smirnov statistic against that uniform null as an informal check
-(its asymptotic critical value is unreliable much below ~20 replications, so
-treat it as a hint, not a test, at small N).
+It also records a rank fraction per channel and replication: the fraction of
+posterior ROI draws below the realised true ROI. These ranks help show whether
+the fitted estimates tend to land above or below the configured truth.
 
-This module does not (yet) implement rank histograms or SBC beyond that one
-KS statistic -- no chain-pooling diagnostics, no ECDF-difference plots. What
-is above is the whole of it.
+**This fixed-truth recovery experiment is not simulation-based calibration
+(SBC).** Classical SBC draws each data-generating parameter from the same
+prior used to fit the model; this module deliberately fixes `true_roi` and
+can deliberately simulate a response shape outside the fitted model. Its rank
+fractions therefore need not be Uniform(0, 1), even when the recovery setup is
+working as intended. They are descriptive recovery output, not a calibration
+test or a basis for a uniform-null threshold.
+
+This module does not implement SBC, rank histograms, or a calibrated rank
+test. What is above is the whole of it.
 
 Multi-replication runs take N times as long as a single fit (each fit is
 several minutes); `--replications` prints a per-replication progress line and
@@ -107,8 +110,8 @@ docstring** -- generating them takes the time it takes, and this module does
 not report numbers nobody measured.
 
 ```
-python -m meridian.validation.recovery --n-geos 5 --n-times 104 --response linear
-python -m meridian.validation.recovery --replications 20 --response linear
+python -m meridian.validation --n-geos 5 --n-times 104 --response linear
+python -m meridian.validation --replications 20 --response linear
 ```
 """
 
@@ -132,7 +135,6 @@ from meridian.model import model
 from meridian.model import prior_distribution
 from meridian.model import spec
 
-
 __all__ = [
     'RecoveryConfig',
     'RecoveryResult',
@@ -146,6 +148,53 @@ __all__ = [
 ]
 
 ResponseShape = Literal['linear', 'concave']
+
+
+def _require_integer_at_least(name: str, value: object, minimum: int) -> None:
+  """Raises a clear error unless `value` is an integer at least `minimum`."""
+  if (
+      isinstance(value, bool)
+      or not isinstance(value, (int, np.integer))
+      or value < minimum
+  ):
+    raise ValueError(
+        f'`{name}` must be an integer >= {minimum}, got {value!r}.'
+    )
+
+
+def _require_finite_at_least(
+    name: str, value: object, minimum: float, *, strict: bool = False
+) -> None:
+  """Raises a clear error unless a scalar is finite and above a bound."""
+  try:
+    number = float(value)
+  except (TypeError, ValueError) as error:
+    raise ValueError(f'`{name}` must be a finite number.') from error
+  violates_bound = number <= minimum if strict else number < minimum
+  if not np.isfinite(number) or violates_bound:
+    comparison = '>' if strict else '>='
+    raise ValueError(
+        f'`{name}` must be finite and {comparison} {minimum}, got {value!r}.'
+    )
+
+
+def _require_positive_vector(name: str, values: object) -> None:
+  """Raises a clear error unless a vector is nonempty, finite, and positive."""
+  try:
+    array = np.asarray(values, dtype=float)
+  except (TypeError, ValueError) as error:
+    raise ValueError(
+        f'`{name}` must be a nonempty sequence of finite values > 0.'
+    ) from error
+  if (
+      array.ndim != 1
+      or array.size == 0
+      or not np.all(np.isfinite(array))
+      or np.any(array <= 0.0)
+  ):
+    raise ValueError(
+        f'`{name}` must be a nonempty sequence of finite values > 0.'
+    )
 
 
 @dataclasses.dataclass(frozen=True)
@@ -169,9 +218,9 @@ class RecoveryConfig:
     n_adapt: MCMC adaptation steps.
     n_burnin: MCMC burn-in steps.
     n_keep: MCMC retained draws per chain.
-    prior_roi_median: Median of the ROI prior applied to EVERY channel. Left
-      deliberately uninformative so that separating the channels is the data's
-      work, not the prior's.
+    prior_roi_median: Median of the shared ROI prior applied to every channel.
+      The same prior prevents channel-specific prior information from deciding
+      their relative recovery, but it remains informative about ROI levels.
     prior_roi_sigma: Log-scale standard deviation of that prior.
     seed: Base seed for both simulation and sampling. With `replications > 1`
       each replication derives its own seed from this one via
@@ -203,21 +252,42 @@ class RecoveryConfig:
   replications: int = 1
 
   def __post_init__(self):
-    if len(self.true_roi) != len(self.spend_scale):
+    try:
+      n_true_roi = len(self.true_roi)
+      n_spend_scale = len(self.spend_scale)
+    except TypeError as error:
       raise ValueError(
-          f'`true_roi` has {len(self.true_roi)} entries but `spend_scale` has'
-          f' {len(self.spend_scale)}.'
+          '`true_roi` and `spend_scale` must be sequences.'
+      ) from error
+    if n_true_roi != n_spend_scale:
+      raise ValueError(
+          f'`true_roi` has {n_true_roi} entries but `spend_scale` has'
+          f' {n_spend_scale}.'
       )
+    _require_positive_vector('true_roi', self.true_roi)
+    _require_positive_vector('spend_scale', self.spend_scale)
+    _require_integer_at_least('n_geos', self.n_geos, 1)
+    _require_integer_at_least('n_times', self.n_times, 1)
+    _require_integer_at_least('max_lag', self.max_lag, 0)
+    _require_integer_at_least('n_chains', self.n_chains, 1)
+    _require_integer_at_least('n_adapt', self.n_adapt, 0)
+    _require_integer_at_least('n_burnin', self.n_burnin, 0)
+    _require_integer_at_least('n_keep', self.n_keep, 1)
+    _require_integer_at_least('replications', self.replications, 1)
+    _require_finite_at_least('alpha', self.alpha, 0.0)
+    _require_finite_at_least('noise_fraction', self.noise_fraction, 0.0)
+    _require_finite_at_least(
+        'prior_roi_median', self.prior_roi_median, 0.0, strict=True
+    )
+    _require_finite_at_least(
+        'prior_roi_sigma', self.prior_roi_sigma, 0.0, strict=True
+    )
     if self.response not in ('linear', 'concave'):
       raise ValueError(
           f"`response` must be 'linear' or 'concave', got {self.response!r}."
       )
     if not 0.0 < self.confidence_level < 1.0:
       raise ValueError('`confidence_level` must be in (0, 1).')
-    if self.replications < 1:
-      raise ValueError(
-          f'`replications` must be >= 1, got {self.replications}.'
-      )
 
   @property
   def channels(self) -> list[str]:
@@ -253,6 +323,8 @@ class RecoveryResult:
 
   config: RecoveryConfig
   channels: tuple[ChannelRecovery, ...]
+  # ArviZ rank-normalized split R-hat, unlike SamplingDiagnostics' upstream
+  # TFP potential-scale-reduction statistic.
   max_r_hat: float
 
   @property
@@ -275,18 +347,20 @@ class RecoveryResult:
     return self.converged and self.all_covered and self.ordering_recovered
 
   def to_frame(self) -> pd.DataFrame:
-    return pd.DataFrame([
-        {
-            'channel': ch.channel,
-            'true_roi': ch.true_roi,
-            'median': ch.median,
-            'ci_low': ch.ci_low,
-            'ci_high': ch.ci_high,
-            'covered': ch.covered,
-            'relative_error': ch.relative_error,
-        }
-        for ch in self.channels
-    ])
+    return pd.DataFrame(
+        [
+            {
+                'channel': ch.channel,
+                'true_roi': ch.true_roi,
+                'median': ch.median,
+                'ci_low': ch.ci_low,
+                'ci_high': ch.ci_high,
+                'covered': ch.covered,
+                'relative_error': ch.relative_error,
+            }
+            for ch in self.channels
+        ]
+    )
 
   def format_report(self) -> str:
     lines = [
@@ -294,7 +368,7 @@ class RecoveryResult:
         f' max_lag={self.config.max_lag}'
         f' n_geos={self.config.n_geos} n_times={self.config.n_times}',
         '-' * 72,
-        f'max r_hat = {self.max_r_hat:.4f}'
+        f'max rank-normalized r_hat = {self.max_r_hat:.4f}'
         f"  {'converged' if self.converged else 'NOT CONVERGED'}",
         '',
         f"{'channel':<12}{'true':>8}{'median':>9}{'90% CI':>22}"
@@ -355,9 +429,7 @@ def simulate(config: RecoveryConfig) -> tuple[pd.DataFrame, np.ndarray]:
   if config.response == 'concave':
     # Rescaled so total incremental outcome, and so true ROI, is unchanged.
     shaped = np.sqrt(spend)
-    shaped = shaped * (
-        spend.sum(axis=(0, 1)) / shaped.sum(axis=(0, 1))
-    )
+    shaped = shaped * (spend.sum(axis=(0, 1)) / shaped.sum(axis=(0, 1)))
   else:
     shaped = spend
 
@@ -365,16 +437,14 @@ def simulate(config: RecoveryConfig) -> tuple[pd.DataFrame, np.ndarray]:
   weights = _decay_weights(config.max_lag, config.alpha)
   incremental = np.zeros_like(contribution)
   for lag, weight in enumerate(weights):
-    incremental[:, lag:, :] += weight * contribution[
-        :, : n_media_times - lag, :
-    ]
+    incremental[:, lag:, :] += (
+        weight * contribution[:, : n_media_times - lag, :]
+    )
 
   baseline_level = 6.0e5 * (population / population.mean())
   trend = 1.0 + 0.15 * np.sin(np.linspace(0, 4 * np.pi, n_media_times))
   control = rng.normal(size=(config.n_geos, n_media_times))
-  baseline = (
-      baseline_level[:, None] * trend[None, :] * (1.0 + 0.03 * control)
-  )
+  baseline = baseline_level[:, None] * trend[None, :] * (1.0 + 0.03 * control)
 
   revenue = baseline + incremental.sum(axis=-1)
   revenue = revenue + rng.normal(
@@ -456,14 +526,14 @@ def _fit_and_recover(
   """Simulates and fits one replication.
 
   Factored out of `run_recovery` so that `run_recovery_replications` can
-  reuse the same fit for its rank statistics (see `ChannelReplicationSummary`
-  and the SBC discussion in the module docstring) without fitting twice.
+  reuse the same fit for its rank fractions (see `ChannelReplicationSummary`)
+  without fitting twice.
 
   Returns:
     A tuple `(result, draws, true_roi)`: the single-run `RecoveryResult`
     (identical to what `run_recovery` returns), the posterior ROI draws with
     shape `(n_draws, n_channels)`, and the realised true ROI per channel used
-    for the rank statistic.
+    for the descriptive rank fraction.
   """
   df, true_roi = simulate(config)
   mmm = _build_model(df, config)
@@ -479,16 +549,18 @@ def _fit_and_recover(
 
   import arviz as az  # pylint: disable=g-import-not-at-top
 
-  r_hat = az.rhat(mmm.inference_data.posterior)  # pytype: disable=attribute-error
+  r_hat = az.rhat(  # pytype: disable=attribute-error
+      mmm.inference_data.posterior, method='rank'
+  )
   # Deterministic parameters -- hierarchical terms pinned to zero in a national
   # model, for instance -- have no between-chain variance, so arviz returns
   # all-NaN r_hat for them. Drop those rather than reducing over a NaN slice.
   per_variable = []
   for name in r_hat.data_vars:
     values = np.asarray(r_hat[name].values, dtype=float)
-    finite = values[np.isfinite(values)]
-    if finite.size:
-      per_variable.append(float(finite.max()))
+    non_nan = values[~np.isnan(values)]
+    if non_nan.size:
+      per_variable.append(float(non_nan.max()))
   # NaN when every parameter is deterministic; `converged` then reads False,
   # which is the safe direction.
   max_r_hat = max(per_variable) if per_variable else float('nan')
@@ -515,9 +587,7 @@ def _fit_and_recover(
       )
       for i, name in enumerate(config.channels)
   )
-  result = RecoveryResult(
-      config=config, channels=channels, max_r_hat=max_r_hat
-  )
+  result = RecoveryResult(config=config, channels=channels, max_r_hat=max_r_hat)
   return result, draws, true_roi
 
 
@@ -596,13 +666,13 @@ def _wilson_interval(
 
 
 def _ks_statistic_vs_uniform(values: np.ndarray) -> float:
-  """One-sample Kolmogorov-Smirnov statistic against Uniform(0, 1).
+  """Returns a legacy, uncalibrated distance from Uniform(0, 1).
 
-  Used on SBC rank fractions: under a calibrated model those fractions are
-  uniform on [0, 1] across replications, so a large statistic here flags
-  miscalibration. This is the statistic only, not a p-value -- see
-  `_ks_uniform_threshold` for the (asymptotic, small-N-unreliable) reference
-  value used to interpret it.
+  `rank_ks_statistic` is retained in `ChannelReplicationSummary` for API
+  compatibility. This recovery experiment fixes the data-generating truth
+  instead of drawing it from the fitting prior, so this value is not an SBC
+  statistic and has no calibrated uniform-null threshold. Use the rank-fraction
+  summaries instead.
   """
   x = np.sort(np.asarray(values, dtype=float))
   n = x.size
@@ -613,21 +683,16 @@ def _ks_statistic_vs_uniform(values: np.ndarray) -> float:
   return float(max(np.max(ecdf_upper - x), np.max(x - ecdf_lower)))
 
 
-def _ks_uniform_threshold(n: int, alpha: float = 0.05) -> float:
-  """Asymptotic KS critical value for a fully specified Uniform(0, 1) null.
-
-  The classic `c(alpha) / sqrt(n)` approximation, `c(0.05) = 1.36`. This is
-  asymptotic and known to be unreliable below roughly n=20 -- treat it as a
-  rough guide at small replication counts, not a calibrated test.
-  """
-  if n <= 0:
-    return float('nan')
-  return 1.36 / np.sqrt(n)
-
-
 @dataclasses.dataclass(frozen=True)
 class ChannelReplicationSummary:
-  """One channel's recovery statistics aggregated across replications."""
+  """One channel's recovery statistics aggregated across replications.
+
+  `rank_ks_statistic` and `rank_ks_threshold` are retained for API
+  compatibility. The former is an uncalibrated descriptive distance from a
+  uniform distribution; the latter is `NaN` because a fixed-truth recovery
+  experiment has no valid uniform-null threshold. Read the rank-fraction
+  summaries rather than using either field as an SBC test.
+  """
 
   channel: str
   n: int
@@ -640,6 +705,9 @@ class ChannelReplicationSummary:
   median_ci_width: float
   rank_ks_statistic: float
   rank_ks_threshold: float
+  rank_fraction_median: float = float('nan')
+  rank_fraction_iqr_low: float = float('nan')
+  rank_fraction_iqr_high: float = float('nan')
 
 
 @dataclasses.dataclass(frozen=True)
@@ -654,9 +722,10 @@ class MultiRecoveryResult:
       `derive_replication_seeds`.
     replications: Each replication's full single-run `RecoveryResult`, in the
       same order as `seeds`.
-    ranks: Per replication, per channel, the SBC rank fraction -- the
+    ranks: Per replication, per channel, the descriptive rank fraction -- the
       fraction of that replication's posterior ROI draws falling below the
-      true value. Shape `(len(replications), n_channels)`.
+      fixed, realised true value. This is not an SBC rank. Shape
+      `(len(replications), n_channels)`.
   """
 
   config: RecoveryConfig
@@ -689,13 +758,13 @@ class MultiRecoveryResult:
       errors = np.array(
           [rep.channels[i].relative_error for rep in self.replications]
       )
-      covered = np.array(
-          [rep.channels[i].covered for rep in self.replications]
+      covered = np.array([rep.channels[i].covered for rep in self.replications])
+      widths = np.array(
+          [
+              rep.channels[i].ci_high - rep.channels[i].ci_low
+              for rep in self.replications
+          ]
       )
-      widths = np.array([
-          rep.channels[i].ci_high - rep.channels[i].ci_low
-          for rep in self.replications
-      ])
       rank_fracs = np.array([rep_ranks[i] for rep_ranks in self.ranks])
       coverage_low, coverage_high = _wilson_interval(
           int(covered.sum()), covered.size
@@ -712,28 +781,36 @@ class MultiRecoveryResult:
               coverage_ci_high=coverage_high,
               median_ci_width=float(np.median(widths)),
               rank_ks_statistic=_ks_statistic_vs_uniform(rank_fracs),
-              rank_ks_threshold=_ks_uniform_threshold(rank_fracs.size),
+              rank_ks_threshold=float('nan'),
+              rank_fraction_median=float(np.median(rank_fracs)),
+              rank_fraction_iqr_low=float(np.quantile(rank_fracs, 0.25)),
+              rank_fraction_iqr_high=float(np.quantile(rank_fracs, 0.75)),
           )
       )
     return tuple(summaries)
 
   def to_frame(self) -> pd.DataFrame:
-    return pd.DataFrame([
-        {
-            'channel': s.channel,
-            'n': s.n,
-            'median_relative_error': s.median_relative_error,
-            'iqr_low': s.iqr_low,
-            'iqr_high': s.iqr_high,
-            'coverage': s.coverage,
-            'coverage_ci_low': s.coverage_ci_low,
-            'coverage_ci_high': s.coverage_ci_high,
-            'median_ci_width': s.median_ci_width,
-            'rank_ks_statistic': s.rank_ks_statistic,
-            'rank_ks_threshold': s.rank_ks_threshold,
-        }
-        for s in self.channel_summaries()
-    ])
+    return pd.DataFrame(
+        [
+            {
+                'channel': s.channel,
+                'n': s.n,
+                'median_relative_error': s.median_relative_error,
+                'iqr_low': s.iqr_low,
+                'iqr_high': s.iqr_high,
+                'coverage': s.coverage,
+                'coverage_ci_low': s.coverage_ci_low,
+                'coverage_ci_high': s.coverage_ci_high,
+                'median_ci_width': s.median_ci_width,
+                'rank_ks_statistic': s.rank_ks_statistic,
+                'rank_ks_threshold': s.rank_ks_threshold,
+                'rank_fraction_median': s.rank_fraction_median,
+                'rank_fraction_iqr_low': s.rank_fraction_iqr_low,
+                'rank_fraction_iqr_high': s.rank_fraction_iqr_high,
+            }
+            for s in self.channel_summaries()
+        ]
+    )
 
   def format_report(self) -> str:
     nominal = self.config.confidence_level
@@ -746,23 +823,21 @@ class MultiRecoveryResult:
         f'base seed={self.config.seed}, per-replication seeds derived via'
         f' SeedSequence({self.config.seed}).spawn({self.n})',
         '-' * 78,
-        f'{n_converged}/{self.n} replications converged (max r_hat < 1.2)',
+        f'{n_converged}/{self.n} replications converged'
+        ' (max rank-normalized r_hat < 1.2)',
         '',
         f"{'channel':<12}{'med.err':>9}{'IQR':>18}"
         f"{f'cov({nominal:.0%})':>11}{'95% Wilson CI':>17}{'med.width':>11}"
-        f"{'SBC KS':>9}",
+        f"{'rank med.':>11}",
     ]
     for s in self.channel_summaries():
-      ks_flag = (
-          '*' if s.rank_ks_statistic > s.rank_ks_threshold else ' '
-      )
       lines.append(
           f'{s.channel:<12}{s.median_relative_error:+8.1%} '
           f' [{s.iqr_low:+6.1%},{s.iqr_high:+6.1%}]'
           f'{s.coverage:10.0%}'
           f'  [{s.coverage_ci_low:5.0%},{s.coverage_ci_high:5.0%}]'
           f'{s.median_ci_width:11.3f}'
-          f'{s.rank_ks_statistic:8.3f}{ks_flag}'
+          f'{s.rank_fraction_median:11.3f}'
       )
     lines += [
         '',
@@ -771,10 +846,10 @@ class MultiRecoveryResult:
         ' interval on that coverage estimate itself, not on ROI -- with only'
         f' {self.n} replications, coverage is a noisy estimate, not a'
         ' precise one.',
-        "SBC KS: one-sample Kolmogorov-Smirnov statistic of each channel's"
-        ' rank fractions against Uniform(0, 1); \'*\' marks a statistic above'
-        ' the (asymptotic, unreliable below ~20 replications) 5% critical'
-        ' value -- a hint of miscalibration, not a rigorous test at this N.',
+        'rank fraction = fraction of posterior ROI draws below the fixed,'
+        ' realised true ROI. This is a recovery experiment, not SBC: truth is'
+        ' configured rather than drawn from the fitting prior, so ranks are'
+        ' descriptive and do not have a Uniform(0, 1) calibration target.',
         f'VERDICT: {"ALL CONVERGED" if self.passed else "NOT ALL CONVERGED"}'
         ' -- whether the coverage above is acceptable is a judgment call for'
         ' the reader, not something this module scores pass/fail.',

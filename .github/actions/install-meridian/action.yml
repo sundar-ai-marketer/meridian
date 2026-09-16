@@ -1,4 +1,9 @@
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
 # Assumes that the local repo is already fetched.
+
+name: Install Meridian
+description: Install the local schema and Meridian checkout with selected extras.
 
 inputs:
   python_version:
@@ -23,4 +28,3 @@ runs:
         pip install -e proto --config-settings editable_mode=strict
         pip install -e .${{ inputs.extras }} --config-settings editable_mode=strict
         pip freeze
-

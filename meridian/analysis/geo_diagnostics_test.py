@@ -29,7 +29,7 @@ from meridian.data import test_utils as data_test_utils
 from meridian.model import model
 from meridian.model import spec
 import numpy as np
-
+import xarray as xr
 
 _N_GEOS = 4
 _N_TIMES = 40
@@ -43,9 +43,7 @@ def _build_model(n_geos: int = _N_GEOS) -> model.Meridian:
       n_media_channels=2,
       n_controls=1,
   )
-  return model.Meridian(
-      input_data=data, model_spec=spec.ModelSpec(max_lag=2)
-  )
+  return model.Meridian(input_data=data, model_spec=spec.ModelSpec(max_lag=2))
 
 
 class GeoAllocationReliabilityTest(parameterized.TestCase):
@@ -111,8 +109,7 @@ class GeoAllocationReliabilityTest(parameterized.TestCase):
     self.assertLen(frame, 2)
     np.testing.assert_allclose(
         frame['cv_ratio'].to_numpy(),
-        frame['median_geo_cv'].to_numpy()
-        / frame['aggregated_cv'].to_numpy(),
+        frame['median_geo_cv'].to_numpy() / frame['aggregated_cv'].to_numpy(),
         rtol=1e-9,
     )
 
@@ -242,9 +239,7 @@ class GeoAllocationReliabilityTest(parameterized.TestCase):
     # [straddling-zero, reliable], [reliable, reliable], [reliable, reliable].
     mean = np.array([[0.0, 5.0], [0.1, 8.0], [5.0, 6.0], [7.0, 9.0]])
     sd = np.array([[0.0, 1.0], [5.0, 1.0], [1.0, 1.0], [1.0, 1.0]])
-    cv = np.array(
-        [[np.nan, 0.2], [50.0, 0.125], [0.2, 0.167], [0.143, 0.111]]
-    )
+    cv = np.array([[np.nan, 0.2], [50.0, 0.125], [0.2, 0.167], [0.143, 0.111]])
     prob_positive = np.array(
         [[0.5, 0.99], [0.55, 0.99], [0.99, 0.99], [0.99, 0.99]]
     )
@@ -305,6 +300,63 @@ class GeoAllocationReliabilityTest(parameterized.TestCase):
     dataset = spec_dict['datasets'][data_key]
     self.assertLen(dataset, _N_GEOS)
     self.assertTrue(all(row['fraction_reliable'] == 0.0 for row in dataset))
+
+
+class GeoAllocationReliabilityComputeTest(absltest.TestCase):
+  """Pure reductions and call contracts that do not require a real MCMC fit."""
+
+  def test_excludes_non_paid_channels_from_allocation_diagnostic(self):
+    """Allocation reliability must only score channels that can be budgeted."""
+    geos = ['geo_a', 'geo_b']
+    channels = ['paid_a', 'paid_b']
+    per_geo = xr.DataArray(
+        np.ones((2, 3, len(geos), len(channels))),
+        dims=[c.CHAIN, c.DRAW, c.GEO, c.CHANNEL],
+        coords={c.GEO: geos, c.CHANNEL: channels},
+    )
+    aggregated = per_geo.sum(c.GEO)
+    diag = object.__new__(geo_diagnostics.GeoAllocationReliability)
+    diag._analyzer = mock.Mock()  # pylint: disable=protected-access
+    diag._analyzer.incremental_outcome_xr.side_effect = [  # pylint: disable=protected-access
+        per_geo,
+        aggregated,
+    ]
+    diag._use_posterior = True  # pylint: disable=protected-access
+    diag._use_kpi = False  # pylint: disable=protected-access
+
+    _, _, returned_geos, returned_channels = diag._compute()  # pylint: disable=protected-access
+
+    self.assertEqual(returned_geos, geos)
+    self.assertEqual(returned_channels, channels)
+    calls = diag._analyzer.incremental_outcome_xr.call_args_list  # pylint: disable=protected-access
+    self.assertLen(calls, 2)
+    self.assertTrue(
+        all(call.kwargs['include_non_paid_channels'] is False for call in calls)
+    )
+
+  def test_all_unusable_cvs_have_a_clear_verdict(self):
+    diag = object.__new__(geo_diagnostics.GeoAllocationReliability)
+    cv = np.full((2, 2), np.nan)
+    diag._by_geo = geo_diagnostics._Reduced(  # pylint: disable=protected-access
+        mean=np.zeros_like(cv),
+        sd=np.zeros_like(cv),
+        cv=cv,
+        prob_positive=np.zeros_like(cv),
+        ci_excludes_zero=np.zeros_like(cv, dtype=bool),
+    )
+    diag._aggregated = geo_diagnostics._Reduced(  # pylint: disable=protected-access
+        mean=np.zeros(2),
+        sd=np.zeros(2),
+        cv=np.full(2, np.nan),
+        prob_positive=np.zeros(2),
+        ci_excludes_zero=np.zeros(2, dtype=bool),
+    )
+    diag._geos = ['geo_a', 'geo_b']  # pylint: disable=protected-access
+    diag._channels = ['paid_a', 'paid_b']  # pylint: disable=protected-access
+
+    verdict = diag.verdict
+    self.assertIn('usable coefficient of variation', verdict)
+    self.assertNotIn('nanx', verdict)
 
 
 class ResolveUseKpiTest(parameterized.TestCase):

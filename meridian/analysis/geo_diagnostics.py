@@ -72,7 +72,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-
 __all__ = [
     'GeoAllocationReliability',
     'RELIABLE_CV_THRESHOLD',
@@ -102,14 +101,19 @@ def _coefficient_of_variation(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
   """Returns (mean, sd, cv) reduced over `axis`.
 
-  Cells carrying no signal get `NaN`, not a number. A channel with no media
-  execution in a geo -- a channel launched in only some geos, or discontinued
-  in one -- produces deterministically zero incremental outcome, so both mean
-  and standard deviation collapse to floating-point residue rather than exact
-  zero. Dividing one by the other yields noise: it can land anywhere from 1e-16
-  to 1e+2 depending on rounding, and either extreme corrupts the ranking, the
-  reliable/unreliable split, and the precision ratio. `_calculate_vif` treats
-  constant columns the same way.
+  Cells whose posterior mean is negligible get `NaN`, not a number. A channel
+  with no media execution in a geo -- a channel launched in only some geos, or
+  discontinued in one -- produces deterministically zero incremental outcome,
+  so both mean and standard deviation collapse to floating-point residue rather
+  than exact zero. Dividing one by the other yields noise: it can land anywhere
+  from 1e-16 to 1e+2 depending on rounding, and either extreme corrupts the
+  ranking, the reliable/unreliable split, and the precision ratio.
+
+  This posterior-based test does not directly inspect media execution. A real
+  channel whose effect has a near-zero posterior mean is also unavailable for a
+  relative-CV comparison; `summary()['has_signal']` means a usable CV, not a
+  proof that execution occurred. `_calculate_vif` treats constant columns the
+  same way.
   """
   mean = np.mean(draws, axis=axis)
   sd = np.std(draws, axis=axis)
@@ -156,9 +160,7 @@ def _sign_precision(
   return prob_positive, ci_excludes_zero
 
 
-def resolve_use_kpi(
-    analyzer: analyzer_module.Analyzer, use_kpi: bool
-) -> bool:
+def resolve_use_kpi(analyzer: analyzer_module.Analyzer, use_kpi: bool) -> bool:
   """Resolves `use_kpi` through `Analyzer._use_kpi`, guarding a private call.
 
   `Analyzer._use_kpi` is not part of the public API; it encodes the
@@ -186,7 +188,7 @@ def resolve_use_kpi(
         ' renamed or removed it. `geo_diagnostics.py` and'
         ' `prior_predictive.py` both depend on it through'
         ' `geo_diagnostics.resolve_use_kpi` for this fork'
-        " KPI/revenue resolution logic. Find its replacement in"
+        ' KPI/revenue resolution logic. Find its replacement in'
         ' `meridian/analysis/analyzer.py`, update `resolve_use_kpi`'
         ' accordingly, and record the break in TRIAGE.md.'
     )
@@ -225,8 +227,7 @@ class GeoAllocationReliability:
     group = c.POSTERIOR if use_posterior else c.PRIOR
     if group not in meridian.inference_data.groups():
       raise errors.NotFittedModelError(
-          f'The model has no {group} draws. Call'
-          f' `sample_{group}()` first.'
+          f'The model has no {group} draws. Call' f' `sample_{group}()` first.'
       )
     if meridian.model_context.is_national:
       raise ValueError(
@@ -241,9 +242,7 @@ class GeoAllocationReliability:
         inference_data=meridian.inference_data,
     )
     self._use_kpi = resolve_use_kpi(self._analyzer, use_kpi)
-    self._by_geo, self._aggregated, self._geos, self._channels = (
-        self._compute()
-    )
+    self._by_geo, self._aggregated, self._geos, self._channels = self._compute()
 
   def _compute(
       self,
@@ -254,12 +253,14 @@ class GeoAllocationReliability:
         aggregate_geos=False,
         aggregate_times=True,
         use_kpi=self._use_kpi,
+        include_non_paid_channels=False,
     )
     aggregated = self._analyzer.incremental_outcome_xr(
         use_posterior=self._use_posterior,
         aggregate_geos=True,
         aggregate_times=True,
         use_kpi=self._use_kpi,
+        include_non_paid_channels=False,
     )
 
     geos = [str(g) for g in per_geo.coords[c.GEO].values]
@@ -312,27 +313,24 @@ class GeoAllocationReliability:
   def summary(self) -> pd.DataFrame:
     """Returns a per geo and channel table, worst precision first.
 
-    Adds `has_signal` (media execution occurred), `reliable` (CV clears
-    `RELIABLE_CV_THRESHOLD`), and `sign_uncertain`: `True` for an informative,
-    unreliable cell whose credible interval still straddles zero -- the
-    effect's direction is unsettled, not just its magnitude. This is case 2
-    from the module docstring, distinct from a cell that is merely imprecise
-    but clearly signed (case 3).
+    Adds `has_signal` (the posterior mean is large enough for a usable CV, not
+    a direct execution check), `reliable` (CV clears `RELIABLE_CV_THRESHOLD`),
+    and `sign_uncertain`: `True` for an informative, unreliable cell whose
+    credible interval still straddles zero -- the effect's direction is
+    unsettled, not just its magnitude. This is case 2 from the module docstring,
+    distinct from a cell that is merely imprecise but clearly signed (case 3).
     """
     frame = self.reliability_data.to_dataframe().reset_index()
     frame['has_signal'] = ~frame[_CV].isna()
     frame['reliable'] = frame[_CV] <= RELIABLE_CV_THRESHOLD
     frame['sign_uncertain'] = (
-        frame['has_signal']
-        & ~frame['reliable']
-        & ~frame[_CI_EXCLUDES_ZERO]
+        frame['has_signal'] & ~frame['reliable'] & ~frame[_CI_EXCLUDES_ZERO]
     )
-    # Worst precision first; cells with no media execution sort to the end
-    # rather than to either extreme of the ranking.
-    return (
-        frame.sort_values([_CV], ascending=False, na_position='last')
-        .reset_index(drop=True)
-    )
+    # Worst precision first; cells without a usable CV sort to the end rather
+    # than to either extreme of the ranking.
+    return frame.sort_values(
+        [_CV], ascending=False, na_position='last'
+    ).reset_index(drop=True)
 
   def precision_loss(self) -> pd.DataFrame:
     """Compares aggregated CV against the median per-geo CV, per channel.
@@ -352,19 +350,21 @@ class GeoAllocationReliability:
           median_geo_cv / self._aggregated.cv,
           np.nan,
       )
-    return pd.DataFrame({
-        c.CHANNEL: self._channels,
-        'aggregated_cv': self._aggregated.cv,
-        'median_geo_cv': median_geo_cv,
-        'cv_ratio': ratio,
-    })
+    return pd.DataFrame(
+        {
+            c.CHANNEL: self._channels,
+            'aggregated_cv': self._aggregated.cv,
+            'median_geo_cv': median_geo_cv,
+            'cv_ratio': ratio,
+        }
+    )
 
   @property
   def fraction_reliable(self) -> float:
     """Fraction of *informative* estimates at or below the CV threshold.
 
-    Cells with no media execution carry no information and are excluded rather
-    than counted as either reliable or unreliable.
+    Cells without a usable CV are excluded rather than counted as either
+    reliable or unreliable.
     """
     cv = self._by_geo.cv
     informative = cv[~np.isnan(cv)]
@@ -378,10 +378,13 @@ class GeoAllocationReliability:
     fraction = self.fraction_reliable
     frame = self.summary()
     informative = frame[frame['has_signal']]
+    if informative.empty:
+      return (
+          'No paid geo-channel estimate has a usable coefficient of variation;'
+          ' per-geo allocation cannot be assessed from this posterior.'
+      )
     sign_uncertain_fraction = (
-        float(informative['sign_uncertain'].mean())
-        if len(informative)
-        else 0.0
+        float(informative['sign_uncertain'].mean()) if len(informative) else 0.0
     )
     sign_note = (
         f' {sign_uncertain_fraction:.0%} of informative estimates have a'
@@ -393,7 +396,9 @@ class GeoAllocationReliability:
     )
     ratios = self.precision_loss()['cv_ratio'].to_numpy()
     finite_ratios = ratios[np.isfinite(ratios)]
-    ratio = float(np.median(finite_ratios)) if finite_ratios.size else float('nan')
+    ratio = (
+        float(np.median(finite_ratios)) if finite_ratios.size else float('nan')
+    )
     if fraction >= 0.8:
       return (
           f'{fraction:.0%} of geo-channel estimates have CV <='
@@ -422,37 +427,34 @@ class GeoAllocationReliability:
   def plot_reliability(self) -> alt.Chart:
     """Plots the share of reliable channel estimates, one bar per geo.
 
-    Each bar is the fraction of that geo's *informative* geo-channel
-    estimates (channels with media execution) whose CV clears
-    `RELIABLE_CV_THRESHOLD`, sorted worst to best. A geo with no informative
-    channel at all still gets a bar, at zero, rather than being silently
-    dropped.
+    Each bar is the fraction of that geo's *informative* geo-channel estimates
+    (cells with a usable CV) whose CV clears `RELIABLE_CV_THRESHOLD`, sorted
+    worst to best. A geo with no informative channel at all still gets a bar,
+    at zero, rather than being silently dropped.
 
     Returns:
       An Altair bar chart, one bar per geo.
     """
     frame = self.summary()
     informative = frame[frame['has_signal']]
-    per_geo = (
-        informative.groupby(c.GEO, as_index=False).agg(
-            fraction_reliable=('reliable', 'mean'),
-            n_channels=('reliable', 'size'),
-            n_sign_uncertain=('sign_uncertain', 'sum'),
-        )
+    per_geo = informative.groupby(c.GEO, as_index=False).agg(
+        fraction_reliable=('reliable', 'mean'),
+        n_channels=('reliable', 'size'),
+        n_sign_uncertain=('sign_uncertain', 'sum'),
     )
     all_geos = pd.DataFrame({c.GEO: self._geos})
-    per_geo = all_geos.merge(per_geo, on=c.GEO, how='left').fillna({
-        'fraction_reliable': 0.0,
-        'n_channels': 0,
-        'n_sign_uncertain': 0,
-    })
+    per_geo = all_geos.merge(per_geo, on=c.GEO, how='left').fillna(
+        {
+            'fraction_reliable': 0.0,
+            'n_channels': 0,
+            'n_sign_uncertain': 0,
+        }
+    )
     per_geo = per_geo.sort_values(
         'fraction_reliable', ascending=True
     ).reset_index(drop=True)
 
-    geo_axis = alt.Axis(
-        title=None, labelAngle=-45, **formatter.AXIS_CONFIG
-    )
+    geo_axis = alt.Axis(title=None, labelAngle=-45, **formatter.AXIS_CONFIG)
     fraction_axis = alt.Axis(
         title='Share of channels reliable',
         domain=False,
@@ -495,13 +497,8 @@ class GeoAllocationReliability:
         )
     )
 
-    return (
-        bar.properties(
-            title=formatter.custom_title_params(
-                'Per-geo allocation reliability'
-            ),
-            width=formatter.bar_chart_width(len(per_geo) + 2),
-            height=300,
-        )
-        .configure_axis(**formatter.TEXT_CONFIG)
-    )
+    return bar.properties(
+        title=formatter.custom_title_params('Per-geo allocation reliability'),
+        width=formatter.bar_chart_width(len(per_geo) + 2),
+        height=300,
+    ).configure_axis(**formatter.TEXT_CONFIG)

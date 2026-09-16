@@ -24,8 +24,8 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from meridian import backend
 from meridian.benchmark import benchmark
-
 
 _TINY = benchmark.BenchmarkConfig(
     n_geos=2,
@@ -54,13 +54,59 @@ class BenchmarkConfigTest(parameterized.TestCase):
     config = benchmark.BenchmarkConfig(n_times=n_times, max_lag=max_lag)
     self.assertEqual(config.n_media_times, expected)
 
+  @parameterized.named_parameters(
+      dict(testcase_name='zero_geos', field='n_geos', value=0),
+      dict(testcase_name='negative_geos', field='n_geos', value=-1),
+      dict(testcase_name='zero_times', field='n_times', value=0),
+      dict(
+          testcase_name='zero_media_channels', field='n_media_channels', value=0
+      ),
+      dict(testcase_name='zero_prior_draws', field='n_prior_draws', value=0),
+      dict(testcase_name='zero_chains', field='n_chains', value=0),
+      dict(testcase_name='zero_keep', field='n_keep', value=0),
+  )
+  def test_rejects_non_positive_required_counts(self, field, value):
+    with self.assertRaisesRegex(ValueError, f'`{field}`'):
+      benchmark.BenchmarkConfig(**{field: value})
+
+  @parameterized.named_parameters(
+      dict(testcase_name='negative_controls', field='n_controls'),
+      dict(testcase_name='negative_lag', field='max_lag'),
+      dict(testcase_name='negative_adapt', field='n_adapt'),
+      dict(testcase_name='negative_burnin', field='n_burnin'),
+  )
+  def test_rejects_negative_optional_counts(self, field):
+    with self.assertRaisesRegex(ValueError, f'`{field}`'):
+      benchmark.BenchmarkConfig(**{field: -1})
+
+  def test_allows_supported_zero_counts(self):
+    config = benchmark.BenchmarkConfig(
+        n_controls=0, max_lag=0, n_adapt=0, n_burnin=0
+    )
+    self.assertEqual(config.n_media_times, config.n_times)
+
 
 class EnvironmentInfoTest(absltest.TestCase):
 
   def test_reports_versions_and_devices(self):
     info = benchmark.environment_info()
-    for key in ['python', 'platform', 'machine', 'meridian', 'jax', 'numpy']:
+    for key in [
+        'python',
+        'platform',
+        'machine',
+        'meridian',
+        'meridian_backend',
+        'meridian_precision',
+        'jax',
+        'numpy',
+    ]:
       self.assertIn(key, info)
+    self.assertEqual(
+        info['meridian_backend'], backend.computation_backend().name
+    )
+    self.assertEqual(
+        info['meridian_precision'], backend.computation_precision().name
+    )
     # The resolved device list is the point of the record: several upstream
     # reports were environment differences, not library behaviour.
     self.assertIn('jax_devices', info)
@@ -91,6 +137,13 @@ class ColdImportTest(absltest.TestCase):
       self.assertAlmostEqual(benchmark.cold_import_seconds(), 1.25)
 
 
+class PeakRssTest(absltest.TestCase):
+
+  def test_marks_peak_memory_unavailable_without_resource_module(self):
+    with mock.patch.object(benchmark, 'resource', None):
+      self.assertIsNone(benchmark._peak_rss_bytes())  # pylint: disable=protected-access
+
+
 class RunBenchmarkTest(absltest.TestCase):
 
   @classmethod
@@ -98,9 +151,7 @@ class RunBenchmarkTest(absltest.TestCase):
     super().setUpClass()
     # Stub the subprocess import measurement; it is covered separately and
     # would add ~8s of interpreter startup to this test.
-    with mock.patch.object(
-        benchmark, 'cold_import_seconds', return_value=1.0
-    ):
+    with mock.patch.object(benchmark, 'cold_import_seconds', return_value=1.0):
       cls.result = benchmark.run_benchmark(_TINY)
 
   def test_reports_all_stages(self):
@@ -148,6 +199,8 @@ class RunBenchmarkTest(absltest.TestCase):
 
   def test_peak_rss_is_plausible(self):
     # Anything under 1 MB means the unit conversion is wrong.
+    if self.result.peak_rss_bytes is None:
+      self.skipTest('Peak RSS is unavailable on this platform.')
     self.assertGreater(self.result.peak_rss_bytes, 1_000_000)
 
   def test_json_round_trips(self):

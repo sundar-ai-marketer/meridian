@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+ * NOTICE: This file was modified from the original google/meridian source.
+ * See the NOTICE file at the repository root, and TRIAGE.md, for what changed
+ * and why.
+ */
+
 $title_dark_grey: #202124;
 $chip_blue: #1967d2;
 $insights_bg_grey: #eee;
@@ -900,5 +906,109 @@ chip.calibrated-wide {
     p {
       color: $chip_blue;
     }
+  }
+}
+
+/*
+ * Give compact screens a useful chart viewport while preserving each Vega
+ * plot's intrinsic width. The chart viewport owns horizontal scrolling so a
+ * wide plot remains readable without making the document scroll sideways.
+ */
+@media (max-width: 720px) {
+  body {
+    margin: 0 8px;
+  }
+
+  .header {
+    margin: 20px 12px 0;
+    grid-template-columns: 40px minmax(0, 1fr);
+    column-gap: 14px;
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .title {
+    font-size: 28px;
+    line-height: 36px;
+  }
+
+  chips {
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 24px 12px;
+  }
+
+  cards {
+    box-sizing: border-box;
+    min-width: 0;
+    margin: 24px 12px 0;
+    row-gap: 24px;
+  }
+
+  card {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+
+    > card-title {
+      padding: 16px 20px;
+      font-size: 22px;
+      line-height: 32px;
+    }
+
+    > card-insights,
+    errors,
+    warnings,
+    infos {
+      padding: 16px 14px;
+      margin-left: 0;
+      margin-right: 0;
+
+      p {
+        margin: 0 8px;
+        font-size: 14px;
+        line-height: 20px;
+      }
+    }
+  }
+
+  charts {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start;
+    gap: 36px;
+    padding: 32px 20px 36px;
+
+    chart,
+    chart-table {
+      box-sizing: border-box;
+      flex: 0 0 100%;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    chart-embed,
+    .chart-table-content {
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    chart-embed:focus-visible,
+    .chart-table-content:focus-visible {
+      outline: 3px solid $chip_blue;
+      outline-offset: 2px;
+    }
+  }
+
+  stats-section {
+    gap: 24px;
+    padding: 20px;
   }
 }

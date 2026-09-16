@@ -1,0 +1,14 @@
+This package includes software developed by Google LLC.
+
+MMM Proto Schema, part of Meridian
+Copyright 2026 The Meridian Authors.
+https://github.com/google/meridian
+Licensed under the Apache License, Version 2.0.
+
+This checkout is distributed by the unofficial sundar-ai-marketer/meridian fork.
+Build metadata in pyproject.toml was modified to require a setuptools version
+that supports the declared license-files metadata and to include this notice.
+The build script now propagates compiler and dependency-download failures
+and preserves paths containing spaces in subprocess arguments.
+Modifications Copyright 2026 Sundar Ramesh Kumar.
+The protobuf schema and the distribution name are unchanged.
