@@ -58,7 +58,7 @@ dependencies = [
   "matplotlib < 3.11.0",
   "natsort >= 7.1.1, < 8",
   "numpy >= 2.0.2, < 2.4.0",
-  "pandas >= 2.2.2, < 3",
+  "pandas>=2.2.2,<4",
   "scipy >= 1.13.1, < 2",
   "statsmodels >= 0.14.5, < 0.15",
   "tensorflow >= 2.21.0, < 2.22",
