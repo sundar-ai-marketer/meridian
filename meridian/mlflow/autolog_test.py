@@ -11,7 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
 
+import tempfile
 from unittest import mock
 
 from absl.testing import absltest
@@ -127,6 +131,21 @@ DEFAULT_EXPECTED_CALLS = [
 
 
 class AutologTest(parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    # Autologging patches process-wide model methods. Leaving it enabled lets
+    # later tests create tracking runs and changes how their warnings surface.
+    # Keep storage private to this test and disable patches before it ends.
+    tracking_dir = tempfile.TemporaryDirectory(prefix="meridian-mlflow-test-")
+    self.addCleanup(tracking_dir.cleanup)
+    tracking_uri = mlflow.get_tracking_uri()
+    self.addCleanup(mlflow.set_tracking_uri, tracking_uri)
+    self.addCleanup(autolog.autolog, disable=True)
+    self.addCleanup(mlflow.end_run)
+    mlflow.set_tracking_uri(f"sqlite:///{tracking_dir.name}/mlflow.db")
+    self.mock_log_param.reset_mock()
+    self.mock_log_metric.reset_mock()
 
   @classmethod
   def setUpClass(cls):

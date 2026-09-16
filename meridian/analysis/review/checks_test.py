@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 from collections.abc import Callable, Sequence
 from unittest import mock
@@ -94,15 +98,13 @@ class ConvergenceCheckTest(parameterized.TestCase):
       self.assertEqual(
           result.recommendation,
           "The model hasn't fully converged, and the `max_r_hat` for parameter"
-          " `mock_var` is 9.00. "
-          + results.NOT_FULLY_CONVERGED_RECOMMENDATION,
+          " `mock_var` is 9.00. " + results.NOT_FULLY_CONVERGED_RECOMMENDATION,
       )
     elif result.case == results.ConvergenceCases.NOT_CONVERGED:
       self.assertEqual(
           result.recommendation,
           "The model hasn't converged, and the `max_r_hat` for parameter"
-          " `mock_var` is 11.00. "
-          + results.NOT_CONVERGED_RECOMMENDATION,
+          " `mock_var` is 11.00. " + results.NOT_CONVERGED_RECOMMENDATION,
       )
 
   def test_convergence_check_with_nan_rhats(self):
@@ -118,17 +120,56 @@ class ConvergenceCheckTest(parameterized.TestCase):
         config=config,
     )
     result = convergence_check.run()
-    self.assertEqual(result.case, results.ConvergenceCases.CONVERGED)
+    self.assertEqual(result.case, results.ConvergenceCases.NOT_CONVERGED)
     self.assertTrue(np.isnan(result.details[results.constants.RHAT]))
-    self.assertTrue(np.isnan(result.details[results.constants.PARAMETER]))
+    self.assertEqual(result.details[results.constants.PARAMETER], "unavailable")
     self.assertEqual(
         result.details[results.constants.CONVERGENCE_THRESHOLD],
         config.convergence_threshold,
     )
     self.assertEqual(
         result.recommendation,
-        "The model has likely converged, as all parameters have R-hat values"
-        " < 1.2.",
+        results.NONFINITE_RHAT_RECOMMENDATION,
+    )
+
+  def test_convergence_check_ignores_deterministic_nan_when_rhat_is_finite(
+      self,
+  ):
+    self.analyzer.get_rhat.return_value = {
+        "deterministic": np.array([np.nan]),
+        "sampled": np.array([1.1]),
+    }
+
+    result = checks.ConvergenceCheck(
+        model_context=self.model_context,
+        inference_data=self.inference_data,
+        analyzer=self.analyzer,
+        config=configs.ConvergenceConfig(),
+    ).run()
+
+    self.assertEqual(result.case, results.ConvergenceCases.CONVERGED)
+    self.assertEqual(result.max_parameter, "sampled")
+    self.assertEqual(result.max_r_hat, 1.1)
+
+  @parameterized.named_parameters(
+      dict(testcase_name="positive_infinity", value=float("inf")),
+      dict(testcase_name="negative_infinity", value=float("-inf")),
+  )
+  def test_convergence_check_rejects_nonfinite_rhat(self, value):
+    self.analyzer.get_rhat.return_value = {"mock_var": np.array([value])}
+
+    result = checks.ConvergenceCheck(
+        model_context=self.model_context,
+        inference_data=self.inference_data,
+        analyzer=self.analyzer,
+        config=configs.ConvergenceConfig(),
+    ).run()
+
+    self.assertEqual(result.case, results.ConvergenceCases.NOT_CONVERGED)
+    self.assertEqual(result.max_parameter, "mock_var")
+    self.assertEqual(result.max_r_hat, value)
+    self.assertEqual(
+        result.recommendation, results.NONFINITE_RHAT_RECOMMENDATION
     )
 
 
@@ -623,11 +664,13 @@ class PriorPosteriorShiftCheckTest(parameterized.TestCase):
     if media_channel_names is not None and posterior_media_samples is not None:
       n_channels = len(media_channel_names)
       n_chains, n_draws, _ = posterior_media_samples.shape
-      posterior_coords.update({
-          constants.CHAIN: range(n_chains),
-          constants.DRAW: range(n_draws),
-          constants.MEDIA_CHANNEL: media_channel_names,
-      })
+      posterior_coords.update(
+          {
+              constants.CHAIN: range(n_chains),
+              constants.DRAW: range(n_draws),
+              constants.MEDIA_CHANNEL: media_channel_names,
+          }
+      )
       self.inference_data.posterior.media_channel.values = media_channel_names
       posterior_vars[constants.ROI_M] = mock.create_autospec(
           spec=xr.DataArray,
@@ -659,11 +702,13 @@ class PriorPosteriorShiftCheckTest(parameterized.TestCase):
     if rf_channel_names is not None and posterior_rf_samples is not None:
       n_channels = len(rf_channel_names)
       n_chains, n_draws, _ = posterior_rf_samples.shape
-      posterior_coords.update({
-          constants.CHAIN: range(n_chains),
-          constants.DRAW: range(n_draws),
-          constants.RF_CHANNEL: rf_channel_names,
-      })
+      posterior_coords.update(
+          {
+              constants.CHAIN: range(n_chains),
+              constants.DRAW: range(n_draws),
+              constants.RF_CHANNEL: rf_channel_names,
+          }
+      )
       self.inference_data.posterior.rf_channel.values = rf_channel_names
       posterior_vars[constants.ROI_RF] = mock.create_autospec(
           spec=xr.DataArray,
@@ -995,9 +1040,7 @@ class BayesianPPPCheckTest(parameterized.TestCase):
     self.inference_data = mock.create_autospec(
         spec=az.InferenceData, spec_set=False, instance=True
     )
-    self.inference_data.posterior = {
-        constants.SIGMA: np.array([[0.0, 0.0]])
-    }
+    self.inference_data.posterior = {constants.SIGMA: np.array([[0.0, 0.0]])}
     self.analyzer = mock.create_autospec(
         spec=analyzer_module.Analyzer, spec_set=True, instance=True
     )
@@ -1087,9 +1130,7 @@ class BayesianPPPCheckTest(parameterized.TestCase):
     )
 
   @mock.patch.object(np.random, "normal", autospec=True, spec_set=True)
-  def test_bayesian_ppp_check_predictive_distribution(
-      self, mock_random_normal
-  ):
+  def test_bayesian_ppp_check_predictive_distribution(self, mock_random_normal):
     self.model_context.input_data.kpi = np.array([10, 20])
     expected_outcome = np.array([25.0, 35.0])
     sigma = np.array([[1.0, 2.0]])
@@ -1132,9 +1173,7 @@ class BayesianPPPCheckTest(parameterized.TestCase):
     )
 
     # Run with smaller sigma.
-    self.inference_data.posterior = {
-        constants.SIGMA: np.full((1, 1000), 0.1)
-    }
+    self.inference_data.posterior = {constants.SIGMA: np.full((1, 1000), 0.1)}
     result_small_sigma = checks.BayesianPPPCheck(
         model_context=self.model_context,
         inference_data=self.inference_data,
@@ -1143,9 +1182,7 @@ class BayesianPPPCheckTest(parameterized.TestCase):
     ).run()
 
     # Run with larger sigma.
-    self.inference_data.posterior = {
-        constants.SIGMA: np.full((1, 1000), 20.0)
-    }
+    self.inference_data.posterior = {constants.SIGMA: np.full((1, 1000), 20.0)}
     result_large_sigma = checks.BayesianPPPCheck(
         model_context=self.model_context,
         inference_data=self.inference_data,
@@ -1166,10 +1203,9 @@ class BayesianPPPCheckTest(parameterized.TestCase):
         kpi=backend.to_tensor(kpi_raw),
         population=backend.to_tensor(pop),
     )
-    slope = (
-        kpi_transformer.inverse(backend.to_tensor(np.ones((n_geos, 1))))
-        - kpi_transformer.inverse(backend.to_tensor(np.zeros((n_geos, 1))))
-    )
+    slope = kpi_transformer.inverse(
+        backend.to_tensor(np.ones((n_geos, 1)))
+    ) - kpi_transformer.inverse(backend.to_tensor(np.zeros((n_geos, 1))))
     expected_slope = np.asarray(slope)
     analytical_slope = (
         float(kpi_transformer.population_scaled_stdev) * pop[:, np.newaxis]
@@ -1431,11 +1467,17 @@ class GoodnessOfFitCheckTest(parameterized.TestCase):
         constants.EVALUATION_SET_VAR,
         constants.GEO_GRANULARITY,
     )
-    data = np.array([
-        [[1.0, r_squared_all], [1.0, r_squared_train], [1.0, r_squared_test]],
-        [[1.0, mape_all], [1.0, mape_train], [1.0, mape_test]],
-        [[1.0, wmape_all], [1.0, wmape_train], [1.0, wmape_test]],
-    ])
+    data = np.array(
+        [
+            [
+                [1.0, r_squared_all],
+                [1.0, r_squared_train],
+                [1.0, r_squared_test],
+            ],
+            [[1.0, mape_all], [1.0, mape_train], [1.0, mape_test]],
+            [[1.0, wmape_all], [1.0, wmape_train], [1.0, wmape_test]],
+        ]
+    )
     coords = {
         constants.METRIC: [
             constants.R_SQUARED,
@@ -1464,11 +1506,13 @@ class GoodnessOfFitCheckTest(parameterized.TestCase):
         constants.METRIC,
         constants.GEO_GRANULARITY,
     )
-    data = np.array([
-        [1.0, r_squared],
-        [1.0, mape],
-        [1.0, wmape],
-    ])
+    data = np.array(
+        [
+            [1.0, r_squared],
+            [1.0, mape],
+            [1.0, wmape],
+        ]
+    )
     coords = {
         constants.METRIC: [
             constants.R_SQUARED,
@@ -1587,9 +1631,7 @@ class GoodnessOfFitCheckTest(parameterized.TestCase):
       self, r_squared, mape, wmape, expected_case
   ):
     self.model_context.n_geos = 2
-    gof_dataset = self._get_gof_dataset_no_holdout(
-        r_squared, mape, wmape
-    )
+    gof_dataset = self._get_gof_dataset_no_holdout(r_squared, mape, wmape)
     self.analyzer.predictive_accuracy.return_value = gof_dataset
     config = configs.GoodnessOfFitConfig()
     gof_check = checks.GoodnessOfFitCheck(
@@ -1702,9 +1744,11 @@ class ImplausibleROICheckTest(parameterized.TestCase):
     # Mean ROI: [2.0, 4.0]
     # Spend weighted: [1.0, 2.0] (< 20.0 upper bound)
     # Reciprocal spend weighted: [4.0, 8.0] (> 0.5 lower bound)
-    self.inference_data.posterior.roi_m.values = np.array([
-        [[2.0, 4.0]],
-    ])  # (chain=1, draw=1, channel=2)
+    self.inference_data.posterior.roi_m.values = np.array(
+        [
+            [[2.0, 4.0]],
+        ]
+    )  # (chain=1, draw=1, channel=2)
     self.inference_data.posterior.coords = [constants.MEDIA_CHANNEL]
 
     config = configs.ImplausibleROIConfig()
@@ -1733,9 +1777,11 @@ class ImplausibleROICheckTest(parameterized.TestCase):
     # ch1: spend_weighted=2.0*0.25=0.5, reciprocal=2.0/0.25=8.0
     # ch2: spend_weighted=4.0*0.75=3.0, reciprocal=4.0/0.75=5.333
     # All are within bounds (0.5, 20.0), so check should pass.
-    self.inference_data.posterior.roi_m.values = np.array([
-        [[2.0, 4.0]],
-    ])  # (chain=1, draw=1, channel=2)
+    self.inference_data.posterior.roi_m.values = np.array(
+        [
+            [[2.0, 4.0]],
+        ]
+    )  # (chain=1, draw=1, channel=2)
     self.inference_data.posterior.coords = [constants.MEDIA_CHANNEL]
 
     config = configs.ImplausibleROIConfig()
@@ -1768,9 +1814,11 @@ class ImplausibleROICheckTest(parameterized.TestCase):
     # Mean ROI: [2.0, 4.0]
     # Spend weighted: [1.0, 2.0] (< 20.0 upper bound)
     # Reciprocal spend weighted: [4.0, 8.0] (> 0.5 lower bound)
-    self.inference_data.posterior.roi_m.values = np.array([
-        [[2.0, 4.0]],
-    ])  # (chain=1, draw=1, channel=2)
+    self.inference_data.posterior.roi_m.values = np.array(
+        [
+            [[2.0, 4.0]],
+        ]
+    )  # (chain=1, draw=1, channel=2)
     self.inference_data.posterior.coords = [constants.MEDIA_CHANNEL]
 
     config = configs.ImplausibleROIConfig()
@@ -1794,9 +1842,11 @@ class ImplausibleROICheckTest(parameterized.TestCase):
     )
     # ch1: ROI mean = 50.0. Spend weighted = 25.0 (> 20.0 upper bound)
     # -> high ROI!
-    self.inference_data.posterior.roi_m.values = np.array([
-        [[50.0, 4.0]],
-    ])
+    self.inference_data.posterior.roi_m.values = np.array(
+        [
+            [[50.0, 4.0]],
+        ]
+    )
     self.inference_data.posterior.coords = [constants.MEDIA_CHANNEL]
 
     config = configs.ImplausibleROIConfig()
@@ -1820,9 +1870,11 @@ class ImplausibleROICheckTest(parameterized.TestCase):
     )
     # ch2: ROI mean = 0.1. Reciprocal spend weighted = 0.2 (< 0.5 lower bound)
     # -> low ROI!
-    self.inference_data.posterior.roi_m.values = np.array([
-        [[2.0, 0.1]],
-    ])
+    self.inference_data.posterior.roi_m.values = np.array(
+        [
+            [[2.0, 0.1]],
+        ]
+    )
     self.inference_data.posterior.coords = [constants.MEDIA_CHANNEL]
 
     config = configs.ImplausibleROIConfig()
@@ -1852,12 +1904,16 @@ class ImplausibleROICheckTest(parameterized.TestCase):
     # For ch2: spend_weighted=4/3, reciprocal=12.
     # For rf1: spend_weighted=3/3=1, reciprocal=9.
     # All are within bounds (0.5, 20.0).
-    self.inference_data.posterior.roi_m.values = np.array([
-        [[2.0, 4.0]],
-    ])  # (chain=1, draw=1, channel=2)
-    self.inference_data.posterior.roi_rf.values = np.array([
-        [[3.0]],
-    ])  # (chain=1, draw=1, channel=1)
+    self.inference_data.posterior.roi_m.values = np.array(
+        [
+            [[2.0, 4.0]],
+        ]
+    )  # (chain=1, draw=1, channel=2)
+    self.inference_data.posterior.roi_rf.values = np.array(
+        [
+            [[3.0]],
+        ]
+    )  # (chain=1, draw=1, channel=1)
     self.inference_data.posterior.coords = [
         constants.MEDIA_CHANNEL,
         constants.RF_CHANNEL,
@@ -1934,9 +1990,11 @@ class HighVarianceCheckTest(parameterized.TestCase):
         [100.0]
     )
     self.inference_data.posterior.media_channel.values = np.array(["ch1"])
-    self.inference_data.posterior.roi_m.values = np.array([
-        [[2.0]],
-    ])
+    self.inference_data.posterior.roi_m.values = np.array(
+        [
+            [[2.0]],
+        ]
+    )
     self.inference_data.posterior.coords = [constants.MEDIA_CHANNEL]
 
     # HDI bounds: [1.5, 2.5]
@@ -1963,9 +2021,11 @@ class HighVarianceCheckTest(parameterized.TestCase):
         [100.0]
     )
     self.inference_data.posterior.media_channel.values = np.array(["ch1"])
-    self.inference_data.posterior.roi_m.values = np.array([
-        [[1.0]],
-    ])
+    self.inference_data.posterior.roi_m.values = np.array(
+        [
+            [[1.0]],
+        ]
+    )
     self.inference_data.posterior.coords = [constants.MEDIA_CHANNEL]
 
     # HDI bounds: [0.0, 10.0]
@@ -1995,12 +2055,16 @@ class HighVarianceCheckTest(parameterized.TestCase):
         ["ch1", "ch2"]
     )
     self.inference_data.posterior.rf_channel.values = np.array(["rf1"])
-    self.inference_data.posterior.roi_m.values = np.array([
-        [[2.0, 4.0]],
-    ])  # (chain=1, draw=1, channel=2)
-    self.inference_data.posterior.roi_rf.values = np.array([
-        [[3.0]],
-    ])  # (chain=1, draw=1, channel=1)
+    self.inference_data.posterior.roi_m.values = np.array(
+        [
+            [[2.0, 4.0]],
+        ]
+    )  # (chain=1, draw=1, channel=2)
+    self.inference_data.posterior.roi_rf.values = np.array(
+        [
+            [[3.0]],
+        ]
+    )  # (chain=1, draw=1, channel=1)
     self.inference_data.posterior.coords = [
         constants.MEDIA_CHANNEL,
         constants.RF_CHANNEL,
@@ -2209,14 +2273,18 @@ class PotentialBiasCheckTest(parameterized.TestCase):
       dict(
           testcase_name="constant_input",
           paid_channels=["ch1"],
-          media_all_data=np.array([
-              [[1.0], [2.0], [3.0], [4.0]],
-              [[1.0], [1.0], [1.0], [1.0]],  # constant media in geo2
-          ]),
-          controls_data=np.array([
-              [[4.0], [5.0], [2.0], [1.0]],
-              [[4.0], [5.0], [2.0], [1.0]],
-          ]),
+          media_all_data=np.array(
+              [
+                  [[1.0], [2.0], [3.0], [4.0]],
+                  [[1.0], [1.0], [1.0], [1.0]],  # constant media in geo2
+              ]
+          ),
+          controls_data=np.array(
+              [
+                  [[4.0], [5.0], [2.0], [1.0]],
+                  [[4.0], [5.0], [2.0], [1.0]],
+              ]
+          ),
           expected_aggregate_case=results.PotentialBiasAggregateCases.PASS,
           expected_low_correlation_channels=[],
           expected_channel_cases=[

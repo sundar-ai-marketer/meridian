@@ -31,7 +31,6 @@ from meridian.model import model
 from meridian.model import spec
 import numpy as np
 
-
 _N_GEOS = 4
 _N_TIMES = 40
 _N_CHAINS = 2
@@ -46,9 +45,7 @@ def _build_model(n_geos: int = _N_GEOS) -> model.Meridian:
       n_media_channels=2,
       n_controls=1,
   )
-  return model.Meridian(
-      input_data=data, model_spec=spec.ModelSpec(max_lag=2)
-  )
+  return model.Meridian(input_data=data, model_spec=spec.ModelSpec(max_lag=2))
 
 
 class SamplingDiagnosticsTest(parameterized.TestCase):
@@ -90,9 +87,7 @@ class SamplingDiagnosticsTest(parameterized.TestCase):
     self.assertIsNotNone(self.diag.divergence_rate)
 
   def test_n_divergences_matches_raw_sample_stats(self):
-    raw = np.asarray(
-        self.mmm.inference_data.sample_stats[c.DIVERGING].values
-    )
+    raw = np.asarray(self.mmm.inference_data.sample_stats[c.DIVERGING].values)
     self.assertEqual(self.diag.n_divergences, int(raw.sum()))
 
   def test_divergence_rate_matches_count_over_total_draws(self):
@@ -220,13 +215,13 @@ class SamplingDiagnosticsTest(parameterized.TestCase):
 
   def test_min_bulk_ess_matches_manual_arviz_computation(self):
     ess = az.ess(self.mmm.inference_data.posterior, method='bulk')
-    finite_mins = []
+    non_nan_mins = []
     for data_array in ess.data_vars.values():
       arr = np.asarray(data_array.values, dtype=float).ravel()
-      finite = arr[np.isfinite(arr)]
-      if finite.size:
-        finite_mins.append(float(np.min(finite)))
-    expected = min(finite_mins) if finite_mins else float('nan')
+      non_nan = arr[~np.isnan(arr)]
+      if non_nan.size:
+        non_nan_mins.append(float(np.min(non_nan)))
+    expected = min(non_nan_mins) if non_nan_mins else float('nan')
     self.assertAlmostEqual(self.diag.min_bulk_ess, expected, places=6)
 
   def test_min_bulk_ess_per_draw_is_consistent(self):
@@ -275,7 +270,7 @@ class SamplingDiagnosticsTest(parameterized.TestCase):
     frame = self.diag.summary()
     finite = frame['bulk_ess'].dropna().to_numpy()
     self.assertTrue(np.all(np.diff(finite) >= 0))
-    # NaN rows (deterministic parameters), if any, sort to the end.
+    # NaN rows (unavailable diagnostics), if any, sort to the end.
     if frame['bulk_ess'].isna().any():
       self.assertTrue(frame['bulk_ess'].iloc[-1] != frame['bulk_ess'].iloc[-1])
 
@@ -339,27 +334,31 @@ class SamplingDiagnosticsTest(parameterized.TestCase):
   )
   def test_verdict_reflects_divergence_severity(self, rate, expected):
     n_divergences = round(rate * self.diag.total_draws)
-    with mock.patch.object(
-        type(self.diag),
-        'divergence_rate',
-        new_callable=mock.PropertyMock,
-        return_value=rate,
-    ), mock.patch.object(
-        type(self.diag),
-        'n_divergences',
-        new_callable=mock.PropertyMock,
-        return_value=n_divergences,
-    ), mock.patch.object(
-        type(self.diag),
-        'divergence_rate_is_serious',
-        new_callable=mock.PropertyMock,
-        return_value=rate
-        > sampling_diagnostics.DIVERGENCE_RATE_SERIOUS_THRESHOLD,
+    with (
+        mock.patch.object(
+            type(self.diag),
+            'divergence_rate',
+            new_callable=mock.PropertyMock,
+            return_value=rate,
+        ),
+        mock.patch.object(
+            type(self.diag),
+            'n_divergences',
+            new_callable=mock.PropertyMock,
+            return_value=n_divergences,
+        ),
+        mock.patch.object(
+            type(self.diag),
+            'divergence_rate_is_serious',
+            new_callable=mock.PropertyMock,
+            return_value=rate
+            > sampling_diagnostics.DIVERGENCE_RATE_SERIOUS_THRESHOLD,
+        ),
     ):
       self.assertIn(expected, self.diag.verdict)
 
   # -----------------------------------------------------------------------
-  # `_nan_reduce` helper: deterministic-parameter handling.
+  # `_nan_reduce` helper: unavailable-diagnostic handling.
   # -----------------------------------------------------------------------
 
   def test_nan_reduce_all_nan_returns_nan(self):
@@ -379,6 +378,68 @@ class SamplingDiagnosticsTest(parameterized.TestCase):
         np.array([10.0, np.nan, 3.0]), np.min
     )
     self.assertEqual(result, 3.0)
+
+
+class NonFiniteDiagnosticsTest(absltest.TestCase):
+  """Non-finite handling does not need a real MCMC fit to be regression-tested."""
+
+  def _diag(self) -> sampling_diagnostics.SamplingDiagnostics:
+    diag = object.__new__(sampling_diagnostics.SamplingDiagnostics)
+    diag._analyzer = mock.Mock()  # pylint: disable=protected-access
+    diag._n_chains = 2  # pylint: disable=protected-access
+    diag._n_draws = 10  # pylint: disable=protected-access
+    diag._divergences = sampling_diagnostics._Divergences(  # pylint: disable=protected-access
+        reported=False, per_chain_counts=np.array([np.nan, np.nan])
+    )
+    return diag
+
+  def test_infinite_rhat_is_not_dropped(self):
+    diag = self._diag()
+    diag._analyzer.get_rhat.return_value = {  # pylint: disable=protected-access
+        'bad_parameter': np.array([1.0, np.inf])
+    }
+    self.assertTrue(np.isposinf(diag.rhat_max))
+    self.assertFalse(diag.rhat_max_ok_modern)
+    self.assertFalse(diag.rhat_max_ok_upstream)
+    with mock.patch.object(
+        diag, '_ess_per_parameter', return_value={'healthy_ess': 800.0}
+    ):
+      self.assertIn('R-hat is non-finite', diag.verdict)
+
+  def test_infinite_ess_is_not_reported_as_healthy(self):
+    diag = self._diag()
+    diag._analyzer.get_rhat.return_value = {  # pylint: disable=protected-access
+        'healthy_rhat': np.array([1.0])
+    }
+    with mock.patch.object(
+        diag,
+        '_ess_per_parameter',
+        side_effect=lambda method: {
+            'healthy_parameter': 800.0,
+            'bad_parameter': np.inf,
+        },
+    ):
+      frame = diag.summary()
+      bad = frame[frame['parameter'] == 'bad_parameter'].iloc[0]
+      healthy = frame[frame['parameter'] == 'healthy_parameter'].iloc[0]
+      self.assertFalse(bad['ess_ok'])
+      self.assertTrue(healthy['ess_ok'])
+      self.assertFalse(diag.ess_ok)
+      self.assertIn('ESS is non-finite', diag.verdict)
+
+  def test_all_nan_diagnostics_are_undefined_not_deterministic(self):
+    diag = self._diag()
+    diag._analyzer.get_rhat.return_value = {  # pylint: disable=protected-access
+        'unavailable': np.array([np.nan])
+    }
+    with mock.patch.object(
+        diag,
+        '_ess_per_parameter',
+        return_value={'unavailable': np.nan},
+    ):
+      verdict = diag.verdict
+    self.assertIn('R-hat is undefined for all parameters', verdict)
+    self.assertIn('ESS is undefined for all parameters', verdict)
 
 
 if __name__ == '__main__':

@@ -1,3 +1,9 @@
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
+name: Build distributions
+description: Build and upload the wheel and source distribution.
+
 inputs:
   python_version:
     description: The Python version of the build toolchain to use.

@@ -13,16 +13,19 @@ SHELL := /bin/bash
 
 # Override with `make VENV=~/.venvs/mmm setup` etc.
 VENV ?= .venv
+# Make does not perform shell tilde expansion after a variable is substituted
+# into a quoted recipe argument, so expand it while evaluating the Makefile.
+override VENV := $(subst ~,$(HOME),$(VENV))
 VENV_PY := $(VENV)/bin/python
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup verify test test-tf demo css build clean distclean all quickstart check-venv
+.PHONY: help setup verify test test-tf test-e2e demo css build clean distclean all quickstart check-venv
 
 ## help: Show this list of targets.
 help:
 	@echo "Meridian -- available targets:"
-	@grep -E '^## [a-zA-Z_-]+:' $(MAKEFILE_LIST) | sed -E 's/^## /  /' | \
+	@grep -E '^## [a-zA-Z0-9_-]+:' $(MAKEFILE_LIST) | sed -E 's/^## /  /' | \
 		awk -F':' '{printf "  %-12s%s\n", $$1, $$2}'
 
 # Internal guard: most targets need a working venv. Fails fast with a clear
@@ -35,32 +38,37 @@ check-venv:
 
 ## setup: Build the venv, install every extra, compile CSS, verify (wraps scripts/setup.sh).
 setup:
-	./scripts/setup.sh $(VENV)
+	./scripts/setup.sh "$(VENV)"
 
 ## verify: Check that the environment is actually usable (scripts/verify_environment.py).
 verify: check-venv
-	$(VENV_PY) scripts/verify_environment.py
+	"$(VENV_PY)" scripts/verify_environment.py
 
-## test: Run the full test suite in parallel (pytest meridian -q -n auto).
+## test: Run the full test suite in parallel with work-stealing.
 test: check-venv
-	$(VENV_PY) -m pytest meridian -q -n auto
+	"$(VENV_PY)" -m pytest meridian scenarioplanner -q -n auto --dist=worksteal
 
 ## test-tf: Run the full test suite with the TensorFlow backend forced.
 test-tf: check-venv
-	MERIDIAN_BACKEND=tensorflow $(VENV_PY) -m pytest meridian -q -n auto
+	MERIDIAN_BACKEND=tensorflow "$(VENV_PY)" -m pytest meridian scenarioplanner -q -n auto --dist=worksteal
+
+## test-e2e: Run the real fit → optimize → serialize → report smoke test.
+test-e2e: check-venv
+	"$(VENV_PY)" scripts/compile_report_css.py
+	"$(VENV_PY)" scripts/test_end_to_end.py
 
 ## demo: Run the quickstart end-to-end example (examples/quickstart.py).
 demo: check-venv
-	$(VENV_PY) examples/quickstart.py
+	"$(VENV_PY)" examples/quickstart.py
 
 ## css: Compile the report stylesheet (scripts/compile_report_css.py).
 css: check-venv
-	$(VENV_PY) scripts/compile_report_css.py
+	"$(VENV_PY)" scripts/compile_report_css.py
 
 ## build: Build the wheel and sdist into dist/.
 build: check-venv
-	$(VENV_PY) -m pip install -q -U build
-	$(VENV_PY) -m build
+	"$(VENV_PY)" -m pip install -q -U build
+	"$(VENV_PY)" -m build
 
 ## clean: Remove build artifacts and generated output. Never touches the venv.
 clean:
@@ -80,8 +88,9 @@ distclean: clean
 			*) echo "Aborted. '$(VENV)' was left untouched." ;; \
 		esac
 
-## quickstart: The one-click path -- setup, compile CSS, verify, then run the demo.
-quickstart: setup css verify demo
+## quickstart: The one-click path -- setup, then run the demo.
+quickstart: setup
+	$(MAKE) VENV="$(VENV)" demo
 
 ## all: Alias for quickstart.
 all: quickstart

@@ -6,6 +6,7 @@ include meridian/templates/*
 # TRIAGE.md is what the NOTICE points at for what changed and why.
 include NOTICE
 include TRIAGE.md
+include AUDIT.md
 # Must come last. MANIFEST.in directives are applied in order, so an earlier
 # global-exclude is undone by the `include meridian/templates/*` above, which
 # is how meridian/templates/formatter_test.py used to reach the wheel.

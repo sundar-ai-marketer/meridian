@@ -39,7 +39,7 @@ immediately.
 Run it as:
 
 ```
-python -m meridian.benchmark.benchmark --n-geos 20 --n-times 156 --json out.json
+python -m meridian.benchmark --n-geos 20 --n-times 156 --json out.json
 ```
 """
 
@@ -50,11 +50,15 @@ from collections.abc import Sequence
 import dataclasses
 import json
 import platform
-import resource
 import subprocess
 import sys
 import time
 from typing import Any
+
+try:
+  import resource
+except ImportError:  # pragma: no cover - unavailable on Windows.
+  resource = None
 
 
 __all__ = [
@@ -66,11 +70,15 @@ __all__ = [
 ]
 
 
-def _peak_rss_bytes() -> int:
-  """Returns peak resident set size in bytes.
+def _peak_rss_bytes() -> int | None:
+  """Returns peak resident set size in bytes, if this platform exposes it.
 
   `ru_maxrss` is bytes on macOS but kilobytes on Linux, so normalize.
+  Windows has no standard-library `resource` module; return `None` rather than
+  manufacturing a cross-platform number with different semantics.
   """
+  if resource is None:
+    return None
   peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
   return peak if sys.platform == 'darwin' else peak * 1024
 
@@ -125,6 +133,18 @@ def environment_info() -> dict[str, Any]:
     info['meridian'] = meridian.__version__
   except Exception as e:  # pylint: disable=broad-except
     info['meridian'] = f'unavailable: {e!r}'
+
+  try:
+    from meridian import backend  # pylint: disable=g-import-not-at-top
+
+    # Inspect the Tensor implementation rather than only the current config:
+    # `set_backend()` after imports cannot change a model's active backend.
+    info['meridian_backend'] = backend.computation_backend().name
+    info['meridian_precision'] = backend.computation_precision().name
+  except Exception as e:  # pylint: disable=broad-except
+    unavailable = f'unavailable: {e!r}'
+    info['meridian_backend'] = unavailable
+    info['meridian_precision'] = unavailable
 
   try:
     import jax  # pylint: disable=g-import-not-at-top
@@ -183,6 +203,21 @@ class BenchmarkConfig:
   n_keep: int = 100
   seed: int = 0
 
+  def __post_init__(self):
+    for name in (
+        'n_geos',
+        'n_times',
+        'n_media_channels',
+        'n_prior_draws',
+        'n_chains',
+        'n_keep',
+    ):
+      if getattr(self, name) < 1:
+        raise ValueError(f'`{name}` must be >= 1, got {getattr(self, name)}.')
+    for name in ('n_controls', 'max_lag', 'n_adapt', 'n_burnin'):
+      if getattr(self, name) < 0:
+        raise ValueError(f'`{name}` must be >= 0, got {getattr(self, name)}.')
+
   @property
   def n_media_times(self) -> int:
     """Media history long enough to fill the adstock window."""
@@ -197,7 +232,7 @@ class BenchmarkResult:
   environment: dict[str, Any]
   timings_seconds: dict[str, float]
   throughput: dict[str, float]
-  peak_rss_bytes: int
+  peak_rss_bytes: int | None
 
   def to_json(self, indent: int = 2) -> str:
     return json.dumps(dataclasses.asdict(self), indent=indent, default=str)
@@ -209,6 +244,8 @@ class BenchmarkResult:
         'Meridian benchmark',
         '=' * 58,
         f'  meridian     {env.get("meridian")}',
+        f'  backend      {env.get("meridian_backend")}',
+        f'  precision    {env.get("meridian_precision")}',
         f'  python       {env.get("python")}',
         f'  platform     {env.get("platform")}',
         f'  processor    {env.get("processor")}',
@@ -227,10 +264,12 @@ class BenchmarkResult:
     lines += ['', 'Throughput', '-' * 58]
     for key, value in self.throughput.items():
       lines.append(f'  {key:<20} {value:10.2f}')
-    lines += [
-        '',
-        f'Peak RSS: {self.peak_rss_bytes / 1e9:.2f} GB',
-    ]
+    peak_rss = (
+        f'Peak RSS: {self.peak_rss_bytes / 1e9:.2f} GB'
+        if self.peak_rss_bytes is not None
+        else 'Peak RSS: unavailable on this platform'
+    )
+    lines += ['', peak_rss]
     return '\n'.join(lines)
 
 
@@ -287,9 +326,7 @@ def run_benchmark(config: BenchmarkConfig | None = None) -> BenchmarkResult:
       seed=config.seed,
   )
   timings['sample_posterior'] = time.perf_counter() - t0
-  timings['total'] = sum(
-      v for k, v in timings.items() if k != 'cold_import'
-  )
+  timings['total'] = sum(v for k, v in timings.items() if k != 'cold_import')
 
   total_mcmc_draws = config.n_chains * (
       config.n_adapt + config.n_burnin + config.n_keep
@@ -342,9 +379,12 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
   args = _parse_args(argv)
-  config = BenchmarkConfig(**{
-      f.name: getattr(args, f.name) for f in dataclasses.fields(BenchmarkConfig)
-  })
+  config = BenchmarkConfig(
+      **{
+          f.name: getattr(args, f.name)
+          for f in dataclasses.fields(BenchmarkConfig)
+      }
+  )
   result = run_benchmark(config)
   print(result.format_table())
   if args.json_path:

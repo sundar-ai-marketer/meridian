@@ -9,7 +9,8 @@ __pycache__/
 .cache/
 
 # Poetry, setuptools, PyPI distribution artifacts.
-/*.egg-info
+*.egg-info/
+/proto/mmm/**/*_pb2.py
 .eggs/
 build/
 dist/
@@ -35,6 +36,8 @@ env/
 
 # Local environment overrides.
 .env
+.env.*
+!.env.example
 
 # Output of examples/quickstart.py (default --output-dir).
 /quickstart_output/

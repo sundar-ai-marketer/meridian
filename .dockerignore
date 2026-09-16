@@ -33,6 +33,16 @@ env/
 
 # Local environment overrides -- never bake secrets into an image layer.
 .env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+.netrc
+.npmrc
+.pypirc
+.aws/
+.gcloud/
 
 # Output of examples/quickstart.py.
 quickstart_output/

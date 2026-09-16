@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 from collections.abc import Mapping, Sequence
 import json
@@ -91,6 +95,22 @@ class ConvergenceCheckResultTest(parameterized.TestCase):
         "The model hasn't converged, and the `max_r_hat` for parameter"
         " `mock_var` is 11.00. "
         f"{results.NOT_CONVERGED_RECOMMENDATION}",
+    )
+
+  @parameterized.named_parameters(
+      dict(testcase_name="undefined", rhat=float("nan")),
+      dict(testcase_name="infinite", rhat=float("inf")),
+  )
+  def test_convergence_check_result_explains_nonfinite_rhat(self, rhat):
+    result = results.ConvergenceCheckResult(
+        case=results.ConvergenceCases.NOT_CONVERGED,
+        config=configs.ConvergenceConfig(),
+        max_r_hat=rhat,
+        max_parameter="unavailable",
+    )
+    self.assertEqual(result.case.status, results.Status.FAIL)
+    self.assertEqual(
+        result.recommendation, results.NONFINITE_RHAT_RECOMMENDATION
     )
 
 
@@ -949,9 +969,10 @@ Convergence Check:
             "uncalibrated_channel": False,
         },
     )
-    with mock.patch.object(
-        review_constants, "DRIVER", "CustomDriver"
-    ), mock.patch.object(review_constants, "NON_DRIVER", "CustomNonDriver"):
+    with (
+        mock.patch.object(review_constants, "DRIVER", "CustomDriver"),
+        mock.patch.object(review_constants, "NON_DRIVER", "CustomNonDriver"),
+    ):
       rec_card = summary._create_channel_recommendation_card_html()
       self.assertIn('<chip class="driver">CustomDriver</chip>', rec_card)
       self.assertIn('<chip class="non-driver">CustomNonDriver</chip>', rec_card)
@@ -1915,11 +1936,13 @@ class PotentialBiasCheckResultTest(parameterized.TestCase):
 
   def test_generate_potential_bias_chart_json(self):
     corr_matrix = xr.DataArray(
-        np.array([
-            [[0.05, 0.15], [0.08, 0.02]],
-            [[0.12, 0.04], [0.01, 0.09]],
-            [[0.02, 0.18], [0.06, 0.11]],
-        ]),
+        np.array(
+            [
+                [[0.05, 0.15], [0.08, 0.02]],
+                [[0.12, 0.04], [0.01, 0.09]],
+                [[0.02, 0.18], [0.06, 0.11]],
+            ]
+        ),
         coords={
             constants.GEO: ["geo1", "geo2", "geo3"],
             constants.CHANNEL: ["channel1", "channel2"],

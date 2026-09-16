@@ -12,7 +12,9 @@ supported by Google.
 **Report a vulnerability in Google's Meridian code to Google**, not here. This
 fork carries upstream's code essentially unchanged, so almost any security
 issue you find is upstream's and everyone benefits from it being fixed there.
-Use [google/meridian](https://github.com/google/meridian/issues).
+Use Google's private intake at [g.co/vulnz](https://g.co/vulnz), as directed
+by [upstream's security policy](https://github.com/google/meridian/security).
+Do not disclose vulnerability details in a public issue.
 
 **Report it here only if it is specific to this fork's own changes** — the
 modules listed in [`NOTICE`](NOTICE) under "Files added by this fork", or a
@@ -20,13 +22,15 @@ behavioural change listed in [`TRIAGE.md`](TRIAGE.md).
 
 To report privately, use GitHub's
 [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability)
-on this repository rather than opening a public issue.
+on this repository rather than opening a public issue. If the private reporting
+button is unavailable, open an issue asking for a private contact without
+including vulnerability details.
 
 ## What to expect
 
-This fork is maintained by one person alongside other work. There is no
-response-time commitment. If you need a guaranteed response, Apache 2.0 lets
-you fork and patch it yourself.
+This fork is maintained by one person alongside other work. Reports are
+reviewed as maintainer availability permits; there is no response-time
+commitment. Keep vulnerability details private while a fix is assessed.
 
 ## Dependency vulnerabilities
 
@@ -36,8 +40,9 @@ work around upstream breakage rather than for security — see the comments in
 raising, but be aware that raising a ceiling can break the model: `arviz` and
 `matplotlib` ceilings in particular are load-bearing.
 
-The TensorFlow floor (`>= 2.21.0`) exists specifically to address
-CVE-2026-2492 and should not be lowered.
+The TensorFlow floor (`>= 2.21.0`) retains the upstream fix for
+[CVE-2026-2492](https://www.zerodayinitiative.com/advisories/ZDI-26-116/)
+and should not be lowered without reviewing that protection.
 
 ## Scope
 

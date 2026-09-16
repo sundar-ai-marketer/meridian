@@ -32,12 +32,14 @@ This module answers three questions about a fitted model:
   1. Did NUTS hit any divergent transitions? Even one means the sampler could
      not explore part of the posterior; see `DIVERGENCE_RATE_SERIOUS_THRESHOLD`
      for when a *rate* of divergences, not just their presence, is serious.
-  2. Is r-hat below a defensible threshold? `ConvergenceCheck`
+  2. Is Meridian's upstream TFP potential-scale-reduction R-hat below a
+     defensible threshold? `ConvergenceCheck`
      (meridian/analysis/review/checks.py) already answers this with a 1.2
-     cutoff inherited from upstream; this module reports that value
-     unchanged (`UPSTREAM_RHAT_THRESHOLD`) alongside the stricter, more
-     modern 1.01 bar from Vehtari et al. (2021) (`MODERN_RHAT_THRESHOLD`), so
-     neither reading is silently discarded.
+     cutoff inherited from upstream; this module reports that value unchanged
+     (`UPSTREAM_RHAT_THRESHOLD`) alongside a stricter 1.01 heuristic
+     (`MODERN_RHAT_THRESHOLD`, whose historical API name is retained).
+     This is not ArviZ's rank-normalized split R-hat; use
+     `arviz.rhat(..., method='rank')` if that separate diagnostic is wanted.
   3. Is ESS high enough to trust the posterior's quantiles? See
      `MIN_BULK_ESS` / `MIN_TAIL_ESS`.
 
@@ -67,7 +69,6 @@ from meridian.model import model
 import numpy as np
 import pandas as pd
 
-
 __all__ = [
     'SamplingDiagnostics',
     'MODERN_RHAT_THRESHOLD',
@@ -77,19 +78,20 @@ __all__ = [
     'DIVERGENCE_RATE_SERIOUS_THRESHOLD',
 ]
 
-# Heuristic, not a hard correctness bound. Vehtari, Gelman, Simpson, Carpenter
-# & Burkner (2021), "Rank-normalization, folding, and localization: An
-# improved R-hat for assessing convergence of MCMC" (Bayesian Analysis)
-# recommend treating r-hat < 1.01 as the modern bar for "converged", tighter
-# than the 1.1-1.2 guidance common before that paper.
+# Strict heuristic, not a hard correctness bound. Its historical public name
+# predates the clarification below. `Analyzer.get_rhat()` calls TensorFlow
+# Probability's conventional `potential_scale_reduction`, not the
+# rank-normalized split R-hat introduced by Vehtari et al. (2021), so 1.01 here
+# is a deliberately strict screen on Meridian's upstream statistic, not a claim
+# that this module implements that paper's estimator.
 MODERN_RHAT_THRESHOLD = 1.01
 
 # Heuristic. Matches Meridian's own `ConvergenceCheck`
 # (meridian/analysis/review/checks.py) exactly -- pulled from its default
 # config rather than duplicated as a literal, so the two thresholds cannot
 # silently drift apart. Below this, `ConvergenceCheck` calls the model
-# "converged"; this module reports it unchanged, alongside the stricter
-# `MODERN_RHAT_THRESHOLD`, rather than overriding upstream's judgment call.
+# "converged"; this module reports it unchanged, alongside the stricter 1.01
+# heuristic, rather than overriding upstream's judgment call.
 UPSTREAM_RHAT_THRESHOLD = (
     review_configs.ConvergenceConfig().convergence_threshold
 )
@@ -136,14 +138,14 @@ _ESS_OK = 'ess_ok'
 
 
 def _nan_reduce(values: np.ndarray, reducer) -> float:
-  """Reduces `values` over non-finite-safe cells, `NaN` if none are finite.
+  """Reduces `values` over non-NaN cells, `NaN` if every cell is NaN.
 
   Deterministic parameters -- Hill parameters phantom-masked for linear
   channels in `get_rhat`, or hierarchical terms pinned to zero in a national
-  model -- have no between-chain variance, so both r-hat and ESS come back
-  as `NaN` for every cell. `meridian/validation/recovery.py` handles this the
-  same way: drop non-finite cells before reducing, and report `NaN` (not a
-  crash, and not a false "0" or "1") when nothing finite remains.
+  model -- can produce `NaN`. So can diagnostics that are unavailable because
+  there are too few usable draws or chains. Drop only `NaN`: an infinite R-hat
+  must remain visible and fail convergence, while ESS callers separately reject
+  a non-finite result as invalid.
 
   Args:
     values: A 1-D array of per-cell diagnostic values for one parameter.
@@ -151,12 +153,12 @@ def _nan_reduce(values: np.ndarray, reducer) -> float:
       ESS, where smaller is worse).
 
   Returns:
-    The reduced value, or `NaN` if `values` has no finite entries.
+    The reduced value, or `NaN` if `values` has no non-NaN entries.
   """
-  finite = values[np.isfinite(values)]
-  if finite.size == 0:
+  non_nan = values[~np.isnan(values)]
+  if non_nan.size == 0:
     return float('nan')
-  return float(reducer(finite))
+  return float(reducer(non_nan))
 
 
 @dataclasses.dataclass(frozen=True)
@@ -170,10 +172,11 @@ class _Divergences:
 class SamplingDiagnostics:
   """MCMC trust signals absent from Meridian: divergences and ESS.
 
-  Reuses `Analyzer.get_rhat()` for r-hat rather than recomputing it, so this
-  class and `meridian.analysis.review.checks.ConvergenceCheck` never disagree
-  on the r-hat values themselves -- only, deliberately, on which threshold to
-  flag them against (see module docstring).
+  Reuses `Analyzer.get_rhat()` for R-hat rather than recomputing it. That path
+  currently calls TFP's conventional `potential_scale_reduction`, so this class
+  and `meridian.analysis.review.checks.ConvergenceCheck` never disagree on the
+  upstream statistic itself -- only, deliberately, on which threshold to flag
+  it against. It does not calculate ArviZ's rank-normalized split R-hat.
   """
 
   def __init__(self, meridian: model.Meridian):
@@ -287,14 +290,16 @@ class SamplingDiagnostics:
     else:
       counts = np.full(self._n_chains, np.nan)
     rates = counts / self._n_draws
-    return pd.DataFrame({
-        c.CHAIN: np.arange(self._n_chains),
-        'n_divergences': counts,
-        'n_draws': self._n_draws,
-        'divergence_rate': rates,
-        'reported': self._divergences.reported,
-        'serious': rates > DIVERGENCE_RATE_SERIOUS_THRESHOLD,
-    })
+    return pd.DataFrame(
+        {
+            c.CHAIN: np.arange(self._n_chains),
+            'n_divergences': counts,
+            'n_draws': self._n_draws,
+            'divergence_rate': rates,
+            'reported': self._divergences.reported,
+            'serious': rates > DIVERGENCE_RATE_SERIOUS_THRESHOLD,
+        }
+    )
 
   # ---------------------------------------------------------------------
   # r-hat and effective sample size.
@@ -310,12 +315,14 @@ class SamplingDiagnostics:
 
     Returns:
       A DataFrame with columns: `parameter`, `rhat`, `bulk_ess`, `tail_ess`,
-      `bulk_ess_per_draw`, `tail_ess_per_draw`, `rhat_ok_modern` (below
-      `MODERN_RHAT_THRESHOLD`), `rhat_ok_upstream` (below
-      `UPSTREAM_RHAT_THRESHOLD`), and `ess_ok` (bulk and tail ESS both at or
-      above their thresholds). A parameter with no finite r-hat or ESS (a
-      deterministic parameter; see `_nan_reduce`) gets `NaN` in that column
-      and reads `False` for the corresponding `_ok` flag.
+      `bulk_ess_per_draw`, `tail_ess_per_draw`, `rhat_ok_modern` (finite and
+      below the strict 1.01 heuristic), `rhat_ok_upstream` (finite and below
+      `UPSTREAM_RHAT_THRESHOLD`), and `ess_ok` (bulk and tail ESS both finite
+      and at or above their thresholds). `rhat` is Meridian's conventional TFP
+      potential-scale-reduction statistic, rather than rank-normalized R-hat.
+      A parameter with an unavailable diagnostic gets `NaN` in that column and
+      reads `False` for the corresponding `_ok` flag; infinite diagnostic
+      values are also invalid.
     """
     rhat_by_param = self._rhat_per_parameter()
     bulk_by_param = self._ess_per_parameter(method='bulk')
@@ -332,27 +339,36 @@ class SamplingDiagnostics:
         [tail_by_param.get(p, float('nan')) for p in parameters]
     )
 
-    frame = pd.DataFrame({
-        _PARAMETER: parameters,
-        _RHAT: rhat,
-        _BULK_ESS: bulk_ess,
-        _TAIL_ESS: tail_ess,
-        _BULK_ESS_PER_DRAW: bulk_ess / self.total_draws,
-        _TAIL_ESS_PER_DRAW: tail_ess / self.total_draws,
-    })
-    frame[_RHAT_OK_MODERN] = frame[_RHAT] < MODERN_RHAT_THRESHOLD
-    frame[_RHAT_OK_UPSTREAM] = frame[_RHAT] < UPSTREAM_RHAT_THRESHOLD
-    frame[_ESS_OK] = (frame[_BULK_ESS] >= MIN_BULK_ESS) & (
-        frame[_TAIL_ESS] >= MIN_TAIL_ESS
+    frame = pd.DataFrame(
+        {
+            _PARAMETER: parameters,
+            _RHAT: rhat,
+            _BULK_ESS: bulk_ess,
+            _TAIL_ESS: tail_ess,
+            _BULK_ESS_PER_DRAW: bulk_ess / self.total_draws,
+            _TAIL_ESS_PER_DRAW: tail_ess / self.total_draws,
+        }
     )
-    # Worst (lowest) bulk ESS first; NaN (deterministic parameters) sorts
-    # last rather than to either extreme.
+    frame[_RHAT_OK_MODERN] = np.isfinite(frame[_RHAT]) & (
+        frame[_RHAT] < MODERN_RHAT_THRESHOLD
+    )
+    frame[_RHAT_OK_UPSTREAM] = np.isfinite(frame[_RHAT]) & (
+        frame[_RHAT] < UPSTREAM_RHAT_THRESHOLD
+    )
+    frame[_ESS_OK] = (
+        np.isfinite(frame[_BULK_ESS])
+        & np.isfinite(frame[_TAIL_ESS])
+        & (frame[_BULK_ESS] >= MIN_BULK_ESS)
+        & (frame[_TAIL_ESS] >= MIN_TAIL_ESS)
+    )
+    # Worst (lowest) bulk ESS first; unavailable values sort last rather than
+    # to either extreme.
     return frame.sort_values(
         _BULK_ESS, ascending=True, na_position='last'
     ).reset_index(drop=True)
 
   def _rhat_per_parameter(self) -> dict[str, float]:
-    """Worst (max, finite) r-hat per top-level parameter name."""
+    """Worst (max, non-NaN) r-hat per top-level parameter name."""
     rhat = self._analyzer.get_rhat()
     return {
         name: _nan_reduce(np.asarray(value, dtype=float).ravel(), np.max)
@@ -360,7 +376,7 @@ class SamplingDiagnostics:
     }
 
   def _ess_per_parameter(self, method: str) -> dict[str, float]:
-    """Worst (min, finite) ESS per top-level parameter name, via arviz."""
+    """Worst (min, non-NaN) ESS per top-level parameter name, via ArviZ."""
     ess_dataset = az.ess(self._posterior, method=method)
     return {
         name: _nan_reduce(
@@ -371,34 +387,37 @@ class SamplingDiagnostics:
 
   @property
   def rhat_max(self) -> float:
-    """Worst r-hat across all parameters.
+    """Worst upstream TFP potential-scale-reduction R-hat across parameters.
 
-    `NaN` if every parameter is deterministic (see `_nan_reduce`). Identical
-    in value to what `ConvergenceCheck.run().max_r_hat` computes, since both
-    call `Analyzer.get_rhat()`.
+    `NaN` if R-hat is unavailable for every parameter (see `_nan_reduce`).
+    Identical in value to what `ConvergenceCheck.run().max_r_hat` computes,
+    since both call `Analyzer.get_rhat()`. This is not ArviZ's rank-normalized
+    split R-hat.
     """
     values = np.array(list(self._rhat_per_parameter().values()))
     return _nan_reduce(values, np.max) if values.size else float('nan')
 
   @property
   def rhat_max_ok_modern(self) -> bool:
-    """Whether `rhat_max` is below `MODERN_RHAT_THRESHOLD`."""
-    return bool(self.rhat_max < MODERN_RHAT_THRESHOLD)
+    """Whether upstream R-hat clears the strict 1.01 heuristic."""
+    rhat_max = self.rhat_max
+    return bool(np.isfinite(rhat_max) and rhat_max < MODERN_RHAT_THRESHOLD)
 
   @property
   def rhat_max_ok_upstream(self) -> bool:
-    """Whether `rhat_max` is below `UPSTREAM_RHAT_THRESHOLD`."""
-    return bool(self.rhat_max < UPSTREAM_RHAT_THRESHOLD)
+    """Whether upstream R-hat is below `UPSTREAM_RHAT_THRESHOLD`."""
+    rhat_max = self.rhat_max
+    return bool(np.isfinite(rhat_max) and rhat_max < UPSTREAM_RHAT_THRESHOLD)
 
   @property
   def min_bulk_ess(self) -> float:
-    """Smallest bulk-ESS across all parameters."""
+    """Smallest bulk-ESS across all parameters, or `NaN` if unavailable."""
     values = np.array(list(self._ess_per_parameter('bulk').values()))
     return _nan_reduce(values, np.min) if values.size else float('nan')
 
   @property
   def min_tail_ess(self) -> float:
-    """Smallest tail-ESS across all parameters."""
+    """Smallest tail-ESS across all parameters, or `NaN` if unavailable."""
     values = np.array(list(self._ess_per_parameter('tail').values()))
     return _nan_reduce(values, np.min) if values.size else float('nan')
 
@@ -409,11 +428,34 @@ class SamplingDiagnostics:
 
   @property
   def ess_ok(self) -> bool:
-    """Whether both `min_bulk_ess` and `min_tail_ess` clear their thresholds."""
-    return bool(
-        self.min_bulk_ess >= MIN_BULK_ESS
-        and self.min_tail_ess >= MIN_TAIL_ESS
+    """Whether all reported ESS values are finite and clear their thresholds."""
+    bulk_values = np.asarray(
+        list(self._ess_per_parameter('bulk').values()), dtype=float
     )
+    tail_values = np.asarray(
+        list(self._ess_per_parameter('tail').values()), dtype=float
+    )
+    reported_bulk = bulk_values[~np.isnan(bulk_values)]
+    reported_tail = tail_values[~np.isnan(tail_values)]
+    return bool(
+        reported_bulk.size
+        and reported_tail.size
+        and np.all(np.isfinite(reported_bulk))
+        and np.all(np.isfinite(reported_tail))
+        and _nan_reduce(bulk_values, np.min) >= MIN_BULK_ESS
+        and _nan_reduce(tail_values, np.min) >= MIN_TAIL_ESS
+    )
+
+  def _has_nonfinite_ess(self) -> bool:
+    """Whether any reported per-parameter ESS is infinite."""
+    for method in ('bulk', 'tail'):
+      values = np.asarray(
+          list(self._ess_per_parameter(method).values()), dtype=float
+      )
+      reported = values[~np.isnan(values)]
+      if np.any(~np.isfinite(reported)):
+        return True
+    return False
 
   # ---------------------------------------------------------------------
   # Verdict.
@@ -455,22 +497,29 @@ class SamplingDiagnostics:
 
     rhat_max = self.rhat_max
     if np.isnan(rhat_max):
-      parts.append('Every parameter is deterministic; r-hat is undefined.')
+      parts.append(
+          'Upstream TFP R-hat is undefined for all parameters; convergence'
+          ' cannot be assessed.'
+      )
+    elif not np.isfinite(rhat_max):
+      parts.append(
+          'Upstream TFP R-hat is non-finite; convergence cannot be assessed.'
+      )
     elif self.rhat_max_ok_modern:
       parts.append(
-          f'Max r-hat {rhat_max:.4f} clears both the modern'
-          f' ({MODERN_RHAT_THRESHOLD}) and upstream'
+          f'Max upstream TFP R-hat {rhat_max:.4f} clears both the strict'
+          f' ({MODERN_RHAT_THRESHOLD}) heuristic and upstream'
           f' ({UPSTREAM_RHAT_THRESHOLD}) thresholds.'
       )
     elif self.rhat_max_ok_upstream:
       parts.append(
-          f'Max r-hat {rhat_max:.4f} clears upstream\'s'
-          f' ({UPSTREAM_RHAT_THRESHOLD}) threshold but not the stricter'
-          f' modern one ({MODERN_RHAT_THRESHOLD}, Vehtari et al. 2021).'
+          f"Max upstream TFP R-hat {rhat_max:.4f} clears upstream's"
+          f' ({UPSTREAM_RHAT_THRESHOLD}) threshold but not the strict'
+          f' {MODERN_RHAT_THRESHOLD} heuristic.'
       )
     else:
       parts.append(
-          f'Max r-hat {rhat_max:.4f} exceeds even upstream\'s'
+          f"Max upstream TFP R-hat {rhat_max:.4f} exceeds even upstream's"
           f' {UPSTREAM_RHAT_THRESHOLD} threshold. This model has not'
           ' converged.'
       )
@@ -478,7 +527,17 @@ class SamplingDiagnostics:
     min_bulk = self.min_bulk_ess
     min_tail = self.min_tail_ess
     if np.isnan(min_bulk) and np.isnan(min_tail):
-      parts.append('Every parameter is deterministic; ESS is undefined.')
+      parts.append(
+          'ESS is undefined for all parameters; sampling precision cannot be'
+          ' assessed.'
+      )
+    elif np.isnan(min_bulk) or np.isnan(min_tail):
+      parts.append(
+          'ESS is unavailable for one or more required diagnostics; sampling'
+          ' precision cannot be assessed.'
+      )
+    elif self._has_nonfinite_ess():
+      parts.append('ESS is non-finite; sampling precision cannot be assessed.')
     elif self.ess_ok:
       parts.append(
           f'Min bulk/tail ESS {min_bulk:.0f}/{min_tail:.0f} both clear'

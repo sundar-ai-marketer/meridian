@@ -1,3 +1,9 @@
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
+name: Create version tag
+description: Create a Git tag for a validated package version.
+
 inputs:
   new_version:
     description: The new semantic version string to create a tag for.

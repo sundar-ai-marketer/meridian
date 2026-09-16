@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 """Implementation of the Model Quality Checks."""
 
@@ -148,20 +152,41 @@ class ConvergenceCheck(
     rhats = self._analyzer.get_rhat()
     with warnings.catch_warnings():
       warnings.filterwarnings("ignore", category=RuntimeWarning)
-      max_r_hats = {k: np.nanmax(v) for k, v in rhats.items()}  # pyrefly: ignore[no-matching-overload]
+      max_r_hats = {
+          k: np.nanmax(v) for k, v in rhats.items()
+      }  # pyrefly: ignore[no-matching-overload]
 
-    valid_rhat_items = [
+    reported_rhat_items = [
         item for item in max_r_hats.items() if not np.isnan(item[1])
     ]
-    if not valid_rhat_items:
+    if not reported_rhat_items:
       return results.ConvergenceCheckResult(
-          case=results.ConvergenceCases.CONVERGED,
+          case=results.ConvergenceCases.NOT_CONVERGED,
           config=self._config,
           max_r_hat=np.nan,
-          max_parameter=np.nan,  # pyrefly: ignore[bad-argument-type]
+          max_parameter="unavailable",
       )
 
-    max_parameter, max_r_hat = max(max_r_hats.items(), key=lambda item: item[1])
+    nonfinite_rhat_items = [
+        item for item in reported_rhat_items if not np.isfinite(item[1])
+    ]
+    if nonfinite_rhat_items:
+      max_parameter, max_r_hat = max(
+          nonfinite_rhat_items, key=lambda item: item[1]
+      )
+      return results.ConvergenceCheckResult(
+          case=results.ConvergenceCases.NOT_CONVERGED,
+          config=self._config,
+          max_r_hat=max_r_hat,
+          max_parameter=max_parameter,
+      )
+
+    # Restrict the reduction to reported, finite values. `max_r_hats` can also
+    # contain NaNs for deterministic parameters, and Python's `max` is
+    # order-dependent when one candidate is NaN.
+    max_parameter, max_r_hat = max(
+        reported_rhat_items, key=lambda item: item[1]
+    )
 
     # Case 1: Converged.
     if max_r_hat < self._config.convergence_threshold:
@@ -282,15 +307,17 @@ class BayesianPPPCheck(
     )
 
     sigma = np.asarray(
-        self._inference_data.posterior[constants.SIGMA]  # pyrefly: ignore[missing-attribute]
+        self._inference_data.posterior[
+            constants.SIGMA
+        ]  # pyrefly: ignore[missing-attribute]
     )
     if sigma.ndim == 2:
-      return sigma.flatten() * (
-          stdev * np.sqrt(np.sum(weight_sq_filtered))
-      )
+      return sigma.flatten() * (stdev * np.sqrt(np.sum(weight_sq_filtered)))
     if self._selected_geos is not None:
       sigma_selected = np.asarray(
-          self._inference_data.posterior[constants.SIGMA].sel(  # pyrefly: ignore[missing-attribute]
+          self._inference_data.posterior[
+              constants.SIGMA
+          ].sel(  # pyrefly: ignore[missing-attribute]
               geo=list(self._selected_geos)
           )
       )
@@ -318,7 +345,9 @@ class BayesianPPPCheck(
             aggregate_times=False,
         )
     )
-    total_outcome_actual = np.sum(total_actual_outcome_filtered)  # pyrefly: ignore[no-matching-overload]
+    total_outcome_actual = np.sum(
+        total_actual_outcome_filtered
+    )  # pyrefly: ignore[no-matching-overload]
 
     total_outcome_posterior = analyzer.expected_outcome(
         aggregate_times=True,
@@ -812,14 +841,26 @@ class ROIConsistencyCheck(
     prior_rois = []
     posterior_rois = []
     channel_names = []
-    if constants.MEDIA_CHANNEL in self._inference_data.posterior.coords:  # pyrefly: ignore[missing-attribute]
+    if (
+        constants.MEDIA_CHANNEL in self._inference_data.posterior.coords
+    ):  # pyrefly: ignore[missing-attribute]
       prior_rois.append(self._model_context.model_spec.prior.roi_m)
-      posterior_rois.append(self._inference_data.posterior.roi_m)  # pyrefly: ignore[missing-attribute]
-      channel_names.append(self._inference_data.posterior.media_channel.values)  # pyrefly: ignore[missing-attribute]
-    if constants.RF_CHANNEL in self._inference_data.posterior.coords:  # pyrefly: ignore[missing-attribute]
+      posterior_rois.append(
+          self._inference_data.posterior.roi_m
+      )  # pyrefly: ignore[missing-attribute]
+      channel_names.append(
+          self._inference_data.posterior.media_channel.values
+      )  # pyrefly: ignore[missing-attribute]
+    if (
+        constants.RF_CHANNEL in self._inference_data.posterior.coords
+    ):  # pyrefly: ignore[missing-attribute]
       prior_rois.append(self._model_context.model_spec.prior.roi_rf)
-      posterior_rois.append(self._inference_data.posterior.roi_rf)  # pyrefly: ignore[missing-attribute]
-      channel_names.append(self._inference_data.posterior.rf_channel.values)  # pyrefly: ignore[missing-attribute]
+      posterior_rois.append(
+          self._inference_data.posterior.roi_rf
+      )  # pyrefly: ignore[missing-attribute]
+      channel_names.append(
+          self._inference_data.posterior.rf_channel.values
+      )  # pyrefly: ignore[missing-attribute]
 
     channel_data = _get_roi_consistency_channel_data(
         prior_rois=prior_rois,
@@ -854,13 +895,19 @@ def _calculate_new_statistics_from_samples(
     n_channels: int,
 ) -> dict[str, np.ndarray]:
   """Calculate Mean, Median, Q1, and Q3 from posterior samples."""
-  n_chains = len(inference_data.posterior.coords[constants.CHAIN])  # pyrefly: ignore[missing-attribute]
-  n_draws = len(inference_data.posterior.coords[constants.DRAW])  # pyrefly: ignore[missing-attribute]
+  n_chains = len(
+      inference_data.posterior.coords[constants.CHAIN]
+  )  # pyrefly: ignore[missing-attribute]
+  n_draws = len(
+      inference_data.posterior.coords[constants.DRAW]
+  )  # pyrefly: ignore[missing-attribute]
   n_posterior_samples = n_chains * n_draws
 
   posterior_samples = np.transpose(
       np.reshape(
-          inference_data.posterior.variables[var_name].values,  # pyrefly: ignore[missing-attribute]
+          inference_data.posterior.variables[
+              var_name
+          ].values,  # pyrefly: ignore[missing-attribute]
           (n_posterior_samples, n_channels),
       )
   )
@@ -915,13 +962,17 @@ class PriorPosteriorShiftCheck(
     Returns:
       A tuple of (`channel_results`, `no_shift_channels`).
     """
-    if channel_type not in self._inference_data.posterior.coords:  # pyrefly: ignore[missing-attribute]
+    if (
+        channel_type not in self._inference_data.posterior.coords
+    ):  # pyrefly: ignore[missing-attribute]
       return [], []
 
     channel_results = []
     no_shift_channels = []
 
-    n_channels = len(self._inference_data.posterior[channel_type].values)  # pyrefly: ignore[missing-attribute]
+    n_channels = len(
+        self._inference_data.posterior[channel_type].values
+    )  # pyrefly: ignore[missing-attribute]
     if channel_type == constants.MEDIA_CHANNEL:
       var_name = constants.ROI_M
       prior_dist = self._model_context.model_spec.prior.roi_m
@@ -961,7 +1012,9 @@ class PriorPosteriorShiftCheck(
       current_shift = _get_shifted_mask(post_stat, prior_stat, alpha)
       any_shift = any_shift | current_shift
 
-    channel_names = self._inference_data.posterior[channel_type].values  # pyrefly: ignore[missing-attribute]
+    channel_names = self._inference_data.posterior[
+        channel_type
+    ].values  # pyrefly: ignore[missing-attribute]
     for i, channel_name in enumerate(channel_names):
       shifted = any_shift[i]
       case = (
@@ -1052,14 +1105,24 @@ class ImplausibleROICheck(
     # 2. Get posterior ROI and channels
     posterior_rois = []
     channels = []
-    if constants.MEDIA_CHANNEL in self._inference_data.posterior.coords:  # pyrefly: ignore[missing-attribute]
-      posterior_rois.append(self._inference_data.posterior.roi_m.values)  # pyrefly: ignore[missing-attribute]
+    if (
+        constants.MEDIA_CHANNEL in self._inference_data.posterior.coords
+    ):  # pyrefly: ignore[missing-attribute]
+      posterior_rois.append(
+          self._inference_data.posterior.roi_m.values
+      )  # pyrefly: ignore[missing-attribute]
       channels.extend(
           self._inference_data.posterior.media_channel.values.tolist()  # pyrefly: ignore[missing-attribute]
       )
-    if constants.RF_CHANNEL in self._inference_data.posterior.coords:  # pyrefly: ignore[missing-attribute]
-      posterior_rois.append(self._inference_data.posterior.roi_rf.values)  # pyrefly: ignore[missing-attribute]
-      channels.extend(self._inference_data.posterior.rf_channel.values.tolist())  # pyrefly: ignore[missing-attribute]
+    if (
+        constants.RF_CHANNEL in self._inference_data.posterior.coords
+    ):  # pyrefly: ignore[missing-attribute]
+      posterior_rois.append(
+          self._inference_data.posterior.roi_rf.values
+      )  # pyrefly: ignore[missing-attribute]
+      channels.extend(
+          self._inference_data.posterior.rf_channel.values.tolist()
+      )  # pyrefly: ignore[missing-attribute]
 
     if not posterior_rois:
       raise ValueError("No posterior ROI data found in inference_data.")
@@ -1156,15 +1219,25 @@ class HighVarianceCheck(
     posterior_rois = []
     channels = []
 
-    if constants.MEDIA_CHANNEL in self._inference_data.posterior.coords:  # pyrefly: ignore[missing-attribute]
-      posterior_rois.append(self._inference_data.posterior.roi_m.values)  # pyrefly: ignore[missing-attribute]
+    if (
+        constants.MEDIA_CHANNEL in self._inference_data.posterior.coords
+    ):  # pyrefly: ignore[missing-attribute]
+      posterior_rois.append(
+          self._inference_data.posterior.roi_m.values
+      )  # pyrefly: ignore[missing-attribute]
       channels.extend(
           self._inference_data.posterior.media_channel.values.tolist()  # pyrefly: ignore[missing-attribute]
       )
 
-    if constants.RF_CHANNEL in self._inference_data.posterior.coords:  # pyrefly: ignore[missing-attribute]
-      posterior_rois.append(self._inference_data.posterior.roi_rf.values)  # pyrefly: ignore[missing-attribute]
-      channels.extend(self._inference_data.posterior.rf_channel.values.tolist())  # pyrefly: ignore[missing-attribute]
+    if (
+        constants.RF_CHANNEL in self._inference_data.posterior.coords
+    ):  # pyrefly: ignore[missing-attribute]
+      posterior_rois.append(
+          self._inference_data.posterior.roi_rf.values
+      )  # pyrefly: ignore[missing-attribute]
+      channels.extend(
+          self._inference_data.posterior.rf_channel.values.tolist()
+      )  # pyrefly: ignore[missing-attribute]
 
     if not posterior_rois:
       raise ValueError("No posterior ROI data found in inference_data.")

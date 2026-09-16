@@ -12,11 +12,17 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+NOTICE: This file was modified from the original google/meridian source.
+See the NOTICE file at the repository root, and TRIAGE.md, for what changed
+and why.
 #}
 
 <chart>
   {% include "findings.html.jinja" %}
-  <chart-embed id="{{ id }}"></chart-embed>
+  <chart-embed id="{{ id }}" tabindex="0" role="region"
+               aria-label="Scrollable chart. Use left and right arrow keys to pan."
+               aria-keyshortcuts="ArrowLeft ArrowRight Home End"></chart-embed>
   {% if description %}
     <chart-description>
       {{ description }}
@@ -26,6 +32,20 @@ limitations under the License.
 
 <script type="text/javascript">
   (() => {
+    const chart = document.getElementById({{ id|tojson }});
+    chart.addEventListener('keydown', (event) => {
+      if (event.target !== chart) return;
+
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        const direction = event.key === 'ArrowRight' ? 1 : -1;
+        chart.scrollLeft += direction * Math.max(80, chart.clientWidth * 0.8);
+      } else if (event.key === 'Home' || event.key === 'End') {
+        event.preventDefault();
+        chart.scrollLeft = event.key === 'End' ? chart.scrollWidth : 0;
+      }
+    });
+
     const spec = JSON.parse({{ chart_json|tojson }});
     vegaEmbed('#{{ id }}', spec).catch(console.error);
   })();

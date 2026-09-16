@@ -29,6 +29,11 @@ env:
 
 jobs:
   build:
+    # This copied workflow is retained for reference, but its publish jobs are
+    # intentionally restricted to Google's repository below. Skip the build on
+    # forks so a public fork does not spend CI minutes on a workflow that cannot
+    # publish anything.
+    if: github.repository == 'google/meridian'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -41,6 +46,7 @@ jobs:
   # Check if the current `meridian.__version__` semver has been incremented. If so, set a
   # `new_version` output.
   check-version:
+    if: github.repository == 'google/meridian'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -50,14 +56,14 @@ jobs:
 
       - uses: ./.github/actions/install-meridian
         with:
-          python_version: ${{ inputs.python_version }}
+          python_version: ${{ env.USE_PYTHON_VERSION }}
           extras: ''
 
       - id: get_version
         shell: bash
         run: |
           VERSION=$(python -c "import meridian; print(meridian.__version__)")
-          echo "value=$VERSION" >> $GITHUB_OUTPUT
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
 
       - id: version_check
         uses: ./.github/actions/version-check

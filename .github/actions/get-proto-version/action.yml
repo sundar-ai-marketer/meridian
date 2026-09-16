@@ -1,3 +1,9 @@
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
+name: Read schema version
+description: Read the schema distribution version from its project metadata.
+
 inputs:
   python_version:
     description: The Python version of the build toolchain to use.
@@ -7,9 +13,6 @@ outputs:
   value:
     description: The current version of mmm-proto-schema
     value: ${{ steps.get_version.outputs.value }}
-
-env:
-  PROTO_DIR: "proto"
 
 runs:
   using: composite
@@ -23,38 +26,22 @@ runs:
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: ${{ env.USE_PYTHON_VERSION }}
-
-    - name: Install semver
-      shell: bash
-      run: pip install semver
+        python-version: ${{ inputs.python_version }}
 
     - name: Get version
       id: get_version
       shell: bash
       run: |
-        VERSION=$(python -c """
-        import sys
+        python - <<'PY'
+        import os
+        from pathlib import Path
         import tomllib
 
-        try:
-          filepath = '${{ env.PROTO_DIR }}/pyproject.toml'
-          with open(filepath, 'rb') as f:
-            data = tomllib.load(f)
-
-          version = data.get('project', {}).get('version', '')
-          if version:
-            print(version)
-          else:
-            print(f'Error: Version not found in {filepath} under [project.version]', file=sys.stderr)
-            sys.exit(1)
-        except FileNotFoundError:
-          print(f'Error: File {filepath} not found', file=sys.stderr)
-          sys.exit(1)
-        """ )
-
-        if [ $? -ne 0 ]; then
-          echo "Failed to get version from ${{ env.PROTO_DIR}}/pyproject.toml"
-          exit 1
-        fi
-        echo "value=$VERSION" >> $GITHUB_OUTPUT
+        metadata = tomllib.loads(Path('proto/pyproject.toml').read_text())
+        version = metadata['project']['version']
+        if not isinstance(version, str) or not version or '\n' in version:
+            raise ValueError('project.version must be a nonempty single-line string')
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+            output.write(f'value={version}\n')
+        print(version)
+        PY

@@ -32,6 +32,11 @@ env:
 
 jobs:
   build:
+    # This copied workflow is retained for reference, but its publish jobs are
+    # intentionally restricted to Google's repository below. Skip the build on
+    # forks so a public fork does not spend CI minutes on a workflow that cannot
+    # publish anything.
+    if: github.repository == 'google/meridian'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -46,6 +51,7 @@ jobs:
   # Check if the current `version` semver has been incremented. If so, set a
   # `new_version` output.
   check-proto-version:
+    if: github.repository == 'google/meridian'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:

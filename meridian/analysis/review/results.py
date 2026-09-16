@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
 
 """Data structures for the Model Quality Checks results."""
 
@@ -162,6 +166,12 @@ NOT_CONVERGED_RECOMMENDATION = (
     " misspecification (e.g., priors, multicollinearity) before proceeding."
 )
 
+NONFINITE_RHAT_RECOMMENDATION = (
+    "R-hat is unavailable or non-finite, so convergence cannot be assessed. "
+    "Ensure the fit has multiple non-degenerate chains and enough post-warmup "
+    "draws, then rerun sampling."
+)
+
 
 @enum.unique
 class ConvergenceCases(ModelCheckCase, enum.Enum):
@@ -210,6 +220,15 @@ class ConvergenceCheckResult(CheckResult):
   config: configs.ConvergenceConfig
   max_r_hat: float
   max_parameter: str
+
+  @property
+  def recommendation(self) -> str:
+    """Explains why a non-finite R-hat cannot support a convergence claim."""
+    if self.case is ConvergenceCases.NOT_CONVERGED and not np.isfinite(
+        self.max_r_hat
+    ):
+      return NONFINITE_RHAT_RECOMMENDATION
+    return super().recommendation
 
   @property
   def max_rhat(self) -> float:
@@ -933,12 +952,14 @@ class PotentialBiasCheckResult(CheckResult):
 # Valid subsets of result types for health summary validation.
 # ==============================================================================
 CONVERGENCE_ONLY_SET = frozenset([ConvergenceCheckResult])
-MODEL_LEVEL_SET = frozenset([
-    ConvergenceCheckResult,
-    BaselineCheckResult,
-    GoodnessOfFitCheckResult,
-    BayesianPPPCheckResult,
-])
+MODEL_LEVEL_SET = frozenset(
+    [
+        ConvergenceCheckResult,
+        BaselineCheckResult,
+        GoodnessOfFitCheckResult,
+        BayesianPPPCheckResult,
+    ]
+)
 PPS_SET = MODEL_LEVEL_SET | frozenset([PriorPosteriorShiftCheckResult])
 ROI_SET = PPS_SET | frozenset([ROIConsistencyCheckResult])
 
@@ -1183,33 +1204,37 @@ class ReviewSummary:
     ) in self.channel_calibration_status.items():
       if is_calibrated:
         if n_channels <= constants.MAX_CHANNELS_FOR_CALIBRATED_DISPLAY:
-          recs.append({
-              constants.CHANNEL_NAME: channel_name,
-              constants.IS_CALIBRATED: True,
-              constants.CALIBRATION_SCORE: scores.get(
-                  channel_name, constants.CALIBRATED_CHANNEL_SCORE
-              ),
-          })
+          recs.append(
+              {
+                  constants.CHANNEL_NAME: channel_name,
+                  constants.IS_CALIBRATED: True,
+                  constants.CALIBRATION_SCORE: scores.get(
+                      channel_name, constants.CALIBRATED_CHANNEL_SCORE
+                  ),
+              }
+          )
       else:
-        recs.append({
-            constants.CHANNEL_NAME: channel_name,
-            constants.IS_CALIBRATED: False,
-            constants.CALIBRATION_SCORE: scores.get(
-                channel_name, constants.CALIBRATED_CHANNEL_SCORE
-            ),
-            constants.HIGH_ROI_STATUS: high_roi_map.get(
-                channel_name, Status.PASS
-            ),
-            constants.LOW_ROI_STATUS: low_roi_map.get(
-                channel_name, Status.PASS
-            ),
-            constants.HIGH_VARIANCE_STATUS: high_variance_map.get(
-                channel_name, Status.PASS
-            ),
-            constants.POTENTIAL_BIAS_STATUS: potential_bias_map.get(
-                channel_name, Status.PASS
-            ),
-        })
+        recs.append(
+            {
+                constants.CHANNEL_NAME: channel_name,
+                constants.IS_CALIBRATED: False,
+                constants.CALIBRATION_SCORE: scores.get(
+                    channel_name, constants.CALIBRATED_CHANNEL_SCORE
+                ),
+                constants.HIGH_ROI_STATUS: high_roi_map.get(
+                    channel_name, Status.PASS
+                ),
+                constants.LOW_ROI_STATUS: low_roi_map.get(
+                    channel_name, Status.PASS
+                ),
+                constants.HIGH_VARIANCE_STATUS: high_variance_map.get(
+                    channel_name, Status.PASS
+                ),
+                constants.POTENTIAL_BIAS_STATUS: potential_bias_map.get(
+                    channel_name, Status.PASS
+                ),
+            }
+        )
 
     return recs
 
@@ -1800,11 +1825,13 @@ class ReviewSummary:
 
     plotted_channels = []
     for idx, ch_data in enumerate(plotted_channels_data):
-      plotted_channels.append({
-          constants.CHANNEL_NAME: ch_data.channel_name,
-          constants.CHART_ID: str(idx),
-          constants.CHART_JSON: ch_data.chart_json or "",
-      })
+      plotted_channels.append(
+          {
+              constants.CHANNEL_NAME: ch_data.channel_name,
+              constants.CHART_ID: str(idx),
+              constants.CHART_JSON: ch_data.chart_json or "",
+          }
+      )
 
     template = self._template_env.get_template(
         "calibration_overview_card.html.jinja"
@@ -1861,11 +1888,13 @@ class ReviewSummary:
 
     plotted_channels = []
     for idx, ch_data in enumerate(plotted_channels_data):
-      plotted_channels.append({
-          constants.CHANNEL_NAME: ch_data.channel_name,
-          constants.CHART_ID: str(idx),
-          constants.CHART_JSON: ch_data.details_chart_json or "",
-      })
+      plotted_channels.append(
+          {
+              constants.CHANNEL_NAME: ch_data.channel_name,
+              constants.CHART_ID: str(idx),
+              constants.CHART_JSON: ch_data.details_chart_json or "",
+          }
+      )
 
     template = self._template_env.get_template(
         "calibration_details_card.html.jinja"
@@ -1886,9 +1915,13 @@ class ReviewSummary:
     if isinstance(result, PriorPosteriorShiftCheckResult) or isinstance(
         result, ROIConsistencyCheckResult
     ):
-      check_data[constants.TOTAL_CHANNELS] = len(result.channel_results)  # pyrefly: ignore[unsupported-operation]
-      check_data[constants.PASSED_CHANNELS] = sum(  # pyrefly: ignore[unsupported-operation]
-          1 for r in result.channel_results if r.case.status == Status.PASS
+      check_data[constants.TOTAL_CHANNELS] = len(
+          result.channel_results
+      )  # pyrefly: ignore[unsupported-operation]
+      check_data[constants.PASSED_CHANNELS] = (
+          sum(  # pyrefly: ignore[unsupported-operation]
+              1 for r in result.channel_results if r.case.status == Status.PASS
+          )
       )
 
     return check_data
@@ -1951,9 +1984,7 @@ def build_calibration_recommendation_text(
   channels = list(dict.fromkeys(recommended_channels or []))
   has_recommended = bool(channels)
   drivers_dict = driver_issues_by_channel or {}
-  active_drivers = {
-      ch: issues for ch, issues in drivers_dict.items() if issues
-  }
+  active_drivers = {ch: issues for ch, issues in drivers_dict.items() if issues}
   has_drivers = bool(active_drivers)
 
   rec_clause = None
@@ -2026,4 +2057,3 @@ def build_calibration_recommendation_text(
     )
 
   raise ValueError(f"Unknown location: {location}")
-

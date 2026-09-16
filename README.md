@@ -1,7 +1,9 @@
 <!-- NOTICE: This file was modified from the original google/meridian source.
      See the NOTICE file at the repository root for details. -->
 
-# About Meridian
+# Meridian: marketing mix modeling with practical diagnostics
+
+[![CI](https://github.com/sundar-ai-marketer/meridian/actions/workflows/ci.yml/badge.svg)](https://github.com/sundar-ai-marketer/meridian/actions/workflows/ci.yml)
 
 > **Unofficial fork.** This repository is a personal fork of
 > [google/meridian](https://github.com/google/meridian), maintained by Sundar
@@ -9,13 +11,29 @@
 > Google.** "Meridian" is Google's project name, used here only to identify the
 > upstream work this is derived from.
 >
-> Upstream does not accept external pull requests, so fixes are maintained
-> here. See [`TRIAGE.md`](TRIAGE.md) for what changed and why, and
+> Fork-specific fixes are maintained here. See [`TRIAGE.md`](TRIAGE.md)
+> for what changed and why, and
 > [`NOTICE`](NOTICE) for attribution. Licensed under Apache 2.0, the same terms
 > as the original.
 >
 > **Do not report problems with this fork to Google.** Use this repository's
 > issue tracker.
+
+Turn aggregated marketing data into channel ROI estimates, budget scenarios,
+and an HTML report. This fork adds checks that help you judge when those
+estimates deserve confidence, plus a one-command local setup and a Docker path.
+
+* **Check assumptions before fitting:** prior predictive checks can reveal a
+  mismatch between your priors and observed outcomes.
+* **Inspect uncertainty after fitting:** convergence, effective sample size,
+  divergences, and geographic precision diagnostics expose weak estimates.
+* **Review the evidence:** [issue triage](TRIAGE.md) records the upstream
+  problems addressed; [the release audit](AUDIT.md) records fresh checks,
+  fixes, and remaining limitations.
+
+This is a Python modeling library, not a hosted application. The included
+sample is simulated data. Software tests cannot establish that a model is
+causally valid for your business.
 
 
 Marketing mix modeling (MMM) is a statistical analysis technique that measures
@@ -53,17 +71,21 @@ with *this* repository, install it from the checkout instead.
 Python 3.11, 3.12 or 3.13. Do not install into an environment that already has
 TensorFlow — see the note on `tensorflow-metal` below.
 
+The setup helper targets Linux and Apple Silicon macOS. For Windows or Intel
+Macs, use the Linux container path below. The required TensorFlow version has
+no native Intel macOS wheel; see [TensorFlow's platform support](https://www.tensorflow.org/install/pip).
+
 ```sh
-git clone https://github.com/FORK_URL.git meridian && cd meridian
+git clone https://github.com/sundar-ai-marketer/meridian.git meridian && cd meridian
 make quickstart
 ```
 
 One command: it finds a supported Python, builds an isolated environment,
 removes `tensorflow-metal` if present, installs this checkout with every
 extra, compiles the report stylesheet, verifies the result, then runs a real
-end-to-end analysis on the bundled sample data. About fifteen minutes on an M4
-Max, most of it the install. Safe to re-run, and it exits non-zero rather than
-leaving you with an environment that does not work.
+end-to-end analysis on the bundled sample data. Installation and sampling can
+take several minutes each. Setup can be rerun and exits with an error if its
+environment checks fail.
 
 `make help` lists everything:
 
@@ -72,25 +94,39 @@ leaving you with an environment that does not work.
 | `make quickstart` | setup → stylesheet → verify → demo. The one-command path. |
 | `make setup` | environment only |
 | `make verify` | check an existing environment is usable |
-| `make test` / `make test-tf` | full suite, on either backend |
+| `make test` / `make test-tf` | core and Scenario Planner suites, on either backend |
+| `make test-e2e` | real fit → budget optimization → save/load → styled report |
 | `make demo` | the end-to-end example |
 | `make build` | wheel + sdist |
 | `make clean` | build artifacts and generated output. Never touches your venv. |
 
-The demo alone takes about six minutes on an M4 Max — build input data, set an
-ROI prior, check the prior against the data *before* fitting, fit, check
-convergence, read ROI, optimize a budget, and save the model. Pass `--full` for
-the demo's proper MCMC settings (about 35 minutes on an M4 Max).
+The demo builds input data, sets an ROI prior, checks the prior against the
+data *before* fitting, fits, checks convergence, reads ROI, optimizes a budget,
+and saves the model. The short run took about 12 minutes during this audit.
+Pass `--full` for longer sampling, then review the diagnostics; additional
+draws do not guarantee convergence. Runtime depends on hardware and load.
 
 ### Without installing anything locally
 
 *   **GitHub Codespaces / VS Code Dev Containers.** `.devcontainer/` builds the
     whole environment on container create. Open the repo in a Codespace, or
     "Reopen in Container" locally, and run `make demo`.
-*   **Docker.** `docker build -t meridian . && docker run --rm meridian` runs
-    the demo in a container. The image is several GB — TensorFlow and JAX are
-    both in it. Note this image has not been built and smoke-tested yet; treat
-    it as unverified until you have run it once.
+*   **Docker.** The image includes TensorFlow and JAX. A clean Linux arm64 build
+    and real model-to-report smoke test passed during this audit; the measured
+    image size was about 901 MB. Size and build time vary by platform.
+
+Run the container demo and copy its outputs to your computer:
+
+```sh
+docker build -t meridian .
+docker run --name meridian-demo meridian
+docker cp meridian-demo:/app/quickstart_output ./quickstart_output
+docker rm meridian-demo
+```
+
+Open `quickstart_output/summary.html` to inspect the report. Review the printed
+sampling diagnostics before interpreting the estimates. For a smaller
+integration check, run `docker run --rm meridian python scripts/test_end_to_end.py`.
 
 <details>
 <summary>Manual setup, if you would rather not run a script</summary>
@@ -99,6 +135,7 @@ the demo's proper MCMC settings (about 35 minutes on an M4 Max).
 python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
+pip install -e proto --config-settings editable_mode=strict
 pip install -e ".[dev,colab,schema,mlflow,geox,scenarioplanner]"
 python scripts/compile_report_css.py     # see "Report stylesheet" below
 python scripts/verify_environment.py     # must end with RESULT: PASS
@@ -109,8 +146,9 @@ python scripts/verify_environment.py     # must end with RESULT: PASS
 To run the tests:
 
 ```sh
-make test                                                # ~9 min, 5591 tests
+make test                                                # full JAX suite
 make test-tf                                             # the other backend
+make test-e2e                                            # small real integration run
 ```
 
 ### Things that will bite you otherwise
@@ -142,7 +180,7 @@ make test-tf                                             # the other backend
     left as-is rather than diverging for a cosmetic warning.
 *   **No GPU on Apple Silicon.** Fits run on CPU. For scale: 20 geos x 156
     weeks x 4 channels at the demo's MCMC settings takes about 35 minutes on an
-    M4 Max. Use `python -m meridian.benchmark.benchmark` to measure your own
+    M4 Max. Use `python -m meridian.benchmark` to measure your own
     hardware.
 
 ## Shaping your own data
@@ -283,8 +321,8 @@ significantly reduce training time.
 This is a fork of [google/meridian](https://github.com/google/meridian).
 Upstream does not accept external pull requests, so fixes live here.
 
-[`TRIAGE.md`](TRIAGE.md) records a disposition for every issue open on the
-upstream tracker: verified already fixed, fixed here, a usage question, an
+[`TRIAGE.md`](TRIAGE.md) records a disposition for the 47 issues open on the
+upstream tracker on 15 September 2026: verified already fixed, fixed here, a usage question, an
 environment problem, a declined feature with its reason, or genuinely
 unresolved.
 
@@ -314,8 +352,10 @@ Changes to the generated HTML report:
 *   Budget allocation is a labelled bar, not a pie. The old pie put its
     percentages in hover tooltips only, in a file whose whole purpose is being
     exported and sent to someone.
-*   Vega libraries load from pinned versions rather than unversioned URLs, so a
-    report archived today still renders the same way next year.
+*   Vega libraries load from versioned CDN URLs. Report charts and web fonts
+    require internet access; these reports are not self-contained offline files.
+*   On small screens, wide charts stay readable in keyboard-accessible scroll
+    regions instead of being clipped inside a narrow card.
 
 Added modules:
 
@@ -347,10 +387,12 @@ Added modules:
     diag.summary().head()          # per parameter: r-hat, bulk/tail ESS
     ```
 
-    R-hat is reported against both upstream's 1.2 and the modern 1.01 bar
-    (Vehtari et al. 2021), side by side, rather than one silently overriding
-    the other. A converged r-hat with bulk ESS in the dozens does not support
-    a 90% interval, and nothing else in the library will tell you that.
+    This diagnostic uses upstream's TFP R-hat estimator and compares it with
+    thresholds of 1.2 and 1.01. The latter is a stricter heuristic on that same
+    estimator, not Vehtari's rank-normalized diagnostic. The quickstart and
+    recovery tools separately report ArviZ's rank-normalized R-hat; their
+    values can differ. Read ESS and divergences alongside either result:
+    passing an R-hat threshold alone does not establish a reliable interval.
 
 *   `meridian.analysis.geo_diagnostics` — measure whether per-geo estimates on
     your model are precise enough to allocate budget on:
@@ -417,7 +459,7 @@ To take upstream changes:
 git fetch upstream
 git checkout upstream-main && git merge --ff-only upstream/main
 git checkout main && git rebase upstream-main
-pytest meridian -q -n 8                      # then the same on MERIDIAN_BACKEND=tensorflow
+pytest meridian scenarioplanner -q -n 8       # then the same on MERIDIAN_BACKEND=tensorflow
 ```
 
 If `meridian/upstream_issues_test.py` fails after a rebase, that is the point
@@ -476,9 +518,11 @@ median ROI to two decimals off a model this size and call it a measurement.
 **Re-measure before citing any of this.** Each row is one simulated dataset and
 one fit — enough to size the effect, not enough to separate systematic bias from
 an unlucky draw, and NUTS is not bit-reproducible across library or hardware
-versions even at a fixed seed. Doing it properly means many seeds and rank
-statistics (simulation-based calibration), which this module does not implement
-yet. Run it at the shape and scale of *your* data and treat the gap you measure
+versions even at a fixed seed. Use many seeds to measure recovery coverage
+and bias. The module also reports descriptive posterior rank fractions for
+fixed synthetic truths. Those are not simulation-based calibration (SBC):
+SBC requires drawing the truth from the same prior used to fit the model,
+which this module does not implement. Run it at the shape and scale of *your* data and treat the gap you measure
 as a floor on the uncertainty you carry into a recommendation.
 
 What this does **not** do: it does not diagnose whether any particular channel's
