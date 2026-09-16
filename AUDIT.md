@@ -3,7 +3,7 @@
 # Public-release audit
 
 Audit date: 16 September 2026. Target: `sundar-ai-marketer/meridian`.
-Starting revision: `6ca9299`. Upstream base: Google Meridian v2.0.0,
+Starting revision: `3983667`. Upstream base: Google Meridian v2.0.0,
 `00134ea`. This document distinguishes newly measured results from historical
 results in [TRIAGE.md](TRIAGE.md).
 
@@ -236,7 +236,7 @@ settings; they are not a service-level promise.
 
 ## Additional hardening after the first green public release
 
-Commit `277c7e5` passed all nine hosted CI jobs: Python 3.11–3.13 on both
+Commit `50a608e` passed all nine hosted CI jobs: Python 3.11–3.13 on both
 JAX and TensorFlow, distribution builds, version checks and Docker. Each JAX
 matrix leg passed 5,735 tests with 44 skips; each TensorFlow leg passed 5,730
 with 49 skips. All six real-fit integration checks preserved ROI exactly
@@ -475,8 +475,19 @@ the corrected environment explicitly includes that suffix family.
 
 ## Rollback
 
-The audit starts from a clean working tree at `6ca9299`. Changes are recorded
+The audit starts from a clean working tree at `3983667`. Changes are recorded
 in release-preparation commits. Revert those commits in reverse order to
 restore the previous code and setup behavior without rewriting upstream history.
 Generated models, logs, environments, and browser artifacts are not required
 to run the library and are kept out of the source release.
+
+## Commit hash rewrite
+
+On 17 September 2026 the 52 fork commits were rewritten to drop co-author
+trailers from their messages. File content did not change: the tree at the
+rewritten head is `1f1d4dc`, identical to the tree at the pre-rewrite head.
+Upstream commits, their GPG signatures and all 59 tags were left untouched, so
+this fork still shares history with `google/meridian` and the documented rebase
+workflow still applies. The CI results recorded above ran against the
+pre-rewrite hashes of the same content; CI after the rewrite runs under new
+hashes.
