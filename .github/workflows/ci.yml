@@ -123,7 +123,21 @@ jobs:
       # newly available tests to the next worker, which avoids a slow tail when
       # test durations vary. `pytest -vv` alone is serial and noisy.
       - name: Run core tests
-        run: pytest -q -n auto --dist=worksteal meridian scenarioplanner
+        run: |
+          # Keep lightweight resource evidence in the live log even if the
+          # hosted runner stops before it can upload an artifact.
+          (
+            while true; do
+              date -u
+              free -m
+              df -h .
+              ps -eo pid,ppid,rss,comm --sort=-rss | sed -n '1,8p'
+              sleep 60
+            done
+          ) &
+          monitor_pid=$!
+          trap 'kill "$monitor_pid" 2>/dev/null || true' EXIT
+          pytest -q -n auto --dist=worksteal meridian scenarioplanner
         env:
           MERIDIAN_BACKEND: ${{ matrix.meridian-backend }}
 

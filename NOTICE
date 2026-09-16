@@ -41,6 +41,7 @@ Files modified from the original google/meridian source:
   meridian/templates/formatter_test.py
   meridian/templates/table.html.jinja
   meridian/templates/style.scss
+  meridian/backend/backend_test.py
   meridian/backend/test_utils.py
   meridian/data/data_frame_input_data_builder.py
   meridian/data/data_frame_input_data_builder_test.py
