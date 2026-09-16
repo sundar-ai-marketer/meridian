@@ -54,15 +54,14 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - uses: ./.github/actions/install-meridian
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python_version: ${{ env.USE_PYTHON_VERSION }}
-          extras: ''
+          python-version: ${{ env.USE_PYTHON_VERSION }}
 
       - id: get_version
         shell: bash
         run: |
-          VERSION=$(python -c "import meridian; print(meridian.__version__)")
+          VERSION=$(python -c "import runpy; print(runpy.run_path('meridian/version.py')['__version__'])")
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
 
       - id: version_check

@@ -129,8 +129,8 @@ Additional verification:
   passed all installed extras, stylesheet compilation and a real fit with
   finite ROI.
 - `actionlint` 1.7.12 and ShellCheck passed after correcting action metadata
-  and shell quoting. Version-action contract tests and five schema build
-  failure/success contract tests passed.
+  and shell quoting. Version-action contract tests and the then-five schema
+  build contracts passed; the follow-up below expands those contracts to seven.
 - The first GitHub run passed package, Docker and version jobs, but a hosted
   runner shut down during the TensorFlow/Python 3.11 suite. No test assertion
   failed before the interruption; matrix fail-fast cancelled the other legs.
