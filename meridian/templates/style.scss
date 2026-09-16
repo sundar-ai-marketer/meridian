@@ -976,6 +976,22 @@ chip.calibrated-wide {
     }
   }
 
+  card > card-insights p,
+  card errors p,
+  card warnings p,
+  card infos p {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  stats {
+    max-width: 100%;
+  }
+
+  stats > stat {
+    overflow-wrap: anywhere;
+  }
+
   charts {
     box-sizing: border-box;
     width: 100%;

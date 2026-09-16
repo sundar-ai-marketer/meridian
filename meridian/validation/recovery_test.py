@@ -256,15 +256,40 @@ class ResultTest(absltest.TestCase):
     self.assertFalse(result.converged)
     self.assertFalse(result.passed)
 
-  def test_fails_when_rhat_is_infinite(self):
-    result = self._result(
-        [1.1, 2.1, 3.9],
-        [0.8, 1.8, 3.5],
-        [1.4, 2.4, 4.4],
-        r_hat=float('inf'),
-    )
-    self.assertFalse(result.converged)
-    self.assertFalse(result.passed)
+  def test_fails_when_rhat_is_not_finite(self):
+    for r_hat in (float('nan'), float('inf'), float('-inf')):
+      with self.subTest(r_hat=r_hat):
+        result = self._result(
+            [1.1, 2.1, 3.9],
+            [0.8, 1.8, 3.5],
+            [1.4, 2.4, 4.4],
+            r_hat=r_hat,
+        )
+        self.assertFalse(result.converged)
+        self.assertFalse(result.passed)
+        self.assertIn(
+            'finite rank-normalized r_hat < 1.2 threshold not met',
+            result.format_report(),
+        )
+
+  def test_report_labels_rhat_as_a_threshold(self):
+    result = self._result([1.1, 2.1, 3.9], [0.8, 1.8, 3.5], [1.4, 2.4, 4.4])
+
+    report = result.format_report()
+
+    self.assertIn('finite rank-normalized r_hat < 1.2 threshold met', report)
+    self.assertNotIn('converged', report.lower())
+
+  def test_report_uses_configured_interval_label(self):
+    for level, label in ((0.8, '80% CI'), (0.925, '92.5% CI')):
+      with self.subTest(level=level):
+        result = dataclasses.replace(
+            self._result([1.1, 2.1, 3.9], [0.8, 1.8, 3.5], [1.4, 2.4, 4.4]),
+            config=recovery.RecoveryConfig(confidence_level=level),
+        )
+        report = result.format_report()
+        self.assertIn(label, report)
+        self.assertNotIn('90% CI', report)
 
   def test_relative_error_signs(self):
     result = self._result([1.5, 1.0, 4.0], [0.1, 0.1, 0.1], [9.0, 9.0, 9.0])
@@ -372,6 +397,15 @@ class MultiRecoveryResultTest(absltest.TestCase):
       self.assertIn(channel, report)
     self.assertIn('replications=3', report)
     self.assertIn('VERDICT', report)
+    self.assertIn(
+        'met the finite max rank-normalized r_hat < 1.2 threshold', report
+    )
+    self.assertNotIn('CONVERGED', report)
+    custom_level = dataclasses.replace(
+        multi, config=dataclasses.replace(multi.config, confidence_level=0.925)
+    ).format_report()
+    self.assertIn('cov(92.5%)', custom_level)
+    self.assertIn('nominal 92.5% interval', custom_level)
 
   def test_rank_fractions_are_descriptive_not_sbc(self):
     results = [
@@ -447,6 +481,9 @@ class EndToEndTest(absltest.TestCase):
     # A real, non-empty progress trail, including the runtime estimate.
     self.assertTrue(progress_lines)
     self.assertIn('replication 2/2', progress_lines[-1])
+    self.assertIn('r_hat', progress_lines[-1])
+    self.assertIn('1.2', progress_lines[-1])
+    self.assertNotIn('converged', progress_lines[-1].lower())
     self.assertIn('VERDICT', multi.format_report())
 
 

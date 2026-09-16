@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -56,6 +57,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
       '--screenshot-dir',
       type=Path,
       help='optional directory for full-page viewport screenshots',
+  )
+  parser.add_argument(
+      '--min-desktop-chart-width',
+      type=float,
+      default=600,
+      help=(
+          'expected minimum desktop chart viewport width in pixels '
+          '(default: 600; use 500 for the two-column optimization report)',
+      ),
   )
   parser.add_argument(
       '--executable-path',
@@ -147,8 +157,11 @@ def run_browser_regression(
     report_html: Path,
     screenshot_dir: Path | None = None,
     executable_path: Path | None = None,
+    min_desktop_chart_width: float = 600,
 ) -> dict[str, Any]:
   """Runs the report checks and returns JSON-serializable evidence."""
+  if not math.isfinite(min_desktop_chart_width) or min_desktop_chart_width <= 0:
+    raise ValueError('Minimum desktop chart width must be finite and positive.')
   try:
     from playwright.sync_api import expect, sync_playwright
   except ImportError as error:
@@ -234,7 +247,7 @@ def run_browser_regression(
               desktop_width = first_chart.evaluate(
                   'element => element.getBoundingClientRect().width'
               )
-              if desktop_width < 600:
+              if desktop_width < min_desktop_chart_width:
                 raise AssertionError(
                     'Desktop chart viewport is unexpectedly narrow: '
                     f'{desktop_width}px'
@@ -242,6 +255,7 @@ def run_browser_regression(
               desktop = {
                   'status': 'PASS',
                   'first_chart_viewport_width': desktop_width,
+                  'minimum_chart_viewport_width': min_desktop_chart_width,
               }
 
           if screenshot_dir is not None:
@@ -284,8 +298,9 @@ def main(argv: list[str] | None = None) -> int:
         args.report_html,
         screenshot_dir=args.screenshot_dir,
         executable_path=args.executable_path,
+        min_desktop_chart_width=args.min_desktop_chart_width,
     )
-  except (FileNotFoundError, RuntimeError, AssertionError) as error:
+  except (FileNotFoundError, RuntimeError, AssertionError, ValueError) as error:
     print(f'FAIL: {error}')
     return 1
   print(json.dumps(evidence, indent=2))

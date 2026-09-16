@@ -447,29 +447,32 @@ Upstream does not accept external pull requests, so these fixes live here
 permanently and the main long-term risk is drift. Upstream moves quickly —
 v1.4 to v2.0 inside nine months.
 
-Branch layout:
-
-*   `main` — this fork's line of development.
-*   `upstream-main` — a pristine mirror of `google/meridian`, tracking the
-    `upstream` remote. Never commit to it.
-
-To take upstream changes:
+`main` is this fork's public line of development. A fresh clone only configures
+the fork's `origin` remote. Add Google's repository once, then review upstream
+changes on a separate branch:
 
 ```sh
+git remote add upstream https://github.com/google/meridian.git  # once per clone
 git fetch upstream
-git checkout upstream-main && git merge --ff-only upstream/main
-git checkout main && git rebase upstream-main
-pytest meridian scenarioplanner -q -n 8       # then the same on MERIDIAN_BACKEND=tensorflow
+git switch -c sync-upstream
+git merge upstream/main
+make test
+make test-tf
+make test-e2e
 ```
 
-If `meridian/upstream_issues_test.py` fails after a rebase, that is the point
+Resolve any merge conflicts, review the changes and open a pull request into
+`main`. Require the full CI matrix before merging; this preserves published
+history and does not assume a local `upstream-main` branch exists.
+
+If `meridian/upstream_issues_test.py` fails after an upstream merge, that is the point
 of it. Each test there is named for the upstream issue it guards, so a failure
 tells you either that one of this fork's patches was dropped in the rebase, or
 that upstream regressed something this fork depends on. Read
 [`TRIAGE.md`](TRIAGE.md) for the reasoning behind that specific issue before
 changing the test.
 
-`meridian/math_invariants_test.py` failing after a rebase is more serious: it
+`meridian/math_invariants_test.py` failing after a merge is more serious: it
 means the arithmetic behind reported ROI changed. Do not paper over it.
 
 ## Reading ROI intervals honestly
@@ -490,16 +493,18 @@ channels, seed 7 — measured on the library versions recorded at the top of
 | **linear** | none (`--max-lag 0`) | **+71%** | **no** |
 | linear | geometric (default) | +39% | yes |
 
-All four converged (max r-hat ≤ 1.04) and all four recovered channel *ordering*.
+All four met the recovery tool's loose R-hat threshold (reported maximum
+R-hat ≤ 1.04) and recovered channel *ordering*. That does not establish that
+every fit met the stricter 1.01 target or adequate effective sample size.
 Two separate things are visible here, and they are worth keeping apart:
 
 **1. Saturation misspecification biases the level and the interval misses it.**
-On the no-carryover rows — the clean comparison, where the only thing that
+On the no-carryover rows — the paired comparison, where the only thing that
 changes is the response shape — a linear truth overstates ROI by 71% and the
 90% interval excludes the true value. Concave truth lands within 9% and is
-covered. That is what fitting a concave saturation curve to a response that is
-not concave does, in any MMM that assumes saturation. It is not a Meridian
-defect. The reporting consequence:
+covered. These results illustrate the risk of fitting a concave saturation
+curve to a response that is not concave; a single fit cannot establish the
+size or direction of that effect generally. The reporting consequence:
 
 > Meridian's credible intervals quantify parameter uncertainty **conditional on
 > the assumed saturation shape**. They do not cover being wrong about that

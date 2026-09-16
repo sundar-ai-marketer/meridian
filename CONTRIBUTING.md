@@ -52,6 +52,11 @@ upstream.
     python scripts/test_report_browser.py /tmp/meridian-e2e/summary.html
     ```
 
+    For an optimization report, add `--min-desktop-chart-width 500` to reflect
+    its two-column desktop layout. The default 600px check applies to the
+    model-summary and EDA reports; mobile overflow and keyboard checks remain
+    the same for all three.
+
     Use `backend.tfd` and `backend.np_float_dtype` rather than importing a TFP
     substrate directly, or your code will only work on one backend.
 *   **An updated [`TRIAGE.md`](TRIAGE.md)** if the change alters the

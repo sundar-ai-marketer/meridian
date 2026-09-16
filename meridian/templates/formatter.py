@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
+
 """Functions for formatting analysis outputs."""
 
 from collections.abc import Sequence
@@ -23,6 +27,7 @@ import re
 import altair as alt
 import immutabledict
 import jinja2
+from markupsafe import Markup
 from meridian import constants as c
 
 __all__ = [
@@ -70,33 +75,41 @@ class StatsSpec:
   delta: str | None = None
 
 
-TEXT_CONFIG = immutabledict.immutabledict({
-    'titleFont': c.FONT_ROBOTO,
-    'labelFont': c.FONT_ROBOTO,
-    'titleFontWeight': 'normal',
-    'titleFontSize': c.AXIS_FONT_SIZE,
-    'labelFontSize': c.AXIS_FONT_SIZE,
-    'titleColor': c.GREY_700,
-    'labelColor': c.GREY_700,
-})
+TEXT_CONFIG = immutabledict.immutabledict(
+    {
+        'titleFont': c.FONT_ROBOTO,
+        'labelFont': c.FONT_ROBOTO,
+        'titleFontWeight': 'normal',
+        'titleFontSize': c.AXIS_FONT_SIZE,
+        'labelFontSize': c.AXIS_FONT_SIZE,
+        'titleColor': c.GREY_700,
+        'labelColor': c.GREY_700,
+    }
+)
 
-Y_AXIS_TITLE_CONFIG = immutabledict.immutabledict({
-    'titleAngle': 0,
-    'titleAlign': 'left',
-    'titleY': -20,
-})
+Y_AXIS_TITLE_CONFIG = immutabledict.immutabledict(
+    {
+        'titleAngle': 0,
+        'titleAlign': 'left',
+        'titleY': -20,
+    }
+)
 
-X_AXIS_TITLE_CONFIG = immutabledict.immutabledict({
-    'titleAngle': 0,
-    'titleAlign': 'center',
-    'titleY': 30,
-})
+X_AXIS_TITLE_CONFIG = immutabledict.immutabledict(
+    {
+        'titleAngle': 0,
+        'titleAlign': 'center',
+        'titleY': 30,
+    }
+)
 
-AXIS_CONFIG = immutabledict.immutabledict({
-    'ticks': False,
-    'labelPadding': c.PADDING_10,
-    'domainColor': c.GREY_300,
-})
+AXIS_CONFIG = immutabledict.immutabledict(
+    {
+        'ticks': False,
+        'labelPadding': c.PADDING_10,
+        'domainColor': c.GREY_300,
+    }
+)
 
 
 _template_loader = jinja2.FileSystemLoader(
@@ -243,11 +256,16 @@ def format_col_names(headers: Sequence[str]) -> Sequence[str]:
 
 
 def create_template_env() -> jinja2.Environment:
-  """Creates a Jinja2 template environment."""
-  return jinja2.Environment(
+  """Creates a Jinja2 environment that escapes report template values."""
+  template_env = jinja2.Environment(
       loader=_template_loader,
-      autoescape=jinja2.select_autoescape(),
+      # Report templates use the ``.html.jinja`` suffix.  Jinja's default
+      # selector does not recognize that suffix, so include ``jinja`` here.
+      autoescape=jinja2.select_autoescape(
+          enabled_extensions=('html', 'htm', 'xml', 'jinja')
+      ),
   )
+  return template_env
 
 
 def create_summary_html(
@@ -255,9 +273,14 @@ def create_summary_html(
     title: str,
     cards: Sequence[str],
 ) -> str:
-  """Creates the HTML snippet for the summary page."""
+  """Creates the HTML snippet for the summary page.
+
+  ``cards`` are caller-owned, pre-rendered HTML fragments. Callers must only
+  pass fragments rendered by Meridian's report helpers; data-derived text must
+  first go through a template such as :func:`create_card_html`.
+  """
   return template_env.get_template('summary.html.jinja').render(
-      title=title, cards=cards
+      title=title, cards=[Markup(card) for card in cards]
   )
 
 
@@ -267,32 +290,47 @@ def create_card_html(
     insights: str | None = None,
     chart_specs: Sequence[ChartSpec | TableSpec] | None = None,
     stats_specs: Sequence[StatsSpec] | None = None,
-) -> str:
-  """Creates a card's HTML snippet that includes given card and chart specs."""
+) -> Markup:
+  """Creates a trusted card snippet from escaped report values.
+
+  The rendered card is marked safe only after its template has escaped the
+  supplied values. This lets a summary include its known card fragment without
+  treating caller-provided text as HTML.
+  """
   card_params = dataclasses.asdict(card_spec)
   card_params[c.CARD_CHARTS] = (
-      _create_charts_htmls(template_env, chart_specs) if chart_specs else None  # pyrefly: ignore[bad-assignment]
+      _create_charts_htmls(template_env, chart_specs)
+      if chart_specs
+      else None  # pyrefly: ignore[bad-assignment]
   )
   if insights:
-    insights_html = template_env.get_template('insights.html.jinja').render(
-        text_html=insights
+    insights_html = Markup(
+        template_env.get_template('insights.html.jinja').render(
+            text_html=insights
+        )
     )
     card_params[c.CARD_INSIGHTS] = insights_html
   card_params[c.CARD_STATS] = (
-      _create_stats_htmls(template_env, stats_specs) if stats_specs else None  # pyrefly: ignore[bad-assignment]
+      _create_stats_htmls(template_env, stats_specs)
+      if stats_specs
+      else None  # pyrefly: ignore[bad-assignment]
   )
-  return template_env.get_template('card.html.jinja').render(card_params)
+  return Markup(
+      template_env.get_template('card.html.jinja').render(card_params)
+  )
 
 
 def _create_stats_htmls(
     template_env: jinja2.Environment, specs: Sequence[StatsSpec]
-) -> Sequence[str]:
+) -> Sequence[Markup]:
   """Creates a list of stats HTML snippets given a list of stats specs."""
-  stats_htmls = []
+  stats_htmls: list[Markup] = []
   for spec in specs:
     stats_htmls.append(
-        template_env.get_template('stats.html.jinja').render(
-            dataclasses.asdict(spec)
+        Markup(
+            template_env.get_template('stats.html.jinja').render(
+                dataclasses.asdict(spec)
+            )
         )
     )
   return stats_htmls
@@ -301,23 +339,25 @@ def _create_stats_htmls(
 def _create_charts_htmls(
     template_env: jinja2.Environment,
     specs: Sequence[ChartSpec | TableSpec],
-) -> Sequence[str]:
+) -> Sequence[Markup]:
   """Creates a list of chart HTML snippets given a list of chart specs."""
   chart_template = template_env.get_template('chart.html.jinja')
   table_template = template_env.get_template('table.html.jinja')
-  htmls = []
+  htmls: list[Markup] = []
   for spec in specs:
     if isinstance(spec, ChartSpec):
-      htmls.append(chart_template.render(dataclasses.asdict(spec)))
+      htmls.append(Markup(chart_template.render(dataclasses.asdict(spec))))
     else:
-      htmls.append(table_template.render(dataclasses.asdict(spec)))
+      htmls.append(Markup(table_template.render(dataclasses.asdict(spec))))
   return htmls
 
 
 def create_finding_html(
     template_env: jinja2.Environment, text: str, finding_type: str
-) -> str:
+) -> Markup:
   """Generates an HTML tag for the table finding."""
-  return template_env.get_template('finding.html.jinja').render(
-      finding_class=finding_type, text=text
+  return Markup(
+      template_env.get_template('finding.html.jinja').render(
+          finding_class=finding_type, text=text
+      )
   )

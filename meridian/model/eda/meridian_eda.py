@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
+
 """Meridian Exploratory Data Analysis (EDA) visualization tools."""
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ import re
 from typing import Literal, TYPE_CHECKING
 
 import altair as alt
+from markupsafe import escape, Markup
 from meridian import backend
 from meridian import constants
 from meridian.analysis import analyzer as analyzer_module
@@ -262,15 +267,17 @@ def _prepare_experiment_adjustment_df(
         delta_se = se - baseline_se
         label_text = f'ΔM: {delta_m:+.2f}\nΔSE: {delta_se:+.2f}'
 
-      rows.append({
-          eda_constants.VARIABLE: exp_label,
-          eda_constants.STAGE: stage_name,
-          eda_constants.POINT_ESTIMATE: mean,
-          eda_constants.STANDARD_ERROR: se,
-          eda_constants.CI_LOWER: mean - se,
-          eda_constants.CI_UPPER: mean + se,
-          eda_constants.LABEL_TEXT: label_text,
-      })
+      rows.append(
+          {
+              eda_constants.VARIABLE: exp_label,
+              eda_constants.STAGE: stage_name,
+              eda_constants.POINT_ESTIMATE: mean,
+              eda_constants.STANDARD_ERROR: se,
+              eda_constants.CI_LOWER: mean - se,
+              eda_constants.CI_UPPER: mean + se,
+              eda_constants.LABEL_TEXT: label_text,
+          }
+      )
 
   return pd.DataFrame(rows)
 
@@ -307,7 +314,9 @@ def _build_experiment_adjustment_grid(
 
   if not sub_charts:
     return None
-  return alt.hconcat(*sub_charts) if len(sub_charts) > 1 else sub_charts[0]  # pyrefly: ignore[bad-return]
+  return (
+      alt.hconcat(*sub_charts) if len(sub_charts) > 1 else sub_charts[0]
+  )  # pyrefly: ignore[bad-return]
 
 
 if TYPE_CHECKING:
@@ -319,7 +328,9 @@ __all__ = [
     'BoxplotSortingConfig',
 ]
 
-Geos = int | Sequence[str] | Literal[eda_constants.NATIONALIZE]  # pyrefly: ignore[invalid-literal]
+Geos = (
+    int | Sequence[str] | Literal[eda_constants.NATIONALIZE]
+)  # pyrefly: ignore[invalid-literal]
 
 _BULLET_POINT_RE = re.compile(r'(?m)^\* ')
 
@@ -679,11 +690,13 @@ class MeridianEDA:
     time_at_knots = nat_scaled_kpi_da.time.values[selected_knots]
     kpi_at_knots = nat_scaled_kpi_da.values[selected_knots]
 
-    knots_df = pd.DataFrame({
-        constants.TIME: time_at_knots,
-        eda_constants.VALUE: kpi_at_knots,
-        eda_constants.LABEL: 'knots',
-    })
+    knots_df = pd.DataFrame(
+        {
+            constants.TIME: time_at_knots,
+            eda_constants.VALUE: kpi_at_knots,
+            eda_constants.LABEL: 'knots',
+        }
+    )
 
     line_chart = _plot_time_series(
         data=kpi_df,
@@ -1201,7 +1214,9 @@ class MeridianEDA:
         national_data_source=self.eda_engine.national_treatments_without_non_media_scaled_ds,
         geo_data_source=self.eda_engine.treatments_without_non_media_scaled_ds,
         processing_function=lambda data: _process_stacked_ds(
-            eda_engine_module.stack_variables(data)  # pyrefly: ignore[bad-argument-type]
+            eda_engine_module.stack_variables(
+                data
+            )  # pyrefly: ignore[bad-argument-type]
         ),
         sorting_config=sorting_config,
     )
@@ -1228,7 +1243,9 @@ class MeridianEDA:
         national_data_source=self.eda_engine.national_controls_and_non_media_scaled_ds,
         geo_data_source=self.eda_engine.controls_and_non_media_scaled_ds,
         processing_function=lambda data: _process_stacked_ds(
-            eda_engine_module.stack_variables(data)  # pyrefly: ignore[bad-argument-type]
+            eda_engine_module.stack_variables(
+                data
+            )  # pyrefly: ignore[bad-argument-type]
         ),
         sorting_config=sorting_config,
     )
@@ -1291,7 +1308,9 @@ class MeridianEDA:
           else geo_data_source.sel(geo=geo_to_plot)
       )
 
-      processed_data = processing_function(data_to_process).sort_values(  # pyrefly: ignore[bad-argument-type]
+      processed_data = processing_function(
+          data_to_process
+      ).sort_values(  # pyrefly: ignore[bad-argument-type]
           eda_constants.VALUE,
           ascending=ascending,
           key=abs if sort_abs else None,
@@ -1322,24 +1341,26 @@ class MeridianEDA:
             ),
         }
 
-      charts.append((
-          alt.Chart(plot_data)
-          .mark_bar(size=bar_size)
-          .encode(
-              **encodings,
-              tooltip=[
-                  f'{eda_constants.VARIABLE}:N',
-                  alt.Tooltip(
-                      f'{eda_constants.VALUE}:Q',
-                      title=x_axis_title,
-                      format='.3f',
-                  ),
-              ],
+      charts.append(
+          (
+              alt.Chart(plot_data)
+              .mark_bar(size=bar_size)
+              .encode(
+                  **encodings,
+                  tooltip=[
+                      f'{eda_constants.VARIABLE}:N',
+                      alt.Tooltip(
+                          f'{eda_constants.VALUE}:Q',
+                          title=x_axis_title,
+                          format='.3f',
+                      ),
+                  ],
+              )
+              .properties(
+                  title=title, width=width, height=min(len(plot_data) * 50, 600)
+              )
           )
-          .properties(
-              title=title, width=width, height=min(len(plot_data) * 50, 600)
-          )
-      ))
+      )
 
     return _apply_chart_config(
         alt.vconcat(*charts).resolve_legend(color='independent')
@@ -1454,25 +1475,27 @@ class MeridianEDA:
             f'{color_variable}:N',
             legend=color_legend,
         )
-      charts.append((
-          alt.Chart(plot_data)
-          .mark_boxplot(ticks={'size': 20}, size=40, extent=1.5)
-          .encode(
-              x=alt.X(
-                  f'{eda_constants.VARIABLE}:N',
-                  title=x_axis_title,
-                  sort=sort_order,
-                  scale=alt.Scale(paddingInner=0.02),
-              ),
-              y=alt.Y(
-                  f'{eda_constants.VALUE}:Q',
-                  title=y_axis_title,
-                  scale=alt.Scale(zero=True),
-              ),
-              color=color_encoding,
+      charts.append(
+          (
+              alt.Chart(plot_data)
+              .mark_boxplot(ticks={'size': 20}, size=40, extent=1.5)
+              .encode(
+                  x=alt.X(
+                      f'{eda_constants.VARIABLE}:N',
+                      title=x_axis_title,
+                      sort=sort_order,
+                      scale=alt.Scale(paddingInner=0.02),
+                  ),
+                  y=alt.Y(
+                      f'{eda_constants.VALUE}:Q',
+                      title=y_axis_title,
+                      scale=alt.Scale(zero=True),
+                  ),
+                  color=color_encoding,
+              )
+              .properties(title=title, width=600, height=250)
           )
-          .properties(title=title, width=600, height=250)
-      ))
+      )
 
     return _apply_chart_config(
         alt.vconcat(*charts).resolve_legend(color='independent')
@@ -1704,7 +1727,9 @@ class MeridianEDA:
         national_data_source=artifact.mean_prior_contribution_da,
         geo_data_source=artifact.mean_prior_contribution_da,
         processing_function=lambda data: _process_stacked_ds(
-            data.rename({constants.CHANNEL: eda_constants.VARIABLE})  # pyrefly: ignore[bad-argument-type]
+            data.rename(
+                {constants.CHANNEL: eda_constants.VARIABLE}
+            )  # pyrefly: ignore[bad-argument-type]
         ),
         n_channels=eda_constants.PRIOR_MEAN_BARCHART_LIMIT,
         bar_size=60,
@@ -1738,20 +1763,22 @@ class MeridianEDA:
             )
         )
       finding_tag = (
-          ''.join(finding_tags)
+          Markup('').join(finding_tags)
           if finding_tags
           else formatter.create_finding_html(self._template_env, 'Info', 'info')
       )
 
-      rows.append({
-          eda_constants.CATEGORY: category,
-          eda_constants.FINDING: finding_tag,
-          eda_constants.RECOMMENDED_NEXT_STEP: (
-              eda_constants.CATEGORY_TO_MESSAGE_BY_STATUS[category][
-                  bool(n_fails or n_reviews)
-              ]
-          ),
-      })
+      rows.append(
+          {
+              eda_constants.CATEGORY: category,
+              eda_constants.FINDING: finding_tag,
+              eda_constants.RECOMMENDED_NEXT_STEP: Markup(
+                  eda_constants.CATEGORY_TO_MESSAGE_BY_STATUS[category][
+                      bool(n_fails or n_reviews)
+                  ]
+              ),
+          }
+      )
 
     formatted_table = pd.DataFrame(rows)
     return formatter.create_card_html(
@@ -1978,7 +2005,8 @@ class MeridianEDA:
             row_values=formatted_table.values.tolist(),
             warnings=[
                 _format_explanation_for_html(finding.explanation)
-                + f' {display_limit_message}'
+                + ' '
+                + display_limit_message
             ],
         ),
         found_channels,
@@ -2177,8 +2205,8 @@ class MeridianEDA:
         ),
         row_values=formatted_table.values.tolist(),
         warnings=[
-            f'{_format_explanation_for_html(finding.explanation)}'
-            f'{display_limit_message}'
+            _format_explanation_for_html(finding.explanation)
+            + display_limit_message
         ],
     )
 
@@ -2404,8 +2432,10 @@ class MeridianEDA:
         ).size,
         n_geos=n_geos,
     )
-    message_kwargs['additional_info'] = display_limit_message  # pyrefly: ignore[unsupported-operation]
-    final_message = message_template.format(**message_kwargs)
+    message_kwargs['additional_info'] = (
+        display_limit_message  # pyrefly: ignore[unsupported-operation]
+    )
+    final_message = Markup(message_template).format(**message_kwargs)
 
     return formatter.TableSpec(
         id=table_id,
@@ -2469,7 +2499,7 @@ class MeridianEDA:
                   [constants.CHANNEL, constants.R_SQUARED]
               ),
               row_values=format_df(df),
-              infos=[f'{info}{display_limit_message}'],
+              infos=[Markup('{}{}').format(info, display_limit_message)],
           )
       )
     return tables
@@ -2533,14 +2563,16 @@ class MeridianEDA:
       if data.n_negative_experiments > 0:
         neg_exp_channels.append(data.channel_name)
 
-      row_values.append([
-          data.channel_name,
-          data.baseline_prior_type,
-          bimodal_str,
-          width_str,
-          overlap_str,
-          neg_count_str,
-      ])
+      row_values.append(
+          [
+              data.channel_name,
+              data.baseline_prior_type,
+              bimodal_str,
+              width_str,
+              overlap_str,
+              neg_count_str,
+          ]
+      )
 
     warnings = []
     if bimodal_channels:
@@ -2640,8 +2672,10 @@ class MeridianEDA:
         id=eda_constants.PRIOR_CHART_ID,
         chart_json=self.plot_prior_mean().to_json(),
         infos=[
-            f'{eda_constants.PRIOR_PROBABILITY_REPORT_INFO}Prior Probability of'
-            f' negative baseline: {prior_probability}'
+            Markup(
+                eda_constants.PRIOR_PROBABILITY_REPORT_INFO
+                + 'Prior Probability of negative baseline: {}'
+            ).format(prior_probability)
         ],
     )
 
@@ -2935,7 +2969,7 @@ def _create_display_limit_message(
       (' in ' + ' and '.join(to_review_suffixes)) if to_review_suffixes else ''
   )
   to_review = f'{to_review_prefix} for {n_channels} channels{to_review_suffix}'
-  return eda_constants.DISPLAY_LIMIT_MESSAGE.format(
+  return Markup(eda_constants.DISPLAY_LIMIT_MESSAGE).format(
       function=function, to_review=to_review
   )
 
@@ -3025,7 +3059,9 @@ def _get_plot_data_for_heatmap(
   )
 
 
-def _format_explanation_for_html(explanation: str) -> str:
-  """Formats an explanation string for HTML rendering using <br> tags."""
-  explanation = _BULLET_POINT_RE.sub('&#160;&#160;&#8226; ', explanation)
-  return explanation.replace('\n', '<br/>')
+def _format_explanation_for_html(explanation: str) -> Markup:
+  """Escapes explanation text before adding line breaks and bullet entities."""
+  escaped = _BULLET_POINT_RE.sub(
+      '&#160;&#160;&#8226; ', str(escape(explanation))
+  )
+  return Markup(escaped.replace('\n', '<br/>'))

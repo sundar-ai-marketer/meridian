@@ -17,6 +17,7 @@
 # what changed and why.
 
 from collections.abc import Mapping, Sequence
+import html
 import json
 import os
 from typing import Any
@@ -44,6 +45,11 @@ import xarray as xr
 
 def setUpModule():
   flags.FLAGS.mark_as_parsed()
+
+
+def _decode_html_entities(rendered_html: str) -> str:
+  """Returns rendered HTML with text values decoded for content assertions."""
+  return html.unescape(rendered_html)
 
 
 class ConvergenceCheckResultTest(parameterized.TestCase):
@@ -683,7 +689,7 @@ Convergence Check:
         health_score=80.0,
     )
 
-    html_output = summary._create_health_card_html()
+    html_output = _decode_html_entities(summary._create_health_card_html())
     self.assertIn(expected_html_snippet, html_output)
 
   def test_health_card_html_content(self):
@@ -717,7 +723,7 @@ Convergence Check:
         health_score=85.2,
     )
 
-    html_output = summary._create_health_card_html()
+    html_output = _decode_html_entities(summary._create_health_card_html())
 
     # 1. Validate health score number
     self.assertIn('<div class="score-value">85.2</div>', html_output)
@@ -877,7 +883,9 @@ Convergence Check:
             "calibrated_channel": 100.0,
         },
     )
-    rec_card = summary._create_channel_recommendation_card_html()
+    rec_card = _decode_html_entities(
+        summary._create_channel_recommendation_card_html()
+    )
     for s in (
         "uncalibrated_channel",
         "calibrated_channel",
@@ -921,7 +929,7 @@ Convergence Check:
       self.assertIn(s, rec_card)
     self.assertNotIn("Implausible ROI", rec_card)
 
-    health_card = summary._create_health_card_html()
+    health_card = _decode_html_entities(summary._create_health_card_html())
     for s in (
         "Calibration score",
         "80.3/100",
@@ -935,7 +943,9 @@ Convergence Check:
       self.assertIn(s, health_card)
     self.assertNotIn("Channel recommendation", health_card)
 
-    calib_summary_card = summary._create_calibration_summary_card_html()
+    calib_summary_card = _decode_html_entities(
+        summary._create_calibration_summary_card_html()
+    )
     for s in (
         "Meridian GeoX calibration summary",
         "Calibration score",
@@ -973,7 +983,9 @@ Convergence Check:
         mock.patch.object(review_constants, "DRIVER", "CustomDriver"),
         mock.patch.object(review_constants, "NON_DRIVER", "CustomNonDriver"),
     ):
-      rec_card = summary._create_channel_recommendation_card_html()
+      rec_card = _decode_html_entities(
+          summary._create_channel_recommendation_card_html()
+      )
       self.assertIn('<chip class="driver">CustomDriver</chip>', rec_card)
       self.assertIn('<chip class="non-driver">CustomNonDriver</chip>', rec_card)
 
@@ -989,7 +1001,9 @@ Convergence Check:
         high_variance_chart_json='{"spec": "variance"}',
         potential_bias_chart_json='{"spec": "bias"}',
     )
-    rec_card = summary._create_channel_recommendation_card_html()
+    rec_card = _decode_html_entities(
+        summary._create_channel_recommendation_card_html()
+    )
     for s in (
         "implausible-roi-chart",
         "high-variance-chart",
@@ -1000,6 +1014,31 @@ Convergence Check:
         "'ch1' shows potential bias",
     ):
       self.assertIn(s, rec_card)
+
+  def test_model_health_report_escapes_channel_markup(self):
+    untrusted_channel = '<img src=x onerror="window.pwned=1">'
+    summary = _create_test_summary(
+        results_list=_mock_check_results(high_roi_channels=[untrusted_channel]),
+        channel_calibration_status={untrusted_channel: False},
+        implausible_roi_chart_json=(
+            '{"title": "</script><script>window.pwned=1</script>"}'
+        ),
+    )
+
+    html = summary._gen_model_health_card()
+
+    self.assertIn('<card class="model-health-card">', html)
+    self.assertIn('<card class="channel-recommendation-card"', html)
+    self.assertIn("&lt;img src=x onerror=", html)
+    self.assertNotIn("<img src=x", html)
+    self.assertNotIn("</script><script>window.pwned=1</script>", html)
+    self.assertIn(r"\u003c/script\u003e\u003cscript\u003e", html)
+    self.assertIn(
+        '<a href="https://developers.google.com/meridian/reference/api/'
+        'meridian/analysis/analyzer/MeridianAnalyzer#roi" target="_blank">'
+        "MeridianAnalyzer.roi</a>",
+        html,
+    )
 
   def test_health_card_html_calibration(self):
     summary = _create_test_summary(
@@ -1016,7 +1055,7 @@ Convergence Check:
         },
     )
 
-    html = summary._create_health_card_html()
+    html = _decode_html_entities(summary._create_health_card_html())
 
     for s in (
         "<td>Calibration score</td>",
@@ -1074,7 +1113,7 @@ Convergence Check:
         channel_calibration_status={ch: False for ch in channels},
         channel_scores={ch: 50.0 for ch in channels},
     )
-    html = summary._create_health_card_html()
+    html = _decode_html_entities(summary._create_health_card_html())
     self.assertIn(expected_text, html)
     self.assertIn(f'<div class="stats-text">{expected_stats}</div>', html)
 
@@ -1181,7 +1220,9 @@ Convergence Check:
         },
         channel_scores={"calibrated_channel": 100.0, "biased_channel": 60.0},
     )
-    calib_summary_card = summary._create_calibration_summary_card_html()
+    calib_summary_card = _decode_html_entities(
+        summary._create_calibration_summary_card_html()
+    )
     self.assertIn(
         "We recommend incrementality experiments to improve prior accuracy for"
         " 'biased_channel': 'biased_channel' shows potential bias. See Channel"
@@ -1238,7 +1279,9 @@ Convergence Check:
         or {"uncalibrated_channel": False},
         calibrated_channel_names=calibrated,
     )
-    card = summary._create_calibration_summary_card_html()
+    card = _decode_html_entities(
+        summary._create_calibration_summary_card_html()
+    )
     for s in (
         "No channels require calibration.",
         '<chip class="neutral">0 channel(s)</chip>',
@@ -1254,7 +1297,9 @@ Convergence Check:
         channel_calibration_status={"youtube": True, "demandgen": True},
         calibrated_channel_names=["demandgen", "youtube"],
     )
-    card = summary._create_calibration_summary_card_html()
+    card = _decode_html_entities(
+        summary._create_calibration_summary_card_html()
+    )
     self.assertIn(
         "Calibration has been completed for 'youtube' and 'demandgen' using"
         " incrementality experiments",
@@ -1275,8 +1320,12 @@ Convergence Check:
         include_passing_checks=True,
         channel_scores={"ch": score},
     )
-    rec_card = summary._create_channel_recommendation_card_html()
-    calib_card = summary._create_calibration_summary_card_html()
+    rec_card = _decode_html_entities(
+        summary._create_channel_recommendation_card_html()
+    )
+    calib_card = _decode_html_entities(
+        summary._create_calibration_summary_card_html()
+    )
 
     for card, chart_class in [
         (rec_card, "channel-score-chart"),
@@ -1456,7 +1505,9 @@ Convergence Check:
         calibrated_channel_names=calibrated_channels,
         channel_scores=channel_scores,
     )
-    rec_card = summary._create_channel_recommendation_card_html()
+    rec_card = _decode_html_entities(
+        summary._create_channel_recommendation_card_html()
+    )
     expected_banner = "warning" if expected_warning_banner else "info"
     unexpected_banner = "info" if expected_warning_banner else "warning"
     self.assertEqual(summary.has_calibration_warning, expected_warning_banner)
@@ -1642,7 +1693,9 @@ Convergence Check:
         potential_bias_chart_json='{"spec": "bias"}',
         channel_calibration_status=channel_calibration_status,
     )
-    rec_card = summary._create_channel_recommendation_card_html()
+    rec_card = _decode_html_entities(
+        summary._create_channel_recommendation_card_html()
+    )
 
     self.assertEqual(
         rec_card.count("status-banner-strip warning advisory-warning-banner"),
@@ -2154,7 +2207,9 @@ class CalibrationOverviewCardTest(parameterized.TestCase):
         for i in range(num_channels)
     ]
     summary = _create_test_summary(calibration_overview_data=ch_list)
-    html = summary._create_calibration_overview_card_html()
+    html = _decode_html_entities(
+        summary._create_calibration_overview_card_html()
+    )
     if num_channels == 0:
       self.assertEqual(html, "")
     for s in expected_strings:
@@ -2172,7 +2227,9 @@ class CalibrationOverviewCardTest(parameterized.TestCase):
         channel_calibration_status={"ch_b": True, "ch_a": True},
         calibration_overview_data=[ch_a, ch_b],
     )
-    html = summary._create_calibration_overview_card_html()
+    html = _decode_html_entities(
+        summary._create_calibration_overview_card_html()
+    )
     self.assertIn("for 'ch_b' and 'ch_a'.", html)
 
   def test_create_calibration_overview_card_html_none_calibrated_output(self):
@@ -2191,7 +2248,9 @@ class CalibrationOverviewCardTest(parameterized.TestCase):
         health_score=1.0,
         calibration_overview_data=ch_list,
     )
-    html = summary._create_calibration_overview_card_html()
+    html = _decode_html_entities(
+        summary._create_calibration_overview_card_html()
+    )
     self.assertIn("Calibration overview", html)
     self.assertIn("ch_none calibration", html)
     self.assertNotIn(_OVERVIEW_LIMIT_MESSAGE, html)
@@ -2219,7 +2278,9 @@ class CalibrationOverviewCardTest(parameterized.TestCase):
         health_score=1.0,
         calibration_overview_data=ch_list,
     )
-    html = summary._create_calibration_overview_card_html()
+    html = _decode_html_entities(
+        summary._create_calibration_overview_card_html()
+    )
     self.assertIn("Calibration overview", html)
     self.assertNotIn(_OVERVIEW_LIMIT_MESSAGE, html)
 
@@ -2285,7 +2346,9 @@ class CalibrationDetailsCardTest(parameterized.TestCase):
         health_score=1.0,
         calibration_overview_data=ch_list,
     )
-    html = summary._create_calibration_details_card_html()
+    html = _decode_html_entities(
+        summary._create_calibration_details_card_html()
+    )
     for item in expected_in:
       self.assertIn(item, html)
     for item in expected_not_in:
@@ -2369,7 +2432,9 @@ class CalibrationDetailsCardTest(parameterized.TestCase):
         health_score=1.0,
         calibration_overview_data=[channel_data],
     )
-    html = summary._create_calibration_details_card_html()
+    html = _decode_html_entities(
+        summary._create_calibration_details_card_html()
+    )
     if expected_empty:
       self.assertEqual(html, "")
     for item in expected_in:

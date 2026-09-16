@@ -63,6 +63,7 @@ Severity describes the consequence of the defect, not exploitability.
 | High | Geographic paid-budget reliability included organic and non-media channels by default. | Explicitly request paid channels in both aggregated and per-geo calculations; mixed-channel regression test. |
 | High | Fixed-truth recovery ranks were described and tested as simulation-based calibration. That uniform-null interpretation is not valid for this experiment. | Report descriptive rank fractions; remove the calibration verdict. Legacy rank fields remain documented for compatibility. |
 | Medium | Invalid recovery configurations could reach sampling or divide by zero in relative ROI error. | Validate finite positive channel ROI/spend and meaningful dimensions at configuration construction, while preserving valid zero-noise and zero-lag settings. |
+| Medium | Recovery output used an unqualified convergence label and a fixed 90% interval heading even with a different configured level. | Reject non-finite R-hat values, label the 1.2 comparison as a screening threshold, and print the configured interval level. Focused regression tests cover these cases. |
 | High | Docker's unprivileged user could not write the default report/model output under root-owned `/app`. | Copy the runtime application with the runtime user's ownership; verify a real container fit and output workflow. |
 | High | First publication without release tags made the version action fail before reaching its first-release branch. | A tested helper validates versions and handles a tagless repository. |
 | Medium | Composite actions lacked required metadata; the schema version action used unsupported top-level environment metadata and ignored its Python-version input. The core version job installed the numerical stack for a metadata read. | Supply valid action metadata and read project versions without scientific dependencies. `actionlint` validates the corrected workflows. |
@@ -71,6 +72,8 @@ Severity describes the consequence of the defect, not exploitability.
 | Medium | Local unit tests did not by themselves prove the real fit-to-report integration. | Add `make test-e2e` and run the real fit, optimizer, save/load, and report workflow in CI. |
 | Medium | Relative virtual-environment paths failed when setup was launched outside the checkout; Make recipes mishandled paths containing spaces. | Resolve the environment path before changing directory and quote executable paths. |
 | Medium | Reports clipped charts on narrow screens, despite having no document-level overflow. | Contain wide charts in focusable scroll regions; test arrow/Home/End panning and 320/390/1440px rendering. |
+| Low | Optimization ROI tiles exposed binary floating-point artifacts after rounding, producing long decimal strings. | Format report values explicitly to one decimal place; preserve the numerical results. The optimizer output suite passed 23 tests, including a regression using NumPy scalar values. |
+| High | Report templates used an unrecognized autoescape suffix, so data-derived text could be interpreted as HTML. | Enable escaping for report templates, preserve only explicitly rendered fragments, and serialize chart script values safely. Regression and browser checks verify literal labels, table values and quoted identifiers. |
 | Medium | Package metadata and clone instructions still contained publication placeholders. | Use the selected fork URL; retain separate upstream attribution and documentation links. |
 | Medium | Declared setuptools minimum did not support `project.license-files`. | Require setuptools >=77.0.3 in both build configurations and carry the schema package notice. |
 | High | Schema compilation could log a failed Git/protoc command and continue building a distribution. The Docker builder also lacked Git for the local schema build. | Propagate build failures, preserve argument boundaries in paths with spaces, test the build contract, and install Git/CA certificates in the builder stage. |
@@ -121,6 +124,12 @@ Additional verification:
 - `actionlint` 1.7.12 and ShellCheck passed after correcting action metadata
   and shell quoting. Version-action contract tests and five schema build
   failure/success contract tests passed.
+- The first GitHub run passed package, Docker and version jobs, but a hosted
+  runner shut down during the TensorFlow/Python 3.11 suite. No test assertion
+  failed before the interruption; matrix fail-fast cancelled the other legs.
+  The matrix now retains independent results when one leg fails. Consult the
+  [latest CI run](https://github.com/sundar-ai-marketer/meridian/actions/workflows/ci.yml)
+  for verification of the published revision.
 - Core and protobuf wheel/source builds succeeded; `twine check` passed all
   four artifacts.
 - The core wheel contains compiled report CSS, LICENSE, and NOTICE, and
@@ -166,7 +175,22 @@ Additional verification:
   on the deliberately small smoke fixture.
 - Browser checks rendered all 11 report charts without JavaScript errors.
   The mobile repair was checked at 320px, 390px, and 1440px, including contained
-  overflow and keyboard panning. Formatter tests: 39 passed.
+  overflow and keyboard panning. The full saved-model report passed the same
+  checks after the text-escaping correction, with desktop and mobile screenshots
+  reviewed. A separate browser fixture verified that HTML-like labels remain
+  literal text, embedded script text does not execute, and quoted chart
+  identifiers still render. Formatter tests: 40 passed.
+- EDA and optimization reports were also checked at 320px, 390px and 1440px.
+  Their long diagnostic text and statistic tiles now wrap on narrow screens.
+  The optimization browser check uses a 500px minimum desktop chart width for
+  its two-column layout, while model-summary and EDA retain the 600px default.
+  These checks cover rendering, page overflow, browser errors and keyboard
+  chart panning where a chart is wider than its viewport.
+- After the escaping and recovery-output corrections, complete formatter,
+  summarizer and review-result modules passed 234 tests; the complete EDA
+  report module passed 162 tests. The recovery module passed 59 tests on each
+  backend, including the corrected threshold and interval labels. A final
+  14-test output gate also checked fractional interval labels (92.5%).
 - `pip-audit` checked 173 local and 172 Linux-container dependency versions
   against its public advisory service and reported no known vulnerabilities
   on the audit date. This is a point-in-time advisory check, not proof of zero risk.
@@ -241,10 +265,15 @@ the fitted prior described in [Stan's SBC guide](https://mc-stan.org/docs/stan-u
 These checks apply to the audited dependency versions; they were reviewed on
 16 September 2026.
 
+Report escaping was checked against the installed Jinja implementation and its
+[autoescape API documentation](https://jinja.palletsprojects.com/en/stable/api/#jinja2.select_autoescape)
+on 16 September 2026. The default suffix selector does not cover `.html.jinja`;
+the corrected environment explicitly includes that suffix family.
+
 ## Rollback
 
 The audit starts from a clean working tree at `6ca9299`. Changes are recorded
-in a dedicated release-preparation commit. Reverting that commit restores
-the previous code and setup behavior without rewriting upstream history.
+in release-preparation commits. Revert those commits in reverse order to
+restore the previous code and setup behavior without rewriting upstream history.
 Generated models, logs, environments, and browser artifacts are not required
 to run the library and are kept out of the source release.

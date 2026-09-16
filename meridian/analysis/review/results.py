@@ -28,6 +28,7 @@ import os
 from typing import Any
 
 import jinja2
+from markupsafe import Markup
 from meridian.analysis import summary_text
 from meridian.analysis.review import configs
 from meridian.analysis.review import constants
@@ -1442,12 +1443,12 @@ class ReviewSummary:
   def _gen_model_health_card(self) -> str:
     """Generates the HTML model health card (as sanitized content str)."""
     html_template = self._template_env.get_template("summary.html.jinja")
-    cards = [self._create_health_card_html()]
+    cards = [Markup(self._create_health_card_html())]
     if self.channel_calibration_recommendations:
-      cards.append(self._create_calibration_summary_card_html())
-      cards.append(self._create_calibration_overview_card_html())
-      cards.append(self._create_calibration_details_card_html())
-      cards.append(self._create_channel_recommendation_card_html())
+      cards.append(Markup(self._create_calibration_summary_card_html()))
+      cards.append(Markup(self._create_calibration_overview_card_html()))
+      cards.append(Markup(self._create_calibration_details_card_html()))
+      cards.append(Markup(self._create_channel_recommendation_card_html()))
     return html_template.render(
         title=summary_text.MODEL_HEALTH_CARD_TITLE,
         cards=cards,
@@ -1576,27 +1577,37 @@ class ReviewSummary:
           desc += f" We recommend reviewing {_format_list_with_and(flagged)}."
           implausible_roi_is_warning = True
       if implausible_roi_is_warning:
-        desc += (
-            " In general, the deeper the channels are into their respective"
+        desc = Markup(
+            "{} In general, the deeper the channels are into their respective"
             " regions, the greater the concern may be and the more value you"
             " may gain from an incrementality experiment for that channel."
             " Conversely, channels outside of the regions but close to the"
             " boundary may also be strong candidates for calibration. For"
             " readability, ROIs between 0.6 and 19 are clustered together on"
-            " this plot. Please hover over points or use <a"
-            ' href="https://developers.google.com/meridian/reference/api/meridian/analysis/analyzer/MeridianAnalyzer#roi"'
-            ' target="_blank">MeridianAnalyzer.roi</a> to view the exact ROI'
-            " for specific channels."
+            " this plot. Please hover over points or use {} to view the exact"
+            " ROI for specific channels."
+        ).format(
+            desc,
+            Markup(
+                '<a href="https://developers.google.com/meridian/reference/api/'
+                'meridian/analysis/analyzer/MeridianAnalyzer#roi" target="_blank">'
+                "MeridianAnalyzer.roi</a>"
+            ),
         )
       else:
-        desc += (
-            " Channels closer to the boundaries of the Implausible High ROI and"
-            " Implausible Low ROI regions may be strong candidates for"
+        desc = Markup(
+            "{} Channels closer to the boundaries of the Implausible High ROI"
+            " and Implausible Low ROI regions may be strong candidates for"
             " calibration. For readability, ROIs between 0.6 and 19 are"
             " clustered together on this plot. Please hover over points or use"
-            ' <a href="https://developers.google.com/meridian/reference/api/meridian/analysis/analyzer/MeridianAnalyzer#roi"'
-            ' target="_blank">MeridianAnalyzer.roi</a> to view the exact ROI'
-            " for specific channels."
+            " {} to view the exact ROI for specific channels."
+        ).format(
+            desc,
+            Markup(
+                '<a href="https://developers.google.com/meridian/reference/api/'
+                'meridian/analysis/analyzer/MeridianAnalyzer#roi" target="_blank">'
+                "MeridianAnalyzer.roi</a>"
+            ),
         )
       implausible_roi_description = desc
 

@@ -47,6 +47,6 @@ and why.
     });
 
     const spec = JSON.parse({{ chart_json|tojson }});
-    vegaEmbed('#{{ id }}', spec).catch(console.error);
+    vegaEmbed(chart, spec).catch(console.error);
   })();
 </script>
