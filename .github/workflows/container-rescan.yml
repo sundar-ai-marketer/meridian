@@ -1,0 +1,183 @@
+# NOTICE: This file is new in this fork and does not exist in the original
+# google/meridian source.
+#
+# The container's OS advisory inventory is a point-in-time measurement. Left
+# alone it rots: a published "64 advisories, none with a vendor fix" becomes a
+# claim about a scanner database from months ago, and the day Debian ships a
+# fix nobody notices. This job rebuilds the image from a freshly pulled base
+# every week, rescans it, re-measures which packages the analysis workflow
+# actually loads, regenerates the triage document, and commits the result.
+#
+# The actionable signal is a HIGH or CRITICAL finding that HAS a vendor fix.
+# The Dockerfile applies available Debian updates during the build, so such a
+# finding surviving a clean rebuild means the fix is not in the archive yet or
+# the build did not pick it up. That opens an issue. Unfixed findings are
+# expected, are recorded, and do not raise an alarm.
+
+name: Container rescan
+
+on:
+  schedule:
+    # 05:00 UTC every Monday. Weekly rather than daily: neither the Debian
+    # archive nor the Trivy database moves fast enough to justify a daily
+    # rebuild of a multi-gigabyte scientific image.
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+# Needs more than the repository default: `contents` to commit refreshed
+# evidence, `issues` to raise the fixable-finding alarm.
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: container-rescan
+  cancel-in-progress: false
+
+env:
+  TRIVY_VERSION: "0.74.0"
+  TRIVY_SHA256: "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a"
+
+jobs:
+  rescan:
+    name: Rebuild, rescan and refresh triage
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      # `--pull` is the point of this job: without it the cached base layer is
+      # reused and the rebuild proves nothing about current Debian packages.
+      - name: Rebuild the image from a freshly pulled base
+        run: docker build --pull --tag meridian:rescan .
+
+      - name: Install the pinned scanner
+        run: |
+          scanner_dir="$RUNNER_TEMP/scanner"
+          mkdir -p "$scanner_dir"
+          curl --fail --silent --show-error --location \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
+            --output "$scanner_dir/trivy.tar.gz"
+          echo "${TRIVY_SHA256}  $scanner_dir/trivy.tar.gz" | sha256sum --check -
+          tar -xzf "$scanner_dir/trivy.tar.gz" -C "$scanner_dir" trivy
+
+      # The full report is close to a megabyte. It is retained as an artifact
+      # rather than committed; the compact summary below is what lands in the
+      # repository each week.
+      - name: Scan container OS packages
+        env:
+          TRIVY_CACHE_DIR: ${{ runner.temp }}/trivy-cache
+        run: |
+          "$RUNNER_TEMP/scanner/trivy" image --scanners vuln --pkg-types os \
+            --ignorefile /dev/null --ignore-unfixed=false --format json \
+            --output "$RUNNER_TEMP/container-os-full.json" meridian:rescan
+
+      # Measured inside the image that was just scanned, so the triage's
+      # reachability column describes that exact build and not an older one.
+      # The evidence is copied out rather than written through a bind mount:
+      # the container runs as uid 1000 and the workspace belongs to the runner
+      # user, so a mounted write would fail on permissions.
+      - name: Measure which OS packages the default workflow loads
+        run: |
+          docker run --name reachability-probe \
+            --entrypoint python meridian:rescan \
+            scripts/container_reachability_probe.py --output /tmp/probe.json
+          docker cp reachability-probe:/tmp/probe.json \
+            docs/validation/container-reachability-latest.json
+          docker rm reachability-probe
+
+      - name: Regenerate the triage document and summary
+        run: |
+          python3 scripts/triage_container_os.py \
+            --scan "$RUNNER_TEMP/container-os-full.json" \
+            --probe docs/validation/container-reachability-latest.json \
+            --output docs/validation/os-triage-latest.md \
+            --summary-output docs/validation/container-os-latest.json
+
+      - name: Retain the complete report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: container-os-rescan
+          path: |
+            ${{ runner.temp }}/container-os-full.json
+            docs/validation/container-os-latest.json
+            docs/validation/container-reachability-latest.json
+            docs/validation/os-triage-latest.md
+
+      - name: Count findings that have a vendor fix
+        id: gate
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+
+          with open(
+              os.path.join(os.environ["RUNNER_TEMP"], "container-os-full.json"),
+              encoding="utf-8",
+          ) as handle:
+              report = json.load(handle)
+
+          rows = [
+              row
+              for result in report.get("Results") or []
+              for row in result.get("Vulnerabilities") or []
+          ]
+          fixable = {
+              row["VulnerabilityID"]
+              for row in rows
+              if row.get("FixedVersion") and row.get("Severity") in ("HIGH", "CRITICAL")
+          }
+          unfixed = {row["VulnerabilityID"] for row in rows if not row.get("FixedVersion")}
+          print(f"fixable_high={len(fixable)}")
+          print(f"unfixed_total={len(unfixed)}")
+          print(f"fixable_ids={','.join(sorted(fixable)) or 'none'}")
+          PY
+
+      - name: Open an issue when a fixable high or critical finding appears
+        if: steps.gate.outputs.fixable_high != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIXABLE: ${{ steps.gate.outputs.fixable_high }}
+          FIXABLE_IDS: ${{ steps.gate.outputs.fixable_ids }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Container: ${FIXABLE} OS finding(s) with a vendor fix"
+          body=$(cat <<EOF
+          A clean rebuild (\`docker build --pull\`) still reports ${FIXABLE} high or
+          critical OS finding(s) for which Debian has published a fix.
+
+          Advisories: ${FIXABLE_IDS}
+
+          This is the actionable case. Findings without a vendor fix are expected and
+          are recorded in \`docs/validation/os-triage-latest.md\` without an issue.
+
+          Check whether the base image digest pinned in \`Dockerfile\` predates the
+          fix; if so, repin it and rebuild.
+
+          Run: ${RUN_URL}
+          EOF
+          )
+          existing=$(gh issue list --state open --search "in:title \"$title\"" \
+            --json number --jq '.[0].number // empty' 2>/dev/null || true)
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
+
+      - name: Commit refreshed evidence
+        run: |
+          # `git status --porcelain` rather than `git diff`: on the first run
+          # the rolling evidence files are untracked, and a diff would not see
+          # them at all.
+          if [ -z "$(git status --porcelain -- docs/validation)" ]; then
+            echo "No change in the advisory inventory, reachability evidence or triage."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/validation
+          git commit -m "Refresh the container OS advisory evidence" \
+            -m "Weekly clean rebuild and rescan. Advisories without a vendor fix: ${{ steps.gate.outputs.unfixed_total }}. Findings with a vendor fix: ${{ steps.gate.outputs.fixable_high }}."
+          git push

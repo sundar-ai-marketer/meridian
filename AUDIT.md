@@ -336,6 +336,82 @@ Linux archive checksum are pinned. [SECURITY.md](SECURITY.md) describes clean
 rebuilds and the limits of this policy. Python/JavaScript dependency advisory
 checks above are separate from OS-package findings.
 
+#### Base images evaluated and rejected
+
+On 17 September 2026 four alternative bases were scanned with the same pinned
+scanner on `linux/amd64` to test whether the residual count could be reduced
+by changing the image rather than by waiting for Debian. Counts are unique
+advisories with no vendor fix, and unique high or critical advisories with no
+vendor fix:
+
+| Base | Unfixed | Unfixed high/critical | Note |
+| --- | ---: | ---: | --- |
+| `python:3.11-slim` (current, after updates) | 64 | 8 | in use |
+| `gcr.io/distroless/python3-debian13` | 55 | 11 | more high findings |
+| `gcr.io/distroless/python3-debian12` | 145 | 26 | older Debian |
+| `cgr.dev/chainguard/python` (Wolfi) | 0 | 0 | Python 3.14 only |
+| `python:3.13-slim`, `python:3.14-slim` | 64 | 8 | identical to current |
+
+Distroless removes `util-linux`, `perl-base`, `systemd` and `login` — three of
+the eight current high findings — but adds six new ones from the packages its
+own Python needs (`krb5`, `libexpat1`, `libsqlite3-0`, `libpython3.13`). It is
+a worse position, not a better one, and it moves the image off the tested
+Python 3.11.
+
+Chainguard's image reports no findings, with 75 packages inventoried, so the
+result is package visibility rather than an absence of metadata. Its freely
+available tag ships Python 3.14, and TensorFlow 2.21 — this project's pinned
+range — publishes no `cp314` wheel, so the TensorFlow backend cannot be
+installed there. It was rejected on that basis, not on the scan.
+
+Copying a Python installation into `gcr.io/distroless/cc-debian13` would report
+19 findings and no high ones, but only because no package database would
+describe the copied libraries. The risk would be unchanged and would stop being
+counted. That is scanner evasion and was not done.
+
+The conclusion is that 64 unfixed advisories, 8 of them high, is the floor for
+a Debian-based image that can run this project's pinned TensorFlow. It is not
+evidence that the image is safe.
+
+#### Reachability triage
+
+Because the residual findings cannot be fixed here, they are triaged instead.
+`scripts/container_reachability_probe.py` runs inside the built image, imports
+Meridian and scenarioplanner, performs real tensor work and a report-module
+import, then reads `/proc/self/maps` and attributes every mapped file to its
+dpkg package.
+
+Measured on an `arm64` rebuild on 17 September 2026: **87 OS packages
+installed, 11 loaded** by that workflow. That rebuild independently reproduced
+the published counts — 149 rows, 64 unique advisories, none with a vendor fix,
+8 high — on a different architecture and a later scanner database.
+
+Of the 64, **27 involve at least one loaded package and 37 involve none**. Four
+of the eight high findings (`ncurses`, `systemd`, `libacl1`, `perl-base`) touch
+no package the workflow loads. The other four are the `util-linux` group and
+map to `libuuid1`, which is loaded.
+
+The per-advisory table is
+[docs/validation/os-triage-latest.md](docs/validation/os-triage-latest.md), the
+load evidence is
+[container-reachability-latest.json](docs/validation/container-reachability-latest.json).
+The classification has two values, `loaded` and `not-loaded`, and neither is a
+verdict: `loaded` is not exploitability, and `not-loaded` describes the default
+container command only. Debian records advisories against source packages, so a
+row naming `libuuid1` may describe a defect in `mount` or `login` built from
+the same source; resolving that needs the vendor tracker.
+
+#### Keeping it current
+
+A dated inventory decays. The
+[container-rescan](.github/workflows/container-rescan.yml) workflow rebuilds
+the image weekly with `docker build --pull`, rescans it, re-measures load
+evidence, regenerates the triage, and commits the refreshed summary. It opens
+an issue only when a high or critical finding has a vendor fix, which is the
+case that is actually actionable. The full report stays a retained artifact;
+the committed summary is kept compact so a weekly commit does not accumulate
+megabytes.
+
 ### Strict sampling reference
 
 The new `meridian.analysis.sampling_quality` gate assesses every scalar
@@ -439,7 +515,11 @@ fixed-truth coverage limits explicitly.
   full assistive-technology audit.
 - The container retains vendor-unfixed OS advisory findings, including high
   severities. See the dated OS inventory above; passing CI is not a claim of
-  a vulnerability-free image.
+  a vulnerability-free image. Alternative bases were measured and none
+  improved on this without either dropping the TensorFlow backend or hiding
+  packages from the scanner. The findings are triaged by whether the default
+  workflow loads the affected package, which is a measurement, not an
+  exploitability assessment.
 - Checkout setup, Docker and the six backend/version CI legs now use the
   universal `uv.lock` with a pinned uv installer and constrained build tools.
   Schema includes and GitHub Actions use verified full commit pins, and Docker

@@ -58,6 +58,27 @@ update the pinned base and scanner deliberately. Package-level findings do
 not by themselves establish whether a vulnerable component is reachable in
 Meridian's default workflow.
 
+The findings that have no vendor fix are triaged rather than suppressed. The
+default analysis workflow loads 11 of the image's 87 OS packages, measured by
+`scripts/container_reachability_probe.py` reading `/proc/self/maps` inside the
+built image. Each advisory is recorded with whether any affected package is in
+that loaded set, in
+[docs/validation/os-triage-latest.md](docs/validation/os-triage-latest.md).
+Read that column as scope, not as a verdict: a loaded package is not an
+exploit, an unloaded one is not proof of safety, and Debian attributes
+advisories to source packages rather than to the specific binary at fault.
+
+The [container-rescan](.github/workflows/container-rescan.yml) workflow repeats
+the rebuild, scan, load measurement and triage every week, so the published
+inventory reflects a recent scanner database rather than the audit date. It
+raises an issue when a high or critical finding gains a vendor fix, which is
+the point at which there is something to do.
+
+Alternative base images were measured on 17 September 2026 and none was an
+improvement; see the table in [AUDIT.md](AUDIT.md). If you are considering a
+base change, measure it rather than assuming distroless is smaller: for this
+image it carries more high-severity findings, not fewer.
+
 ## Scope
 
 Meridian is a modelling library. It executes code you give it and reads files
