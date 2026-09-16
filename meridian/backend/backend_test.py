@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
+
 """Tests for the backend abstraction layer."""
 
 # pylint: disable=g-import-not-at-top
@@ -29,6 +33,7 @@ from absl.testing import parameterized
 import immutabledict
 import jax
 import jax.numpy as jnp
+import meridian
 from meridian import backend
 from meridian.backend import config
 from meridian.backend import test_utils
@@ -59,20 +64,35 @@ def _reload_backend_modules():
       importlib.import_module("meridian.backend")
 
 
+def _restore_backend_modules():
+  """Restores backend modules and their package-level alias after reload tests."""
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore", UserWarning)
+    sys.modules["meridian.backend.config"] = config
+    sys.modules["meridian.backend"] = backend
+    importlib.reload(config)
+    importlib.reload(backend)
+
+  # Restoring ``sys.modules`` alone leaves ``meridian.backend`` pointing at a
+  # temporary module imported by an environment-isolation test. Rebind the
+  # parent-package alias so later callers see the restored module too.
+  meridian.backend = backend
+
+
+class BackendModuleRestorationTest(absltest.TestCase):
+
+  def test_restore_backend_modules_rebinds_package_alias(self):
+    with mock.patch.object(meridian, "backend", object()):
+      _restore_backend_modules()
+      self.assertIs(meridian.backend, backend)
+      self.assertIs(sys.modules["meridian.backend"], backend)
+
+
 class BackendInitializationTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
-
-    def restore_and_reload():
-      with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        sys.modules["meridian.backend.config"] = config
-        sys.modules["meridian.backend"] = backend
-        importlib.reload(config)
-        importlib.reload(backend)
-
-    self.addCleanup(restore_and_reload)
+    self.addCleanup(_restore_backend_modules)
     self.enter_context(mock.patch.dict(os.environ))
     self.enter_context(mock.patch.dict(sys.modules))
 
@@ -168,16 +188,7 @@ class BackendJaxX64Test(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
-
-    def restore_and_reload():
-      with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        sys.modules["meridian.backend.config"] = config
-        sys.modules["meridian.backend"] = backend
-        importlib.reload(config)
-        importlib.reload(backend)
-
-    self.addCleanup(restore_and_reload)
+    self.addCleanup(_restore_backend_modules)
     self.enter_context(mock.patch.dict(os.environ))
     self.enter_context(mock.patch.dict(sys.modules))
 

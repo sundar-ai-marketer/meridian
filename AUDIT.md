@@ -82,6 +82,7 @@ Severity describes the consequence of the defect, not exploitability.
 | Low | Local environment variants and nested protobuf build metadata were not fully ignored. | Ignore `.env.*` while allowing `.env.example`, and ignore nested egg-info directories. |
 | Low | Copied upstream publishing workflows performed unnecessary fork builds despite disabled publishing jobs. | Guard those jobs and correct the missing Python-version input. Automatic PyPI publication remains disabled. |
 | Low | Benchmark records did not clearly identify the active computation backend and precision. | Record the resolved runtime backend and precision, with tests. |
+| Medium | Backend initialization tests restored the module cache but left the parent package pointing at a temporary backend module, making later benchmark metadata depend on test order. | Restore the package alias during test cleanup. The failing initialization-then-metadata sequence and a package-alias regression now pass. |
 | Low | Importing the benchmark failed on platforms without the Unix `resource` module. | Treat peak memory as unavailable when that platform API is absent; do not invent a comparable measurement. |
 
 ## Verification
@@ -196,6 +197,9 @@ Additional verification:
   report module passed 162 tests. The recovery module passed 59 tests on each
   backend, including the corrected threshold and interval labels. A final
   14-test output gate also checked fractional interval labels (92.5%).
+- After correcting backend-test cleanup, the complete backend and benchmark
+  modules passed 853 tests on each backend. The original failing ordered
+  initialization/metadata sequence also passed.
 - `pip-audit` checked 173 local and 172 Linux-container dependency versions
   against its public advisory service and reported no known vulnerabilities
   on the audit date. This is a point-in-time advisory check, not proof of zero risk.
