@@ -271,7 +271,12 @@ The follow-up addresses concrete remaining limits:
 - Schema includes and GitHub Actions are pinned to full commit IDs. The
   schema builder verifies the fetched revision and fails on mismatches;
   seven build contract tests pass. Dependabot proposes action, uv and Docker
-  updates for review.
+  updates for review. Its first proposals exceeded deliberate compatibility
+  ceilings, so uv updates are now lockfile-only and Docker retains Python
+  3.11; grouped weekly proposals limit CI load. The incompatible proposals
+  were closed without merging. This policy follows GitHub's [Dependabot
+  options reference](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference),
+  verified on 16 September 2026.
 - An actual sampler-options call reproduced a JAX error: an ordinary
   `dual_averaging_kwargs` dictionary was unhashable at the static JIT boundary.
   The public backend wrapper now copies/freezes the mapping before JIT;

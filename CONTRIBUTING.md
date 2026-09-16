@@ -97,6 +97,9 @@ Match the surrounding code: two-space indent, Google-style docstrings,
    Actions and schema includes use full commit pins; update them deliberately
    and verify source provenance. Report assets have their own source and hash
    manifest in `meridian/templates/assets/` and must retain their licenses.
+   Automated uv updates preserve the declared compatibility bounds; widening
+   those bounds or changing Docker's Python minor version requires a deliberate
+   compatibility review. Weekly proposals are grouped to bound CI workload.
 3. For reports, run the browser check above. For sampling or diagnostic changes,
    inspect convergence, effective sample size, divergences, and recovery results
    as appropriate. Do not loosen thresholds just to obtain a passing result.
