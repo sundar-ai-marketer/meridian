@@ -55,7 +55,7 @@ dependencies = [
   # Not imported by this package directly -- it is arviz's dependency, and
   # the ceiling is deliberate: matplotlib 3.11 breaks arviz's import
   # (upstream CHANGELOG 1.7.0). Do not "prune" it as unused.
-  "matplotlib < 3.11.0",
+  "matplotlib<3.12.0",
   "natsort >= 7.1.1, < 8",
   "numpy >= 2.0.2, < 2.4.0",
   "pandas >= 2.2.2, < 3",
