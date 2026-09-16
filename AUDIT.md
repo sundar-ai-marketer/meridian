@@ -71,6 +71,7 @@ Severity describes the consequence of the defect, not exploitability.
 | Medium | MLflow autolog tests left process-wide patches enabled, suppressing a later regression test's expected warning and writing to shared tracking storage. | Reproduced with 1 failure/14 passes; isolate each test's SQLite database and disable autologging on cleanup. The same sequence then passed all 15 checks. |
 | Medium | Local unit tests did not by themselves prove the real fit-to-report integration. | Add `make test-e2e` and run the real fit, optimizer, save/load, and report workflow in CI. |
 | Medium | Relative virtual-environment paths failed when setup was launched outside the checkout; Make recipes mishandled paths containing spaces. | Resolve the environment path before changing directory and quote executable paths. |
+| Low | Setup's printed follow-up commands omitted shell quoting and the repository-directory step. | Print shell-escaped paths and an explicit `cd` command so the next steps also work with custom environment paths. |
 | Medium | Reports clipped charts on narrow screens, despite having no document-level overflow. | Contain wide charts in focusable scroll regions; test arrow/Home/End panning and 320/390/1440px rendering. |
 | Low | Optimization ROI tiles exposed binary floating-point artifacts after rounding, producing long decimal strings. | Format report values explicitly to one decimal place; preserve the numerical results. The optimizer output suite passed 23 tests, including a regression using NumPy scalar values. |
 | High | Report templates used an unrecognized autoescape suffix, so data-derived text could be interpreted as HTML. | Enable escaping for report templates, preserve only explicitly rendered fragments, and serialize chart script values safely. Regression and browser checks verify literal labels, table values and quoted identifiers. |
@@ -121,6 +122,10 @@ Additional verification:
   and time, and response-curve behavior. Float32 and float64 use explicit
   precision-appropriate tolerances.
 - `pip check`: no broken requirements in the local environment.
+- A fresh public clone completed `scripts/setup.sh` from outside the checkout,
+  using a relative environment path containing spaces. Its environment check
+  passed all installed extras, stylesheet compilation and a real fit with
+  finite ROI.
 - `actionlint` 1.7.12 and ShellCheck passed after correcting action metadata
   and shell quoting. Version-action contract tests and five schema build
   failure/success contract tests passed.

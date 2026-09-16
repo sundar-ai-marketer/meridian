@@ -100,12 +100,19 @@ if ! "$VENV_PY" scripts/verify_environment.py; then
   die "Environment verification failed. Fix the items marked FAIL above."
 fi
 
+# These commands are meant to be copied into a shell. Quote paths for that
+# shell, including custom environment paths and checkouts containing spaces.
+printf -v REPO_COMMAND_PATH '%q' "$REPO_ROOT"
+printf -v ACTIVATE_COMMAND_PATH '%q' "$VENV/bin/activate"
+printf -v PYTHON_COMMAND_PATH '%q' "$VENV_PY"
+
 cat <<EOF
 
 Setup complete.
 
-  Activate:   source $VENV/bin/activate
-  Try it:     $VENV_PY examples/quickstart.py
-  Run tests:  $VENV_PY -m pytest meridian scenarioplanner -q -n 8 --dist=worksteal
+  Repository: cd $REPO_COMMAND_PATH
+  Activate:   source $ACTIVATE_COMMAND_PATH
+  Try it:     $PYTHON_COMMAND_PATH examples/quickstart.py
+  Run tests:  $PYTHON_COMMAND_PATH -m pytest meridian scenarioplanner -q -n 8 --dist=worksteal
 
 EOF
