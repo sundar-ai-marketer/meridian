@@ -119,9 +119,9 @@ jobs:
       - uses: ./.github/actions/install-meridian
         with:
           python_version: ${{ matrix.python-version }}
-      # Bound worker memory on 16 GB runners. Separate processes release
-      # numerical compilation caches between the three disjoint suites;
-      # work-stealing balances test durations within each suite.
+      # Bound worker memory on 16 GB runners. Fresh processes release numerical
+      # compilation caches between suites. Run fit-heavy suites serially in
+      # their own processes so parallel workers cannot retain multiple fits.
       - name: Run core tests
         run: |
           # Keep lightweight resource evidence in the live log even if the
@@ -140,8 +140,22 @@ jobs:
           test_status=0
           pytest -q -n 2 --dist=worksteal meridian/analysis || test_status=1
           pytest -q -n 2 --dist=worksteal meridian/model || test_status=1
+          fit_suites=(
+            meridian/benchmark
+            meridian/validation
+            meridian/math_invariants_test.py
+            meridian/upstream_issues_test.py
+          )
+          fit_ignores=()
+          for fit_suite in "${fit_suites[@]}"; do
+            fit_ignores+=("--ignore=$fit_suite")
+          done
           pytest -q -n 2 --dist=worksteal meridian scenarioplanner \
-            --ignore=meridian/analysis --ignore=meridian/model || test_status=1
+            --ignore=meridian/analysis --ignore=meridian/model \
+            "${fit_ignores[@]}" || test_status=1
+          for fit_suite in "${fit_suites[@]}"; do
+            pytest -q "$fit_suite" || test_status=1
+          done
           exit "$test_status"
         env:
           MERIDIAN_BACKEND: ${{ matrix.meridian-backend }}
