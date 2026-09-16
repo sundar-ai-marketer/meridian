@@ -152,6 +152,10 @@ docker cp meridian-demo:/app/quickstart_output ./quickstart_output
 docker rm meridian-demo
 ```
 
+For container security, review the [dated OS advisory inventory](AUDIT.md#container-os-security)
+and [rebuild policy](SECURITY.md#container-operating-system-advisories). Available
+OS fixes are applied; vendor-unfixed findings remain explicitly documented.
+
 Open `quickstart_output/summary.html` to inspect the report. Review the printed
 sampling diagnostics before interpreting the estimates. For a smaller
 integration check, run `docker run --rm meridian python scripts/test_end_to_end.py`.

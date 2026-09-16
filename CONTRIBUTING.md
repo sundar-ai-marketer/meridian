@@ -106,6 +106,9 @@ Match the surrounding code: two-space indent, Google-style docstrings,
 4. Review dependency advisories and scan the intended Git history for secrets
    before publication. Record the date, environment, test results, and remaining
    limits in `AUDIT.md`; update attribution in `NOTICE`.
+   Inspect the complete container OS scan, including vendor-unfixed findings.
+   Update the pinned Trivy release and verified archive checksum together.
+   Do not suppress advisories merely to make the security gate pass.
 5. Keep changes in reviewable commits so a faulty release can be reverted.
    The inherited PyPI publishing workflows are disabled for this fork; a GitHub
    push does not publish a Python package to PyPI.

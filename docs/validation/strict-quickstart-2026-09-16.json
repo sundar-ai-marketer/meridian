@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-16",
+  "source_base_commit": "7cf78251e57c730af9a819a17eb7e824367d4421",
+  "source_note": "Run completed with the empty-posterior guard correction in the working tree; see the commit introducing this receipt.",
+  "status": "PASS",
+  "scope": "Exact README strict quickstart in a clean locked macOS ARM64 environment; one bundled synthetic dataset.",
+  "command": "python examples/quickstart.py --full --knots 13 --n-chains 4 --n-adapt 2000 --n-burnin 500 --n-keep 4000 --target-accept-prob 0.99 --sampling-mode strict --output-dir <new-directory>",
+  "elapsed_seconds_rounded": 1007,
+  "python": "3.11.4",
+  "jax": "0.10.2",
+  "tensorflow": "2.21.0",
+  "numpy": "2.3.5",
+  "arviz": "0.19.0",
+  "sampling": {
+    "draws_per_chain": 4000,
+    "n_chains": 4,
+    "n_excluded_deterministic_cells": 5,
+    "n_parameter_cells": 330,
+    "n_stochastic_parameter_cells": 325,
+    "total_post_warmup_draws": 16000
+  },
+  "thresholds": {
+    "bulk_ess_gte": 400,
+    "minimum_ess_rule": "max(400, 100 * n_chains)",
+    "post_warmup_divergences_eq": 0,
+    "rank_normalized_rhat_lt": 1.01,
+    "rank_normalized_rhat_method": "arviz.rhat(method='rank')",
+    "tail_ess_gte": 400
+  },
+  "diagnostics": {
+    "status": "pass",
+    "max_rank_normalized_rhat": 1.0059140331758063,
+    "min_bulk_ess": 698.2469809700876,
+    "min_tail_ess": 758.7014851389175,
+    "divergences": 0,
+    "unavailable_cells": 0
+  },
+  "outputs": {
+    "model.binpb": {
+      "bytes": 45499119,
+      "sha256": "9d782161fcb955569b4bde6e7a06cd3f3ee000247e298a3c71565ea9de802887"
+    },
+    "sampling-quality.json": {
+      "bytes": 113148,
+      "sha256": "50e9d3810a09baefa2fe5e6f0a35e8e27ac3ad0cb2c50251e1ca066810384cc3"
+    },
+    "summary.html": {
+      "bytes": 2165998,
+      "sha256": "71c056cdf56bdce2cf8b916dc63ea9af3ea0c89183f704a153b87e343c20a24e"
+    }
+  },
+  "limitations": [
+    "Passing sampling diagnostics does not establish causal identification, model adequacy, prior appropriateness, or decision validity."
+  ]
+}

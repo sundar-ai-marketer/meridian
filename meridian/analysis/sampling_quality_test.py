@@ -296,6 +296,25 @@ class SamplingQualityTest(absltest.TestCase):
     self.assertEqual(report.status, 'unavailable')
     self.assertIn('insufficient_chains', _issue_codes(report))
 
+  def test_empty_sampling_axes_are_unavailable(self):
+    for shape in ((0, 10), (2, 0), (0, 0)):
+      for context in (None, _ModelContext(deterministic_names=('theta',))):
+        with self.subTest(shape=shape, context=context):
+          report = sampling_quality.assess_sampling_quality(
+              _idata(
+                  {'theta': np.zeros(shape)},
+                  diverging=np.zeros(shape, dtype=bool),
+              ),
+              model_context=context,
+          )
+          self.assertEqual(report.status, 'unavailable')
+          self.assertFalse(report.sampling_passed)
+          self.assertIn('empty_posterior_draws', _issue_codes(report))
+          self.assertEqual(report.divergences['status'], 'unavailable')
+          payload = json.loads(report.to_json())
+          self.assertIsNone(payload['divergences']['rate'])
+          self.assertIsNone(payload['parameters'][0]['rank_normalized_rhat'])
+
 
 if __name__ == '__main__':
   absltest.main()

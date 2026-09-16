@@ -470,7 +470,17 @@ def _parameter_cells(
     deterministic, source, metadata_error = _deterministic(
         metadata, name, dims, index
     )
-    if not np.all(np.isfinite(values)):
+    if not values.size:
+      cell['reasons'] = [
+          _cell_issue(
+              cell,
+              'empty_posterior_draws',
+              'This posterior cell contains no sampled transitions.',
+              check='posterior',
+              severity='unavailable',
+          )
+      ]
+    elif not np.all(np.isfinite(values)):
       issue = _cell_issue(
           cell,
           'nonfinite_posterior_draws',
@@ -678,6 +688,10 @@ def _divergences(
     n_chains: int | None,
     n_draws: int | None,
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
+  if not n_chains or not n_draws:
+    return _missing_divergences(
+        'No posterior transitions are available to assess divergence flags.'
+    )
   try:
     if _SAMPLE_STATS_GROUP not in inference_data.groups():
       return _missing_divergences('No sample_stats group is present.')

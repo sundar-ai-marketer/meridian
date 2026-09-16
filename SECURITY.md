@@ -44,12 +44,28 @@ The TensorFlow floor (`>= 2.21.0`) retains the upstream fix for
 [CVE-2026-2492](https://www.zerodayinitiative.com/advisories/ZDI-26-116/)
 and should not be lowered without reviewing that protection.
 
+## Container operating-system advisories
+
+The container pins its Python base image and applies available OS package
+updates during the build. CI retains a complete Trivy OS advisory report and
+blocks high or critical findings with a vendor-provided fix. Findings without
+a vendor fix remain in that report; a passing gate does not mean that the
+image has no advisories. See the dated findings in [AUDIT.md](AUDIT.md).
+
+Refresh OS packages with a clean build (`docker build --pull --no-cache -t
+meridian .`). Review the retained `container-os-advisories` CI artifact and
+update the pinned base and scanner deliberately. Package-level findings do
+not by themselves establish whether a vulnerable component is reachable in
+Meridian's default workflow.
+
 ## Scope
 
-Meridian is a modelling library. It executes code you give it, reads files you
-point it at, and does not run a network service, handle authentication, or
-process untrusted input by design. Reports amounting to "this library runs the
-Python you pass it" are not vulnerabilities.
+Meridian is a modelling library. It executes code you give it and reads files
+you select; it provides neither authentication nor an isolated execution
+environment. The default container runs local analysis as a non-root user and
+opens no server port. Privileged execution and host mounts change that exposure.
+Reports amounting to "this library runs the Python you pass it" are not
+vulnerabilities.
 
 Genuine issues would include: code execution triggered by loading a
 `.binpb` model file from an untrusted source, a dependency vulnerability

@@ -28,8 +28,12 @@ ARG UV_VERSION=0.11.14
 
 # build-essential: some pinned scientific-python dependency versions may not
 # ship a wheel for every platform this gets built on, and fall back to
-# compiling from source. Not present in the final image.
+# compiling from source. Not present in the final image. Apply the currently
+# published Debian updates before installing the builder tools; the base image
+# manifest remains pinned above, while the package archive is intentionally
+# refreshed at build time.
 RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y upgrade \
     && apt-get install -y --no-install-recommends \
         build-essential \
         ca-certificates \
@@ -79,7 +83,13 @@ RUN python -m pip check
 
 FROM python:3.11-slim@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534 AS runtime
 
-RUN useradd --create-home --uid 1000 meridian
+# Keep the runtime on the same pinned base manifest while applying the Debian
+# updates available at build time. Do this before dropping to the non-root
+# application user, and remove the apt index afterwards.
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y upgrade \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 1000 meridian
 
 COPY --from=builder /opt/venv /opt/venv
 COPY --chown=meridian:meridian --from=builder /app /app

@@ -257,7 +257,7 @@ The follow-up addresses concrete remaining limits:
 - The local test commands now use the same fresh-process, two-worker phases
   as CI. Fit-heavy suites remain serial. Six runner contracts cover failed
   phases, empty collection, collection errors, cancellation and invalid
-  worker counts. All 5,806 currently collected test cases map to exactly one
+  worker counts. All 5,807 currently collected test cases map to exactly one
   runner phase; no test selection is removed to fit the memory budget.
 - Clean setup from outside the checkout, with spaces in the environment path,
   passed imports and `pip check`. The universal lock resolves 199 packages;
@@ -289,8 +289,10 @@ The follow-up addresses concrete remaining limits:
   This checks a real local service, not cloud authentication or hosted policy.
   `scripts/test_mlflow_integration.py` retains this regression in CI; its final
   process-group cleanup revision also passed locally.
-- Both JAX and TensorFlow passed all 20 focused strict-quality/quickstart tests.
-  Four real backend mapping/execution regressions passed. An intentionally
+- Both JAX and TensorFlow passed all 21 focused strict-quality/quickstart tests.
+  Six additional subcases verify empty sampling axes return unavailable
+  diagnostics rather than indexing/division errors, even with deterministic
+  metadata. Four real backend mapping/execution regressions passed. An intentionally
   inadequate CLI fit saved model and JSON, exited 2 and produced no summary.
   The passing reference was then exercised through the same positive gate,
   ROI, optimization and HTML output helpers.
@@ -309,6 +311,30 @@ The follow-up addresses concrete remaining limits:
   unpublished on PyPI and is excluded from registry advisory matching. The
   rebuilt Linux arm64 image also reported zero known advisories in registry
   dependencies and passed the non-root model-to-report integration again.
+
+### Container OS security
+
+A checksum-verified Trivy 0.74.0 scan (database updated 16 September 2026)
+identified 177 advisory/package rows, representing 90 distinct advisories,
+in the initially pinned Debian 13.6 image. Three critical findings and other
+fixable findings were present in inherited OS packages. Both Docker stages
+now apply the available Debian updates before use.
+
+The rebuilt Debian 13.7 image has **zero critical findings and zero findings
+with a vendor fix available** in that database snapshot. It still has 149
+advisory/package rows representing 64 distinct advisories, including eight
+high-severity advisory IDs without a listed vendor fix. The
+[complete retained inventory](docs/validation/container-os-2026-09-16.json)
+records package versions and vendor-tracker links. These are scanner findings;
+package-level matches do not by themselves prove reachable exploits in this
+non-root, local-analysis container. They must not be described as resolved.
+
+CI retains the full OS report and blocks high/critical findings with a vendor
+fix available. The report includes unfixed findings; the gate's filtering is
+explicit rather than suppressing the inventory. The scanner release and
+Linux archive checksum are pinned. [SECURITY.md](SECURITY.md) describes clean
+rebuilds and the limits of this policy. Python/JavaScript dependency advisory
+checks above are separate from OS-package findings.
 
 ### Strict sampling reference
 
@@ -340,6 +366,14 @@ fit, not calibration certification, held-out predictive validation or evidence
 of causal identification. The gate defaults follow the [Stan diagnostic
 guidance](https://mc-stan.org/learn-stan/diagnostics-warnings.html), checked on
 16 September 2026; comparisons name the ArviZ estimator explicitly.
+
+A subsequent [exact README command run](docs/validation/strict-quickstart-2026-09-16.json)
+completed the full strict workflow in 1,007 seconds in the clean locked
+macOS environment: 4 × 4,000 draws, max rank R-hat 1.00591, min bulk/tail ESS
+698.25/758.70 and zero divergences. It generated the model, JSON assessment,
+ROI, budget optimization and HTML summary. Small numerical differences from
+the earlier saved-model experiment are retained, not presented as bitwise
+reproducibility.
 
 ### Ten-seed fixed-truth recovery
 
@@ -403,6 +437,9 @@ fixed-truth coverage limits explicitly.
   caller-supplied chart specifications with remote data still needs a network.
   Embedded assets increase HTML size. Browser and keyboard checks are not a
   full assistive-technology audit.
+- The container retains vendor-unfixed OS advisory findings, including high
+  severities. See the dated OS inventory above; passing CI is not a claim of
+  a vulnerability-free image.
 - Checkout setup, Docker and the six backend/version CI legs now use the
   universal `uv.lock` with a pinned uv installer and constrained build tools.
   Schema includes and GitHub Actions use verified full commit pins, and Docker

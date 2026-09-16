@@ -127,6 +127,8 @@ Files added by this fork:
   scripts/test_mlflow_integration.py
   docs/validation/recovery-2026-09-16.json
   docs/validation/strict-sampling-2026-09-16.json
+  docs/validation/strict-quickstart-2026-09-16.json
+  docs/validation/container-os-2026-09-16.json
   uv.lock
   .github/dependabot.yml
   .github/actions/version-check/check_version.sh

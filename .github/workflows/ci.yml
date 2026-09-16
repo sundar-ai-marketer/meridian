@@ -180,6 +180,33 @@ jobs:
       - name: Build runtime image
         run: docker build --tag meridian:ci .
 
+      - name: Scan container OS packages
+        env:
+          TRIVY_CACHE_DIR: ${{ runner.temp }}/trivy-cache
+        run: |
+          scanner_dir="$RUNNER_TEMP/trivy"
+          mkdir -p "$scanner_dir"
+          curl --fail --silent --show-error --location \
+            https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz \
+            --output "$scanner_dir/trivy.tar.gz"
+          echo "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a  $scanner_dir/trivy.tar.gz" | sha256sum --check -
+          tar -xzf "$scanner_dir/trivy.tar.gz" -C "$scanner_dir" trivy
+          "$scanner_dir/trivy" image --scanners vuln --pkg-types os \
+            --ignorefile /dev/null --ignore-unfixed=false --format json \
+            --output "$RUNNER_TEMP/container-os-advisories.json" meridian:ci
+          # Retain all findings above; block on high/critical findings for
+          # which the vendor provides a fix. Unfixed findings stay visible.
+          "$scanner_dir/trivy" image --scanners vuln --pkg-types os \
+            --ignorefile /dev/null --ignore-unfixed \
+            --severity HIGH,CRITICAL --exit-code 1 meridian:ci
+
+      - name: Retain complete container OS advisory report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: container-os-advisories
+          path: ${{ runner.temp }}/container-os-advisories.json
+
       - name: Smoke test runtime user and imports
         run: |
           docker run --rm --entrypoint python meridian:ci -c '
