@@ -452,9 +452,9 @@ Added modules:
     unlucky dataset. `--replications N` fits N independent datasets from seeds
     derived from yours and reports **empirical coverage** — the fraction of
     replications where the true ROI fell inside the nominal interval — with a
-    Wilson interval on that estimate, since coverage measured over 20 draws is
-    itself noisy. That is the number that turns "our interval looks wrong" into
-    a statement you can defend.
+    Wilson interval on that estimate, since coverage measured over a small
+    number of replications is itself noisy. This quantifies the evidence and
+    its uncertainty at the selected synthetic setting.
 
 Added test modules:
 
@@ -559,8 +559,9 @@ versions even at a fixed seed. Use many seeds to measure recovery coverage
 and bias. The module also reports descriptive posterior rank fractions for
 fixed synthetic truths. Those are not simulation-based calibration (SBC):
 SBC requires drawing the truth from the same prior used to fit the model,
-which this module does not implement. Run it at the shape and scale of *your* data and treat the gap you measure
-as a floor on the uncertainty you carry into a recommendation.
+which this module does not implement. Run it at the shape and scale of *your*
+data and investigate measured recovery gaps as sensitivity signals. Review
+model specification and real-world validation before making recommendations.
 
 What this does **not** do: it does not diagnose whether any particular channel's
 real response is linear — which often is not identifiable from observational
@@ -623,7 +624,7 @@ off by about 40% in both directions.
 
 ## Citing Meridian
 
-To cite this repository:
+To cite Google's upstream framework:
 
 <!-- mdlint off(SNIPPET_INVALID_LANGUAGE) -->
 ```BibTeX

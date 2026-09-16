@@ -14,7 +14,8 @@ Licensed under the Apache License, Version 2.0 (the same terms as the original).
 
 In accordance with section 4(b) of the Apache License, files changed from the
 original source carry a notice stating that they were modified. New first-party
-source and configuration files carry a fork notice. Unmodified vendored assets
+source and comment-capable configuration files carry a fork notice. Generated
+lockfiles and JSON metadata are identified in the inventory below. Unmodified vendored assets
 retain their upstream licenses and are identified separately below. TRIAGE.md
 records what changed and why, per upstream issue.
 
