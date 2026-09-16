@@ -138,7 +138,11 @@ jobs:
           monitor_pid=$!
           trap 'kill "$monitor_pid" 2>/dev/null || true' EXIT
           test_status=0
-          pytest -q -n 2 --dist=worksteal meridian/analysis || test_status=1
+          pytest -q -n 2 --dist=worksteal meridian/analysis/analyzer_test.py || test_status=1
+          pytest -q -n 2 --dist=worksteal meridian/analysis/optimizer_test.py || test_status=1
+          pytest -q -n 2 --dist=worksteal meridian/analysis \
+            --ignore=meridian/analysis/analyzer_test.py \
+            --ignore=meridian/analysis/optimizer_test.py || test_status=1
           pytest -q -n 2 --dist=worksteal meridian/model || test_status=1
           fit_suites=(
             meridian/benchmark
