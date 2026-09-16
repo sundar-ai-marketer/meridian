@@ -4534,6 +4534,20 @@ class OptimizerOutputTest(parameterized.TestCase):
         ),
     )
 
+  def test_scenario_roi_stats_do_not_expose_float_rounding_artifacts(self):
+    self.optimization_results.nonoptimized_data.attrs['total_roi'] = np.float64(
+        0.6492623509
+    )
+    self.optimization_results.optimized_data.attrs['total_roi'] = np.float64(
+        0.6934903398
+    )
+
+    stats = self.optimization_results._create_scenario_stats_specs('$')
+
+    self.assertEqual(stats[2].stat, '0.6')
+    self.assertEqual(stats[3].stat, '0.7')
+    self.assertEqual(stats[3].delta, '0.0')
+
   def test_output_scenario_card_use_cpik_no_revenue_per_kpi(self):
     summary_html_dom = self._get_output_summary_html_dom(
         self.optimization_results_kpi_output

@@ -12,10 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTICE: This file was modified from the original google/meridian
+# source. See the NOTICE file at the repository root, and TRIAGE.md, for
+# what changed and why.
+
 from xml.etree import ElementTree as ET
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from markupsafe import Markup
 from meridian.templates import formatter
 
 
@@ -139,7 +144,7 @@ class FormatterTest(parameterized.TestCase):
   def test_create_summary_html(self):
     template_env = formatter.create_template_env()
     title = 'Integration Test Report'
-    cards = ['<card>Card 1</card>', '<card>Card 2</card>']
+    cards = [Markup('<card>Card 1</card>'), Markup('<card>Card 2</card>')]
 
     html_result = formatter.create_summary_html(template_env, title, cards)
 
@@ -151,6 +156,80 @@ class FormatterTest(parameterized.TestCase):
     self.assertIn('<card>Card 2</card>', html_result)
     self.assertIn('<svg version="1.1"', html_result)
     self.assertIn('<g id="Art_layer">', html_result)
+
+  def test_report_html_escapes_values_and_preserves_rendered_fragments(self):
+    template_env = formatter.create_template_env()
+    untrusted = '<img src=x onerror="window.pwned=1"> & "quoted"'
+    chart_json = '{"title": "</script><script>window.pwned=1</script>"}'
+    finding_html = formatter.create_finding_html(
+        template_env, 'Trusted finding', 'info'
+    )
+    card_html = formatter.create_card_html(
+        template_env,
+        formatter.CardSpec(id=untrusted, title=untrusted),
+        insights=untrusted,
+        chart_specs=[
+            formatter.ChartSpec(
+                id=untrusted,
+                chart_json=chart_json,
+                description=untrusted,
+                errors=[untrusted],
+            ),
+            formatter.TableSpec(
+                id=untrusted,
+                title=untrusted,
+                column_headers=[untrusted],
+                row_values=[[finding_html, untrusted]],
+                description=untrusted,
+                warnings=[untrusted],
+            ),
+        ],
+        stats_specs=[formatter.StatsSpec(untrusted, untrusted, untrusted)],
+    )
+
+    self.assertIsInstance(card_html, Markup)
+    self.assertNotIn('<img src=x', card_html)
+    self.assertNotIn('</script><script>window.pwned=1</script>', card_html)
+    self.assertIn(r'\u003c/script\u003e\u003cscript\u003e', card_html)
+    self.assertIn('<finding class="info">', card_html)
+
+    card = ET.fromstring(card_html)
+    self.assertEqual(card.attrib['id'], untrusted)
+    self.assertEqual(card.findtext('card-title').strip(), untrusted)
+    self.assertEqual(card.findtext('card-insights/p').strip(), untrusted)
+    self.assertEqual(
+        card.findtext('stats-section/stats/stats-title').strip(), untrusted
+    )
+    self.assertEqual(
+        card.findtext('charts/chart/chart-description').strip(), untrusted
+    )
+    table = card.find('charts/chart-table')
+    self.assertIsNotNone(table)
+    self.assertEqual(
+        table.findtext("./div[@class='chart-table-title']").strip(), untrusted
+    )
+    self.assertEqual(
+        table.findtext("./div[@class='chart-table-content']/table/tr/th"),
+        untrusted,
+    )
+    self.assertEqual(
+        table.findtext("./div[@class='chart-table-content']/table/tr[2]/td[2]"),
+        untrusted,
+    )
+    self.assertIsNotNone(
+        table.find(
+            "./div[@class='chart-table-content']/table/tr[2]/td[1]/finding"
+        )
+    )
+
+    raw_card = '<card>Caller-owned card</card>'
+    summary_html = formatter.create_summary_html(
+        template_env, untrusted, [card_html, raw_card]
+    )
+    self.assertIn('<card id=', summary_html)
+    self.assertIn('<finding class="info">', summary_html)
+    self.assertNotIn('<img src=x', summary_html)
+    self.assertIn(raw_card, summary_html)
 
   def test_create_card_html_structure(self):
     template_env = formatter.create_template_env()
@@ -298,19 +377,25 @@ class FormatterTest(parameterized.TestCase):
     self.assertIsNotNone(error_elem)
     error_p = error_elem.find('p')
     self.assertIsNotNone(error_p)
-    self.assertIn('Chart Error', error_p.text)  # pyrefly: ignore[bad-argument-type]
+    self.assertIn(
+        'Chart Error', error_p.text
+    )  # pyrefly: ignore[bad-argument-type]
 
     warning_elem = chart_elem.find('warnings')
     self.assertIsNotNone(warning_elem)
     warning_p = warning_elem.find('p')
     self.assertIsNotNone(warning_p)
-    self.assertIn('Chart Warning', warning_p.text)  # pyrefly: ignore[bad-argument-type]
+    self.assertIn(
+        'Chart Warning', warning_p.text
+    )  # pyrefly: ignore[bad-argument-type]
 
     info_elem = chart_elem.find('infos')
     self.assertIsNotNone(info_elem)
     info_p = info_elem.find('p')
     self.assertIsNotNone(info_p)
-    self.assertIn('Chart Info', info_p.text)  # pyrefly: ignore[bad-argument-type]
+    self.assertIn(
+        'Chart Info', info_p.text
+    )  # pyrefly: ignore[bad-argument-type]
 
   def test_create_card_html_table_findings(self):
     """Tests that errors, warnings, and infos render inside a table."""
@@ -340,19 +425,25 @@ class FormatterTest(parameterized.TestCase):
     self.assertIsNotNone(error_elem)
     error_p = error_elem.find('p')
     self.assertIsNotNone(error_p)
-    self.assertIn('Table Error', error_p.text)  # pyrefly: ignore[bad-argument-type]
+    self.assertIn(
+        'Table Error', error_p.text
+    )  # pyrefly: ignore[bad-argument-type]
 
     warning_elem = table_elem.find('warnings')
     self.assertIsNotNone(warning_elem)
     warning_p = warning_elem.find('p')
     self.assertIsNotNone(warning_p)
-    self.assertIn('Table Warning', warning_p.text)  # pyrefly: ignore[bad-argument-type]
+    self.assertIn(
+        'Table Warning', warning_p.text
+    )  # pyrefly: ignore[bad-argument-type]
 
     info_elem = table_elem.find('infos')
     self.assertIsNotNone(info_elem)
     info_p = info_elem.find('p')
     self.assertIsNotNone(info_p)
-    self.assertIn('Table Info', info_p.text)  # pyrefly: ignore[bad-argument-type]
+    self.assertIn(
+        'Table Info', info_p.text
+    )  # pyrefly: ignore[bad-argument-type]
 
 
 if __name__ == '__main__':

@@ -34,6 +34,11 @@ Files modified from the original google/meridian source:
   meridian/constants.py
   meridian/templates/summary.html.jinja
   meridian/templates/chart.html.jinja
+  meridian/templates/calibration_details_card.html.jinja
+  meridian/templates/calibration_overview_card.html.jinja
+  meridian/templates/channel_recommendation_card.html.jinja
+  meridian/templates/formatter.py
+  meridian/templates/formatter_test.py
   meridian/templates/table.html.jinja
   meridian/templates/style.scss
   meridian/backend/test_utils.py
@@ -46,6 +51,8 @@ Files modified from the original google/meridian source:
   meridian/model/context_test.py
   meridian/model/eda/eda_engine.py
   meridian/model/eda/eda_engine_test.py
+  meridian/model/eda/meridian_eda.py
+  meridian/model/eda/meridian_eda_test.py
   meridian/model/prior_distribution.py
   meridian/model/prior_distribution_test.py
   meridian/model/spec.py
@@ -130,6 +137,9 @@ Summary of behavioural changes to existing code:
     Charts and web fonts still require internet access.
   * Mobile report charts use keyboard-accessible scroll regions rather than
     clipping wide charts inside narrow cards.
+  * Report text values are HTML-escaped, while explicitly rendered fragments
+    preserve chart, table and finding markup. Chart JSON uses script-safe
+    serialization, and chart lookup handles quoted identifiers.
   * Geographic allocation diagnostics consider paid channels only. Sampling
     diagnostics preserve non-finite failure signals, and fixed-truth recovery
     ranks are explicitly distinguished from simulation-based calibration.

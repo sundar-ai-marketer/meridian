@@ -1333,15 +1333,14 @@ class OptimizationResults:
 
     if outcome == c.REVENUE:
       diff = round(
-          self.optimized_data.total_roi - self.nonoptimized_data.total_roi, 1
+          float(self.optimized_data.total_roi - self.nonoptimized_data.total_roi),
+          1,
       )
       non_optimized_performance_title = summary_text.NON_OPTIMIZED_ROI_LABEL
-      non_optimized_performance_stat = round(
-          self.nonoptimized_data.total_roi, 1
-      )
+      non_optimized_performance_stat = f'{self.nonoptimized_data.total_roi:.1f}'
       optimized_performance_title = summary_text.OPTIMIZED_ROI_LABEL
-      optimized_performance_stat = round(self.optimized_data.total_roi, 1)
-      optimized_performance_diff = f'+{str(diff)}' if diff > 0 else str(diff)
+      optimized_performance_stat = f'{self.optimized_data.total_roi:.1f}'
+      optimized_performance_diff = f'+{diff:.1f}' if diff > 0 else f'{diff:.1f}'
     else:
       diff = self.optimized_data.total_cpik - self.nonoptimized_data.total_cpik
       non_optimized_performance_title = summary_text.NON_OPTIMIZED_CPIK_LABEL

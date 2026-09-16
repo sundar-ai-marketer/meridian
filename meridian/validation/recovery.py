@@ -148,6 +148,7 @@ __all__ = [
 ]
 
 ResponseShape = Literal['linear', 'concave']
+_RHAT_SCREENING_THRESHOLD = 1.2
 
 
 def _require_integer_at_least(name: str, value: object, minimum: int) -> None:
@@ -329,7 +330,15 @@ class RecoveryResult:
 
   @property
   def converged(self) -> bool:
-    return self.max_r_hat < 1.2
+    """Whether finite rank-normalized R-hat meets the screening threshold.
+
+    This preserves the existing convenience property, but a value below this
+    loose threshold is a diagnostic screen rather than a proof of convergence.
+    """
+    return bool(
+        np.isfinite(self.max_r_hat)
+        and self.max_r_hat < _RHAT_SCREENING_THRESHOLD
+    )
 
   @property
   def all_covered(self) -> bool:
@@ -363,15 +372,25 @@ class RecoveryResult:
     )
 
   def format_report(self) -> str:
+    rhat_status = (
+        f'finite rank-normalized r_hat < {_RHAT_SCREENING_THRESHOLD}'
+        ' threshold met'
+        if self.converged
+        else (
+            'finite rank-normalized r_hat'
+            f' < {_RHAT_SCREENING_THRESHOLD} threshold not met'
+        )
+    )
     lines = [
         f'Recovery: response={self.config.response}'
         f' max_lag={self.config.max_lag}'
         f' n_geos={self.config.n_geos} n_times={self.config.n_times}',
         '-' * 72,
-        f'max rank-normalized r_hat = {self.max_r_hat:.4f}'
-        f"  {'converged' if self.converged else 'NOT CONVERGED'}",
+        f'max rank-normalized r_hat = {self.max_r_hat:.4f}',
+        f'  {rhat_status}',
         '',
-        f"{'channel':<12}{'true':>8}{'median':>9}{'90% CI':>22}"
+        f"{'channel':<12}{'true':>8}{'median':>9}"
+        f"{f'{100 * self.config.confidence_level:g}% CI':>22}"
         f"{'cov':>6}{'rel.err':>9}",
     ]
     for ch in self.channels:
@@ -743,7 +762,7 @@ class MultiRecoveryResult:
 
   @property
   def passed(self) -> bool:
-    """Whether every replication converged.
+    """Whether every replication meets the finite R-hat screening threshold.
 
     Deliberately not a claim about coverage: whether empirical coverage is
     "good enough" is a judgment call for whoever reads the report, not a
@@ -814,7 +833,9 @@ class MultiRecoveryResult:
 
   def format_report(self) -> str:
     nominal = self.config.confidence_level
-    n_converged = sum(1 for rep in self.replications if rep.converged)
+    n_meeting_rhat_threshold = sum(
+        1 for rep in self.replications if rep.converged
+    )
     lines = [
         f'Recovery (repeated): response={self.config.response}'
         f' max_lag={self.config.max_lag}'
@@ -823,11 +844,11 @@ class MultiRecoveryResult:
         f'base seed={self.config.seed}, per-replication seeds derived via'
         f' SeedSequence({self.config.seed}).spawn({self.n})',
         '-' * 78,
-        f'{n_converged}/{self.n} replications converged'
-        ' (max rank-normalized r_hat < 1.2)',
+        f'{n_meeting_rhat_threshold}/{self.n} replications met the finite'
+        f' max rank-normalized r_hat < {_RHAT_SCREENING_THRESHOLD} threshold',
         '',
         f"{'channel':<12}{'med.err':>9}{'IQR':>18}"
-        f"{f'cov({nominal:.0%})':>11}{'95% Wilson CI':>17}{'med.width':>11}"
+        f"{f'cov({100 * nominal:g}%)':>11}{'95% Wilson CI':>17}{'med.width':>11}"
         f"{'rank med.':>11}",
     ]
     for s in self.channel_summaries():
@@ -842,7 +863,7 @@ class MultiRecoveryResult:
     lines += [
         '',
         'coverage = fraction of replications where the true ROI fell inside'
-        f' the nominal {nominal:.0%} interval; the Wilson CI is a 95%'
+        f' the nominal {100 * nominal:g}% interval; the Wilson CI is a 95%'
         ' interval on that coverage estimate itself, not on ROI -- with only'
         f' {self.n} replications, coverage is a noisy estimate, not a'
         ' precise one.',
@@ -850,7 +871,7 @@ class MultiRecoveryResult:
         ' realised true ROI. This is a recovery experiment, not SBC: truth is'
         ' configured rather than drawn from the fitting prior, so ranks are'
         ' descriptive and do not have a Uniform(0, 1) calibration target.',
-        f'VERDICT: {"ALL CONVERGED" if self.passed else "NOT ALL CONVERGED"}'
+        f"VERDICT: {'ALL MET R-HAT THRESHOLD' if self.passed else 'NOT ALL MET R-HAT THRESHOLD'}"
         ' -- whether the coverage above is acceptable is a judgment call for'
         ' the reader, not something this module scores pass/fail.',
     ]
@@ -908,7 +929,11 @@ def run_recovery_replications(
     elapsed_total = time.monotonic() - start
     avg = elapsed_total / (i + 1)
     remaining = avg * (n - i - 1)
-    status = 'converged' if result.converged else 'NOT CONVERGED'
+    status = (
+        f'finite r_hat < {_RHAT_SCREENING_THRESHOLD}'
+        if result.converged
+        else f'r_hat unavailable or >= {_RHAT_SCREENING_THRESHOLD}'
+    )
     progress(
         f'replication {i + 1}/{n}: {rep_elapsed:.0f}s, seed={seed_i},'
         f' max r_hat={result.max_r_hat:.3f} ({status}) | elapsed'

@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
+
 from collections.abc import Mapping, Sequence
 import itertools
 import os
@@ -240,34 +243,38 @@ def _create_stdev_finding(
     level: eda_outcome.AnalysisLevel = eda_outcome.AnalysisLevel.OVERALL,
 ) -> eda_outcome.EDAFinding:
   if finding_cause is Cause.VARIABILITY:
-    std_ds = xr.Dataset({
-        eda_constants.STD_WITHOUT_OUTLIERS_VAR_NAME: xr.DataArray(
-            np.zeros((1, 1)),
-            coords={
-                eda_constants.VARIABLE: [variable],
-                constants.GEO: [_GEO_NAMES[0]],
-            },
-            dims=[eda_constants.VARIABLE, constants.GEO],
-        ),
-        eda_constants.STD_WITH_OUTLIERS_VAR_NAME: xr.DataArray(
-            np.zeros((1, 1)),
-            coords={
-                eda_constants.VARIABLE: [variable],
-                constants.GEO: [_GEO_NAMES[0]],
-            },
-            dims=[eda_constants.VARIABLE, constants.GEO],
-        ),
-    })
+    std_ds = xr.Dataset(
+        {
+            eda_constants.STD_WITHOUT_OUTLIERS_VAR_NAME: xr.DataArray(
+                np.zeros((1, 1)),
+                coords={
+                    eda_constants.VARIABLE: [variable],
+                    constants.GEO: [_GEO_NAMES[0]],
+                },
+                dims=[eda_constants.VARIABLE, constants.GEO],
+            ),
+            eda_constants.STD_WITH_OUTLIERS_VAR_NAME: xr.DataArray(
+                np.zeros((1, 1)),
+                coords={
+                    eda_constants.VARIABLE: [variable],
+                    constants.GEO: [_GEO_NAMES[0]],
+                },
+                dims=[eda_constants.VARIABLE, constants.GEO],
+            ),
+        }
+    )
     outlier_df = pd.DataFrame()
   elif finding_cause is Cause.OUTLIER:
     std_ds = xr.Dataset()
-    outlier_df = pd.DataFrame({
-        eda_constants.OUTLIERS_COL_NAME: [1.0],
-        eda_constants.ABS_OUTLIERS_COL_NAME: [1.0],
-        eda_constants.VARIABLE: [variable],
-        constants.GEO: [_GEO_NAMES[0]],
-        constants.TIME: [_N_TIMES],
-    }).set_index([eda_constants.VARIABLE, constants.GEO, constants.TIME])
+    outlier_df = pd.DataFrame(
+        {
+            eda_constants.OUTLIERS_COL_NAME: [1.0],
+            eda_constants.ABS_OUTLIERS_COL_NAME: [1.0],
+            eda_constants.VARIABLE: [variable],
+            constants.GEO: [_GEO_NAMES[0]],
+            constants.TIME: [_N_TIMES],
+        }
+    ).set_index([eda_constants.VARIABLE, constants.GEO, constants.TIME])
   else:
     raise ValueError(f'Unsupported finding cause: {finding_cause}')
 
@@ -493,18 +500,20 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         analysis_artifacts=[
             eda_outcome.VariableGeoTimeCollinearityArtifact(
                 level=eda_outcome.AnalysisLevel.OVERALL,
-                rsquared_ds=xr.Dataset({
-                    eda_constants.RSQUARED_TIME: xr.DataArray(
-                        [0.5],
-                        coords={constants.CHANNEL: ['ch_0']},
-                        name=eda_constants.RSQUARED_TIME,
-                    ),
-                    eda_constants.RSQUARED_GEO: xr.DataArray(
-                        [0.5],
-                        coords={constants.CHANNEL: ['ch_0']},
-                        name=eda_constants.RSQUARED_GEO,
-                    ),
-                }),
+                rsquared_ds=xr.Dataset(
+                    {
+                        eda_constants.RSQUARED_TIME: xr.DataArray(
+                            [0.5],
+                            coords={constants.CHANNEL: ['ch_0']},
+                            name=eda_constants.RSQUARED_TIME,
+                        ),
+                        eda_constants.RSQUARED_GEO: xr.DataArray(
+                            [0.5],
+                            coords={constants.CHANNEL: ['ch_0']},
+                            name=eda_constants.RSQUARED_GEO,
+                        ),
+                    }
+                ),
             )
         ],
     )
@@ -515,50 +524,56 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
     geo_stdev_artifact = eda_outcome.StandardDeviationArtifact(
         variable=constants.TREATMENT_CONTROL_SCALED,
         level=eda_outcome.AnalysisLevel.GEO,
-        std_ds=xr.Dataset({
-            eda_constants.STD_WITHOUT_OUTLIERS_VAR_NAME: xr.DataArray(
-                np.zeros((
-                    len(_MEDIA_CHANNEL_NAMES)
-                    + len(_RF_CHANNEL_NAMES)
-                    + len(_CONTROL_NAMES)
-                    + len(_NON_MEDIA_CHANNEL_NAMES),
-                    len(_GEO_NAMES),
-                )),
-                coords={
-                    eda_constants.VARIABLE: list(
-                        itertools.chain(
-                            _MEDIA_CHANNEL_NAMES,
-                            _RF_CHANNEL_NAMES,
-                            _CONTROL_NAMES,
-                            _NON_MEDIA_CHANNEL_NAMES,
+        std_ds=xr.Dataset(
+            {
+                eda_constants.STD_WITHOUT_OUTLIERS_VAR_NAME: xr.DataArray(
+                    np.zeros(
+                        (
+                            len(_MEDIA_CHANNEL_NAMES)
+                            + len(_RF_CHANNEL_NAMES)
+                            + len(_CONTROL_NAMES)
+                            + len(_NON_MEDIA_CHANNEL_NAMES),
+                            len(_GEO_NAMES),
                         )
                     ),
-                    constants.GEO: list(_GEO_NAMES),
-                },
-                dims=[eda_constants.VARIABLE, constants.GEO],
-            ),
-            eda_constants.STD_WITH_OUTLIERS_VAR_NAME: xr.DataArray(
-                np.zeros((
-                    len(_MEDIA_CHANNEL_NAMES)
-                    + len(_RF_CHANNEL_NAMES)
-                    + len(_CONTROL_NAMES)
-                    + len(_NON_MEDIA_CHANNEL_NAMES),
-                    len(_GEO_NAMES),
-                )),
-                coords={
-                    eda_constants.VARIABLE: list(
-                        itertools.chain(
-                            _MEDIA_CHANNEL_NAMES,
-                            _RF_CHANNEL_NAMES,
-                            _CONTROL_NAMES,
-                            _NON_MEDIA_CHANNEL_NAMES,
+                    coords={
+                        eda_constants.VARIABLE: list(
+                            itertools.chain(
+                                _MEDIA_CHANNEL_NAMES,
+                                _RF_CHANNEL_NAMES,
+                                _CONTROL_NAMES,
+                                _NON_MEDIA_CHANNEL_NAMES,
+                            )
+                        ),
+                        constants.GEO: list(_GEO_NAMES),
+                    },
+                    dims=[eda_constants.VARIABLE, constants.GEO],
+                ),
+                eda_constants.STD_WITH_OUTLIERS_VAR_NAME: xr.DataArray(
+                    np.zeros(
+                        (
+                            len(_MEDIA_CHANNEL_NAMES)
+                            + len(_RF_CHANNEL_NAMES)
+                            + len(_CONTROL_NAMES)
+                            + len(_NON_MEDIA_CHANNEL_NAMES),
+                            len(_GEO_NAMES),
                         )
                     ),
-                    constants.GEO: list(_GEO_NAMES),
-                },
-                dims=[eda_constants.VARIABLE, constants.GEO],
-            ),
-        }),
+                    coords={
+                        eda_constants.VARIABLE: list(
+                            itertools.chain(
+                                _MEDIA_CHANNEL_NAMES,
+                                _RF_CHANNEL_NAMES,
+                                _CONTROL_NAMES,
+                                _NON_MEDIA_CHANNEL_NAMES,
+                            )
+                        ),
+                        constants.GEO: list(_GEO_NAMES),
+                    },
+                    dims=[eda_constants.VARIABLE, constants.GEO],
+                ),
+            }
+        ),
         outlier_df=pd.DataFrame(
             columns=[
                 eda_constants.OUTLIERS_COL_NAME,
@@ -577,50 +592,60 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
     national_stdev_artifact = eda_outcome.StandardDeviationArtifact(
         variable=constants.NATIONAL_TREATMENT_CONTROL_SCALED,
         level=eda_outcome.AnalysisLevel.NATIONAL,
-        std_ds=xr.Dataset({
-            eda_constants.STD_WITHOUT_OUTLIERS_VAR_NAME: xr.DataArray(
-                np.zeros((
-                    len(_MEDIA_CHANNEL_NAMES)
-                    + len(_RF_CHANNEL_NAMES)
-                    + len(_CONTROL_NAMES)
-                    + len(_NON_MEDIA_CHANNEL_NAMES),
-                    1,
-                )),
-                coords={
-                    eda_constants.VARIABLE: list(
-                        itertools.chain(
-                            _MEDIA_CHANNEL_NAMES,
-                            _RF_CHANNEL_NAMES,
-                            _CONTROL_NAMES,
-                            _NON_MEDIA_CHANNEL_NAMES,
+        std_ds=xr.Dataset(
+            {
+                eda_constants.STD_WITHOUT_OUTLIERS_VAR_NAME: xr.DataArray(
+                    np.zeros(
+                        (
+                            len(_MEDIA_CHANNEL_NAMES)
+                            + len(_RF_CHANNEL_NAMES)
+                            + len(_CONTROL_NAMES)
+                            + len(_NON_MEDIA_CHANNEL_NAMES),
+                            1,
                         )
                     ),
-                    constants.GEO: [constants.NATIONAL_MODEL_DEFAULT_GEO_NAME],
-                },
-                dims=[eda_constants.VARIABLE, constants.GEO],
-            ),
-            eda_constants.STD_WITH_OUTLIERS_VAR_NAME: xr.DataArray(
-                np.zeros((
-                    len(_MEDIA_CHANNEL_NAMES)
-                    + len(_RF_CHANNEL_NAMES)
-                    + len(_CONTROL_NAMES)
-                    + len(_NON_MEDIA_CHANNEL_NAMES),
-                    1,
-                )),
-                coords={
-                    eda_constants.VARIABLE: list(
-                        itertools.chain(
-                            _MEDIA_CHANNEL_NAMES,
-                            _RF_CHANNEL_NAMES,
-                            _CONTROL_NAMES,
-                            _NON_MEDIA_CHANNEL_NAMES,
+                    coords={
+                        eda_constants.VARIABLE: list(
+                            itertools.chain(
+                                _MEDIA_CHANNEL_NAMES,
+                                _RF_CHANNEL_NAMES,
+                                _CONTROL_NAMES,
+                                _NON_MEDIA_CHANNEL_NAMES,
+                            )
+                        ),
+                        constants.GEO: [
+                            constants.NATIONAL_MODEL_DEFAULT_GEO_NAME
+                        ],
+                    },
+                    dims=[eda_constants.VARIABLE, constants.GEO],
+                ),
+                eda_constants.STD_WITH_OUTLIERS_VAR_NAME: xr.DataArray(
+                    np.zeros(
+                        (
+                            len(_MEDIA_CHANNEL_NAMES)
+                            + len(_RF_CHANNEL_NAMES)
+                            + len(_CONTROL_NAMES)
+                            + len(_NON_MEDIA_CHANNEL_NAMES),
+                            1,
                         )
                     ),
-                    constants.GEO: [constants.NATIONAL_MODEL_DEFAULT_GEO_NAME],
-                },
-                dims=[eda_constants.VARIABLE, constants.GEO],
-            ),
-        }),
+                    coords={
+                        eda_constants.VARIABLE: list(
+                            itertools.chain(
+                                _MEDIA_CHANNEL_NAMES,
+                                _RF_CHANNEL_NAMES,
+                                _CONTROL_NAMES,
+                                _NON_MEDIA_CHANNEL_NAMES,
+                            )
+                        ),
+                        constants.GEO: [
+                            constants.NATIONAL_MODEL_DEFAULT_GEO_NAME
+                        ],
+                    },
+                    dims=[eda_constants.VARIABLE, constants.GEO],
+                ),
+            }
+        ),
         outlier_df=pd.DataFrame(
             columns=[
                 eda_constants.OUTLIERS_COL_NAME,
@@ -825,14 +850,16 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         {
             'media_spend': (
                 [constants.GEO, constants.TIME, constants.MEDIA_CHANNEL],
-                np.array([
+                np.array(
                     [
-                        [100.0, 0.0],
-                        [200.0, 0.0],
-                        [300.0, 0.0],
-                    ],
-                    [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
-                ]),
+                        [
+                            [100.0, 0.0],
+                            [200.0, 0.0],
+                            [300.0, 0.0],
+                        ],
+                        [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+                    ]
+                ),
             ),
             'rf_spend': (
                 [constants.GEO, constants.TIME, constants.RF_CHANNEL],
@@ -851,10 +878,12 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         {
             'media': (
                 [constants.GEO, constants.TIME, constants.MEDIA_CHANNEL],
-                np.array([
-                    [[10.0, 0.0], [20.0, 0.0], [30.0, 0.0]],
-                    [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
-                ]),
+                np.array(
+                    [
+                        [[10.0, 0.0], [20.0, 0.0], [30.0, 0.0]],
+                        [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+                    ]
+                ),
             ),
             'rf_impressions': (
                 [constants.GEO, constants.TIME, constants.RF_CHANNEL],
@@ -874,14 +903,20 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
     )
     mock_artifact.level = eda_outcome.AnalysisLevel.GEO
     mock_artifact.cost_per_media_unit_da = xr.DataArray(
-        np.array([
-            [[10.0, np.nan, 10.0], [10.0, np.nan, 10.0], [10.0, np.nan, 10.0]],
+        np.array(
             [
-                [np.nan, np.nan, np.nan],
-                [np.nan, np.nan, np.nan],
-                [np.nan, np.nan, np.nan],
-            ],
-        ]),
+                [
+                    [10.0, np.nan, 10.0],
+                    [10.0, np.nan, 10.0],
+                    [10.0, np.nan, 10.0],
+                ],
+                [
+                    [np.nan, np.nan, np.nan],
+                    [np.nan, np.nan, np.nan],
+                    [np.nan, np.nan, np.nan],
+                ],
+            ]
+        ),
         coords={
             constants.GEO: list(_GEO_NAMES),
             constants.TIME: range(_N_TIMES),
@@ -906,18 +941,24 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
     )
     plot = self._eda.plot_cost_per_media_unit_time_series(geos=['geo_0'])
 
-    actual_cost = np.concatenate([
-        row.vconcat[0].layer[0].data[eda_constants.VALUE]
-        for row in plot.vconcat[0].vconcat
-    ])
-    actual_media_units = np.concatenate([
-        row.vconcat[0].layer[1].data[eda_constants.VALUE]
-        for row in plot.vconcat[0].vconcat
-    ])
-    actual_cost_per_media_unit = np.concatenate([
-        row.vconcat[1].data[eda_constants.VALUE]
-        for row in plot.vconcat[0].vconcat
-    ])
+    actual_cost = np.concatenate(
+        [
+            row.vconcat[0].layer[0].data[eda_constants.VALUE]
+            for row in plot.vconcat[0].vconcat
+        ]
+    )
+    actual_media_units = np.concatenate(
+        [
+            row.vconcat[0].layer[1].data[eda_constants.VALUE]
+            for row in plot.vconcat[0].vconcat
+        ]
+    )
+    actual_cost_per_media_unit = np.concatenate(
+        [
+            row.vconcat[1].data[eda_constants.VALUE]
+            for row in plot.vconcat[0].vconcat
+        ]
+    )
 
     plot_json = plot.to_dict()
     # The structure is:
@@ -959,11 +1000,15 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         {
             'media_spend': (
                 [constants.GEO, constants.TIME, constants.MEDIA_CHANNEL],
-                np.array([[
-                    [100.0, 0.0],
-                    [200.0, 0.0],
-                    [300.0, 0.0],
-                ]]),
+                np.array(
+                    [
+                        [
+                            [100.0, 0.0],
+                            [200.0, 0.0],
+                            [300.0, 0.0],
+                        ]
+                    ]
+                ),
             ),
             'rf_spend': (
                 [constants.GEO, constants.TIME, constants.RF_CHANNEL],
@@ -1031,18 +1076,24 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         geos=eda_constants.NATIONALIZE
     )
 
-    actual_cost = np.concatenate([
-        row.vconcat[0].layer[0].data[eda_constants.VALUE]
-        for row in plot.vconcat[0].vconcat
-    ])
-    actual_media_units = np.concatenate([
-        row.vconcat[0].layer[1].data[eda_constants.VALUE]
-        for row in plot.vconcat[0].vconcat
-    ])
-    actual_cost_per_media_unit = np.concatenate([
-        row.vconcat[1].data[eda_constants.VALUE]
-        for row in plot.vconcat[0].vconcat
-    ])
+    actual_cost = np.concatenate(
+        [
+            row.vconcat[0].layer[0].data[eda_constants.VALUE]
+            for row in plot.vconcat[0].vconcat
+        ]
+    )
+    actual_media_units = np.concatenate(
+        [
+            row.vconcat[0].layer[1].data[eda_constants.VALUE]
+            for row in plot.vconcat[0].vconcat
+        ]
+    )
+    actual_cost_per_media_unit = np.concatenate(
+        [
+            row.vconcat[1].data[eda_constants.VALUE]
+            for row in plot.vconcat[0].vconcat
+        ]
+    )
 
     with self.subTest(name='cost_per_media_unit'):
       np.testing.assert_allclose(
@@ -1067,11 +1118,15 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         {
             'media_spend': (
                 [constants.GEO, constants.TIME, constants.MEDIA_CHANNEL],
-                np.array([[
-                    [100.0, 0.0],
-                    [200.0, 0.0],
-                    [300.0, 0.0],
-                ]]),
+                np.array(
+                    [
+                        [
+                            [100.0, 0.0],
+                            [200.0, 0.0],
+                            [300.0, 0.0],
+                        ]
+                    ]
+                ),
             ),
             'rf_spend': (
                 [constants.GEO, constants.TIME, constants.RF_CHANNEL],
@@ -1143,18 +1198,24 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         geos=eda_constants.NATIONALIZE
     )
 
-    actual_cost = np.concatenate([
-        row.vconcat[0].layer[0].data[eda_constants.VALUE]
-        for row in plot.vconcat[0].vconcat
-    ])
-    actual_media_units = np.concatenate([
-        row.vconcat[0].layer[1].data[eda_constants.VALUE]
-        for row in plot.vconcat[0].vconcat
-    ])
-    actual_cost_per_media_unit = np.concatenate([
-        row.vconcat[1].data[eda_constants.VALUE]
-        for row in plot.vconcat[0].vconcat
-    ])
+    actual_cost = np.concatenate(
+        [
+            row.vconcat[0].layer[0].data[eda_constants.VALUE]
+            for row in plot.vconcat[0].vconcat
+        ]
+    )
+    actual_media_units = np.concatenate(
+        [
+            row.vconcat[0].layer[1].data[eda_constants.VALUE]
+            for row in plot.vconcat[0].vconcat
+        ]
+    )
+    actual_cost_per_media_unit = np.concatenate(
+        [
+            row.vconcat[1].data[eda_constants.VALUE]
+            for row in plot.vconcat[0].vconcat
+        ]
+    )
 
     with self.subTest(name='cost_per_media_unit'):
       np.testing.assert_allclose(
@@ -1346,11 +1407,15 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         {
             'media_scaled': (
                 [constants.GEO, constants.TIME, constants.CHANNEL],
-                np.array([[
-                    [10, 20, 30, 40, 50, 60],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                ]]),
+                np.array(
+                    [
+                        [
+                            [10, 20, 30, 40, 50, 60],
+                            [0, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0],
+                        ]
+                    ]
+                ),
             ),
         },
         coords={
@@ -1405,11 +1470,15 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         {
             'media_scaled': (
                 [constants.GEO, constants.TIME, constants.CHANNEL],
-                np.array([[
-                    np.arange(n_channels_data) + 1,
-                    np.zeros(n_channels_data),
-                    np.zeros(n_channels_data),
-                ]]),
+                np.array(
+                    [
+                        [
+                            np.arange(n_channels_data) + 1,
+                            np.zeros(n_channels_data),
+                            np.zeros(n_channels_data),
+                        ]
+                    ]
+                ),
             ),
         },
         coords={
@@ -1636,11 +1705,13 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
           },
           coords={eda_constants.VARIABLE: variables},
       )
-      outlier_df = pd.DataFrame({
-          eda_constants.ABS_OUTLIERS_COL_NAME: outliers_vals,
-          eda_constants.VARIABLE: variables,
-          constants.TIME: [0] * len(variables),
-      }).set_index([eda_constants.VARIABLE, constants.TIME])
+      outlier_df = pd.DataFrame(
+          {
+              eda_constants.ABS_OUTLIERS_COL_NAME: outliers_vals,
+              eda_constants.VARIABLE: variables,
+              constants.TIME: [0] * len(variables),
+          }
+      ).set_index([eda_constants.VARIABLE, constants.TIME])
     else:
       std_ds = xr.Dataset(
           {
@@ -1654,12 +1725,14 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
               constants.GEO: ['geo_0'],
           },
       )
-      outlier_df = pd.DataFrame({
-          eda_constants.ABS_OUTLIERS_COL_NAME: outliers_vals,
-          eda_constants.VARIABLE: variables,
-          constants.GEO: ['geo_0'] * len(variables),
-          constants.TIME: [0] * len(variables),
-      }).set_index([eda_constants.VARIABLE, constants.GEO, constants.TIME])
+      outlier_df = pd.DataFrame(
+          {
+              eda_constants.ABS_OUTLIERS_COL_NAME: outliers_vals,
+              eda_constants.VARIABLE: variables,
+              constants.GEO: ['geo_0'] * len(variables),
+              constants.TIME: [0] * len(variables),
+          }
+      ).set_index([eda_constants.VARIABLE, constants.GEO, constants.TIME])
 
     std_artifact = eda_outcome.StandardDeviationArtifact(
         variable=treatment_control_var,
@@ -1933,10 +2006,14 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
     )
     mock_artifact.level = eda_outcome.AnalysisLevel.GEO
     mock_artifact.corr_matrix = xr.DataArray(
-        np.array([[
-            [1.0, 0.8],
-            [0.8, 1.0],
-        ]]),
+        np.array(
+            [
+                [
+                    [1.0, 0.8],
+                    [0.8, 1.0],
+                ]
+            ]
+        ),
         coords={
             constants.GEO: ['geo_0'],
             eda_constants.VARIABLE_1: ['ch_0', 'control_0'],
@@ -2642,16 +2719,18 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
       channel_name: str = 'facebook_spend',
       spend_values: Sequence[float] = (100.0, 200.0, 300.0),
   ) -> None:
-    self._mock_eda_engine.national_all_spend_ds = xr.Dataset({
-        constants.MEDIA_SPEND: xr.DataArray(
-            np.array([[v] for v in spend_values]),
-            dims=[constants.TIME, constants.MEDIA_CHANNEL],
-            coords={
-                constants.TIME: range(len(spend_values)),
-                constants.MEDIA_CHANNEL: [channel_name],
-            },
-        )
-    })
+    self._mock_eda_engine.national_all_spend_ds = xr.Dataset(
+        {
+            constants.MEDIA_SPEND: xr.DataArray(
+                np.array([[v] for v in spend_values]),
+                dims=[constants.TIME, constants.MEDIA_CHANNEL],
+                coords={
+                    constants.TIME: range(len(spend_values)),
+                    constants.MEDIA_CHANNEL: [channel_name],
+                },
+            )
+        }
+    )
 
   def _setup_mock_calibrated_prior(
       self,
@@ -2778,16 +2857,18 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         )
     )
 
-    self._mock_eda_engine.national_all_spend_ds = xr.Dataset({
-        constants.MEDIA_SPEND: xr.DataArray(
-            np.array([[100.0, 500.0]]),  # Shape (1, 2)
-            dims=[constants.TIME, constants.MEDIA_CHANNEL],
-            coords={
-                constants.TIME: [0],
-                constants.MEDIA_CHANNEL: ['facebook_spend', 'google_spend'],
-            },
-        )
-    })
+    self._mock_eda_engine.national_all_spend_ds = xr.Dataset(
+        {
+            constants.MEDIA_SPEND: xr.DataArray(
+                np.array([[100.0, 500.0]]),  # Shape (1, 2)
+                dims=[constants.TIME, constants.MEDIA_CHANNEL],
+                coords={
+                    constants.TIME: [0],
+                    constants.MEDIA_CHANNEL: ['facebook_spend', 'google_spend'],
+                },
+            )
+        }
+    )
 
   def test_plot_calibration_sorting_channels_by_spend(self):
     self._setup_mock_calibrated_channels_with_spend()
@@ -2967,16 +3048,18 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
             return_value=[mock_prior],
         )
     )
-    self._mock_eda_engine.national_all_spend_ds = xr.Dataset({
-        constants.MEDIA_SPEND: xr.DataArray(
-            np.array([[100.0], [200.0], [300.0]]),
-            dims=[constants.TIME, constants.MEDIA_CHANNEL],
-            coords={
-                constants.TIME: range(3),
-                constants.MEDIA_CHANNEL: ['facebook_spend'],
-            },
-        )
-    })
+    self._mock_eda_engine.national_all_spend_ds = xr.Dataset(
+        {
+            constants.MEDIA_SPEND: xr.DataArray(
+                np.array([[100.0], [200.0], [300.0]]),
+                dims=[constants.TIME, constants.MEDIA_CHANNEL],
+                coords={
+                    constants.TIME: range(3),
+                    constants.MEDIA_CHANNEL: ['facebook_spend'],
+                },
+            )
+        }
+    )
     plot = self._eda.plot_calibration(channel_name='facebook_spend')
     chart_json = plot.to_json()  # pyrefly: ignore[missing-attribute]
     self.assertIn('select', chart_json)
@@ -3072,16 +3155,18 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
             return_value=outcome,
         )
     )
-    self._mock_eda_engine.national_all_spend_ds = xr.Dataset({
-        constants.MEDIA_SPEND: xr.DataArray(
-            np.array([[100.0], [200.0], [300.0]]),
-            dims=[constants.TIME, constants.MEDIA_CHANNEL],
-            coords={
-                constants.TIME: range(3),
-                constants.MEDIA_CHANNEL: ['facebook_spend'],
-            },
-        )
-    })
+    self._mock_eda_engine.national_all_spend_ds = xr.Dataset(
+        {
+            constants.MEDIA_SPEND: xr.DataArray(
+                np.array([[100.0], [200.0], [300.0]]),
+                dims=[constants.TIME, constants.MEDIA_CHANNEL],
+                coords={
+                    constants.TIME: range(3),
+                    constants.MEDIA_CHANNEL: ['facebook_spend'],
+                },
+            )
+        }
+    )
     plot = self._eda.plot_experiment_adjustments()
     self.assertIsInstance(plot, (alt.LayerChart, alt.VConcatChart))
     title_text = (
@@ -3376,9 +3461,7 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
     self.assertIsNone(self._eda.plot_experiment_adjustments())
 
   def test_plot_experiment_adjustments_empty_channel_experiments(self):
-    self._setup_mock_adjustment_outcome(
-        adjustment_data={'facebook_spend': []}
-    )
+    self._setup_mock_adjustment_outcome(adjustment_data={'facebook_spend': []})
     self.assertIsNone(self._eda.plot_experiment_adjustments())
 
   def test_plot_prior_mean_national_success(self):
@@ -3530,6 +3613,32 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
     body_title_text = body_title.text
     self.assertIsNotNone(body_title_text, 'Body title text is None.')
     self.assertEqual(body_title_text.strip(), eda_constants.REPORT_TITLE)
+
+    summary = dom.find(f".//card[@id='{eda_constants.SUMMARY_CARD_ID}']")
+    self.assertIsNotNone(summary.find('.//finding'))
+    self.assertIsNotNone(
+        summary.find(
+            f".//a[@href='#{eda_constants.SPEND_AND_MEDIA_UNIT_CARD_ID}']"
+        )
+    )
+
+  def test_explanation_escapes_text_and_preserves_line_breaks(self):
+    payload = '<img src=x onerror="example()">'
+    formatted = meridian_eda._format_explanation_for_html(payload + '\nnext')
+    paragraph = ET.fromstring(f'<p>{formatted}</p>')
+    self.assertEqual(paragraph.text, payload)
+    self.assertIsNotNone(paragraph.find('br'))
+    self.assertIsNone(paragraph.find('img'))
+
+  def test_display_limit_escapes_arguments_and_preserves_line_break(self):
+    payload = '<em>literal function</em>'
+    formatted = meridian_eda._create_display_limit_message(
+        pd.DataFrame({'row': range(6)}), payload, payload, n_channels=6
+    )
+    paragraph = ET.fromstring(f'<p>{formatted}</p>')
+    self.assertIsNotNone(paragraph.find('br'))
+    self.assertIsNone(paragraph.find('em'))
+    self.assertIn(payload, ''.join(paragraph.itertext()))
 
   @parameterized.named_parameters(
       dict(
@@ -4465,13 +4574,15 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
           artifact_kwargs={
               'std_ds': xr.Dataset(),
               'outlier_df': (
-                  pd.DataFrame({
-                      eda_constants.OUTLIERS_COL_NAME: [-5.0, 10.0, 1.0],
-                      eda_constants.ABS_OUTLIERS_COL_NAME: [5.0, 10.0, 1.0],
-                      eda_constants.VARIABLE: ['var1', 'var2', 'var3'],
-                      constants.GEO: ['geo_0'] * 3,
-                      constants.TIME: [0] * 3,
-                  }).set_index(
+                  pd.DataFrame(
+                      {
+                          eda_constants.OUTLIERS_COL_NAME: [-5.0, 10.0, 1.0],
+                          eda_constants.ABS_OUTLIERS_COL_NAME: [5.0, 10.0, 1.0],
+                          eda_constants.VARIABLE: ['var1', 'var2', 'var3'],
+                          constants.GEO: ['geo_0'] * 3,
+                          constants.TIME: [0] * 3,
+                      }
+                  ).set_index(
                       [eda_constants.VARIABLE, constants.GEO, constants.TIME]
                   )
               ),
@@ -4590,15 +4701,17 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
     geos = [f'geo_{i}' for i in range(n_rows)]
     times = pd.date_range(start='2020-01-01', periods=n_rows)
 
-    outlier_df = pd.DataFrame({
-        constants.CHANNEL: channels,
-        constants.GEO: geos,
-        constants.TIME: times,
-        constants.SPEND: [100.0] * n_rows,
-        constants.MEDIA_UNITS: [10.0] * n_rows,
-        eda_constants.COST_PER_MEDIA_UNIT: [10.0] * n_rows,
-        eda_constants.ABS_COST_PER_MEDIA_UNIT: [10.0] * n_rows,
-    }).set_index([constants.CHANNEL, constants.GEO, constants.TIME])
+    outlier_df = pd.DataFrame(
+        {
+            constants.CHANNEL: channels,
+            constants.GEO: geos,
+            constants.TIME: times,
+            constants.SPEND: [100.0] * n_rows,
+            constants.MEDIA_UNITS: [10.0] * n_rows,
+            eda_constants.COST_PER_MEDIA_UNIT: [10.0] * n_rows,
+            eda_constants.ABS_COST_PER_MEDIA_UNIT: [10.0] * n_rows,
+        }
+    ).set_index([constants.CHANNEL, constants.GEO, constants.TIME])
 
     mock_artifact = mock.create_autospec(
         eda_outcome.CostPerMediaUnitArtifact, instance=True
@@ -4630,6 +4743,7 @@ class MeridianEdaTestWithMockEngine(backend_test_utils.MeridianTestCase):
         'to review outliers for 6 channels in 6 times and 6 geos',
         ''.join(table.itertext()),
     )
+    self.assertIsNotNone(table.find('.//br'))
 
   def test_population_scaling_card_national_is_none(self):
     self._stub_plotters()
@@ -5042,6 +5156,7 @@ class MeridianEdaTest(backend_test_utils.MeridianTestCase):
       self.assertEqual(
           expected_y_title, actual_chart.encoding.y.to_dict().get('title')
       )
+
 
 if __name__ == '__main__':
   absltest.main()
