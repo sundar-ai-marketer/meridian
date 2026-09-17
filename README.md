@@ -511,6 +511,39 @@ changing the test.
 `meridian/math_invariants_test.py` failing after a merge is more serious: it
 means the arithmetic behind reported ROI changed. Do not paper over it.
 
+### Standing checks
+
+Four checks exist because their claims decay if nobody re-runs them. Each one
+writes dated evidence into `docs/validation/` rather than printing a verdict
+and forgetting it.
+
+```sh
+# Container OS advisories: which of them the analysis workflow actually loads.
+docker build --pull -t meridian:triage .
+docker run --name probe --entrypoint python meridian:triage \
+    scripts/container_reachability_probe.py --output /tmp/probe.json
+docker cp probe:/tmp/probe.json docs/validation/container-reachability-latest.json
+docker rm probe
+python scripts/triage_container_os.py --scan scan.json \
+    --probe docs/validation/container-reachability-latest.json \
+    --output docs/validation/os-triage-latest.md
+
+# Can the prior generate data the model would accept? For the shipped
+# defaults the answer is no, which is why SBC is not run here.
+python scripts/prior_predictive_audit.py --draws 400 \
+    --output docs/validation/prior-predictive-audit-$(date +%F).json
+
+# Does a GPU fit agree with a CPU fit within Monte Carlo error?
+# Needs a machine with a card; it refuses to run without one.
+python scripts/gpu_validation.py --output docs/validation/gpu-$(date +%F).json
+```
+
+The [`container-rescan`](.github/workflows/container-rescan.yml) workflow runs
+the first of these weekly and commits the refreshed evidence, so the published
+advisory count describes a recent scanner database rather than the audit date.
+It opens an issue only when a high or critical finding gains a vendor fix,
+which is the only case with anything to do about it.
+
 ## Reading ROI intervals honestly
 
 Recovery testing on synthetic data found a limit worth knowing before any of
