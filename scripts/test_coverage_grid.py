@@ -172,6 +172,12 @@ class CellReportingTest(unittest.TestCase):
     _, _, evidence = self._run(replications)
     self.assertIsNone(evidence["cells"][0]["max_r_hat"])
 
+  def test_evidence_carries_a_complete_provenance_block(self):
+    _, _, evidence = self._run([_FakeReplication()] * 3)
+    self.assertIn("provenance", evidence)
+    for key in ("git_head", "architecture", "package_versions", "script_sha256"):
+      self.assertIn(key, evidence["provenance"])
+
 
 if __name__ == "__main__":
   unittest.main()

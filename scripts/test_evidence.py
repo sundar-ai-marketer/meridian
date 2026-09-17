@@ -12,6 +12,7 @@ happens to be standing in.
 """
 
 import dataclasses
+import datetime
 import json
 import os
 import pathlib
@@ -30,6 +31,30 @@ class _Sample:
 
 
 class JsonSafeTest(unittest.TestCase):
+
+  def test_none_becomes_json_null_not_the_string_none(self):
+    """`None` means "not available" in this evidence and must stay null.
+
+    Regression: the catch-all `str(value)` fallback was added without a
+    `None` branch in front of it, so `json_safe(None)` returned the string
+    `'None'`. Every producer writes optional fields -- an unavailable R-hat,
+    a package that is not installed -- and a quoted "None" reads as a present
+    value rather than a missing one. `scripts/test_run_recovery_study.py`
+    caught it downstream; this catches it at the source.
+    """
+    self.assertIsNone(evidence.json_safe(None))
+    self.assertEqual(json.dumps(evidence.json_safe(None)), "null")
+    self.assertEqual(
+        json.loads(
+            json.dumps(
+                evidence.json_safe(
+                    {"max_r_hat": None, "values": [1, None, float("nan")]}
+                )
+            )
+        ),
+        {"max_r_hat": None, "values": [1, None, None]},
+    )
+
 
   def test_booleans_stay_booleans(self):
     # bool subclasses int; an int-first ordering writes 1 and 0, which turns a
@@ -57,7 +82,15 @@ class JsonSafeTest(unittest.TestCase):
     self.assertIs(result['passed'], True)
 
   def test_a_dataclass_type_is_not_mistaken_for_an_instance(self):
-    self.assertIs(evidence.json_safe(_Sample), _Sample)
+    # `dataclasses.is_dataclass` is True for the class itself, not just
+    # instances, so the `not isinstance(value, type)` guard keeps
+    # `dataclasses.asdict` (which requires an instance) from being called on
+    # it. A bare class is not JSON-serialisable either, so it now falls all
+    # the way through to the same str() fallback as any other unrecognised
+    # type, rather than being handed back raw and unserialisable.
+    result = evidence.json_safe(_Sample)
+    self.assertEqual(result, str(_Sample))
+    json.dumps(result)
 
   def test_mappings_and_sequences_recurse(self):
     result = evidence.json_safe({'a': [{'b': (True, float('nan'))}]})
@@ -87,6 +120,67 @@ class JsonSafeTest(unittest.TestCase):
   def test_a_numpy_array_is_handled_without_raising(self):
     np = self._numpy()
     json.dumps(evidence.json_safe({'a': np.array([1.0, 2.0]).tolist()}))
+
+  def test_a_multi_element_ndarray_is_converted_not_returned_raw(self):
+    # The confirmed defect: `.item()` raises ValueError on a multi-element
+    # array, `_as_numpy_scalar` swallows it and returns None, and json_safe
+    # used to fall through to `return value`, handing back the raw ndarray.
+    np = self._numpy()
+    result = evidence.json_safe(np.array([1.0, 2.0, 3.0]))
+    self.assertEqual(result, [1.0, 2.0, 3.0])
+    self.assertIsInstance(result, list)
+    json.dumps(result)
+
+  def test_a_non_finite_value_nested_in_an_ndarray_becomes_null(self):
+    np = self._numpy()
+    result = evidence.json_safe(np.array([1.0, float('nan'), float('inf')]))
+    self.assertEqual(result, [1.0, None, None])
+    json.dumps(result, allow_nan=False)
+
+  def test_a_multidimensional_ndarray_is_converted(self):
+    np = self._numpy()
+    result = evidence.json_safe(np.array([[1, 2], [3, 4]]))
+    self.assertEqual(result, [[1, 2], [3, 4]])
+    json.dumps(result)
+
+  def test_a_path_becomes_a_string(self):
+    result = evidence.json_safe(pathlib.Path('/tmp/evidence.json'))
+    self.assertEqual(result, '/tmp/evidence.json')
+    self.assertIsInstance(result, str)
+
+  def test_a_pure_posix_path_becomes_a_string(self):
+    result = evidence.json_safe(pathlib.PurePosixPath('a/b'))
+    self.assertEqual(result, 'a/b')
+
+  def test_a_datetime_becomes_an_isoformat_string(self):
+    value = datetime.datetime(2026, 9, 17, 12, 30, 0)
+    self.assertEqual(evidence.json_safe(value), value.isoformat())
+
+  def test_a_date_becomes_an_isoformat_string(self):
+    value = datetime.date(2026, 9, 17)
+    self.assertEqual(evidence.json_safe(value), '2026-09-17')
+
+  def test_a_time_becomes_an_isoformat_string(self):
+    value = datetime.time(12, 30, 0)
+    self.assertEqual(evidence.json_safe(value), value.isoformat())
+
+  def test_a_timedelta_becomes_total_seconds(self):
+    value = datetime.timedelta(minutes=1, seconds=30)
+    self.assertEqual(evidence.json_safe(value), 90.0)
+
+  def test_an_unrecognised_type_falls_back_to_str(self):
+    # This is the only remaining silent-conversion path. It is deliberate: an
+    # evidence file must never lose a value outright, but a second such
+    # fallback elsewhere would hide the same kind of drift this one exists to
+    # surface, so this test pins that there is exactly one.
+    class _Unrecognised:
+
+      def __str__(self):
+        return 'unrecognised-marker'
+
+    result = evidence.json_safe(_Unrecognised())
+    self.assertEqual(result, 'unrecognised-marker')
+    json.dumps(result)
 
   def _numpy(self):
     try:
@@ -176,6 +270,29 @@ class PackageVersionsTest(unittest.TestCase):
 
   def test_result_is_json_serializable(self):
     json.dumps(evidence.json_safe(evidence.package_versions()))
+
+
+class ProvenanceTest(unittest.TestCase):
+
+  def test_returns_all_four_non_null_subfields(self):
+    result = evidence.provenance(pathlib.Path(__file__).resolve())
+    for key in ('git_head', 'architecture', 'package_versions', 'script_sha256'):
+      self.assertIn(key, result)
+      self.assertIsNotNone(result[key])
+    self.assertIsInstance(result['package_versions'], dict)
+    json.dumps(evidence.json_safe(result))
+
+  def test_architecture_names_system_and_machine(self):
+    with mock.patch.object(evidence.platform, 'system', return_value='Linux'):
+      with mock.patch.object(evidence.platform, 'machine', return_value='x86_64'):
+        result = evidence.provenance(pathlib.Path(__file__).resolve())
+    self.assertEqual(result['architecture'], 'Linux-x86_64')
+
+  def test_script_sha256_matches_the_given_file(self):
+    result = evidence.provenance(pathlib.Path(__file__).resolve())
+    self.assertEqual(
+        result['script_sha256'], evidence.sha256(pathlib.Path(__file__).resolve())
+    )
 
 
 class RepoRootTest(unittest.TestCase):

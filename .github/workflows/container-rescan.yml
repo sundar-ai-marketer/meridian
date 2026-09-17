@@ -46,6 +46,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # Evidence files are named `<family>-latest.json` (always the current
+      # run, overwritten in place, so consumers can link a fixed path) and
+      # `<family>-<date>.json` (a dated, never-overwritten copy of that same
+      # content). Both are written from the same run, so the alias is always
+      # byte-identical to the newest dated file in its family -- this is what
+      # scripts/test_evidence_provenance.py checks.
+      - name: Compute today's date
+        id: date
+        run: echo "today=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
       # `--pull` is the point of this job: without it the cached base layer is
       # reused and the rebuild proves nothing about current Debian packages.
       - name: Rebuild the image from a freshly pulled base
@@ -85,6 +95,10 @@ jobs:
           docker cp reachability-probe:/tmp/probe.json \
             docs/validation/container-reachability-latest.json
           docker rm reachability-probe
+          # Dated copy so the alias above always has a family member to
+          # match; see the note on the checkout step.
+          cp docs/validation/container-reachability-latest.json \
+            "docs/validation/container-reachability-${{ steps.date.outputs.today }}.json"
 
       - name: Regenerate the triage document and summary
         run: |
@@ -92,7 +106,9 @@ jobs:
             --scan "$RUNNER_TEMP/container-os-full.json" \
             --probe docs/validation/container-reachability-latest.json \
             --output docs/validation/os-triage-latest.md \
-            --summary-output docs/validation/container-os-latest.json
+            --summary-output docs/validation/os-triage-summary-latest.json
+          cp docs/validation/os-triage-summary-latest.json \
+            "docs/validation/os-triage-summary-${{ steps.date.outputs.today }}.json"
 
       - name: Retain the complete report
         if: always()
@@ -101,8 +117,10 @@ jobs:
           name: container-os-rescan
           path: |
             ${{ runner.temp }}/container-os-full.json
-            docs/validation/container-os-latest.json
+            docs/validation/os-triage-summary-latest.json
+            docs/validation/os-triage-summary-${{ steps.date.outputs.today }}.json
             docs/validation/container-reachability-latest.json
+            docs/validation/container-reachability-${{ steps.date.outputs.today }}.json
             docs/validation/os-triage-latest.md
 
       - name: Count findings that have a vendor fix

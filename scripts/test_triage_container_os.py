@@ -165,6 +165,16 @@ class SummaryTest(unittest.TestCase):
     summary = triage_container_os._summary(advisories, scan, _probe(["libc6"]))
     json.dumps(summary)
 
+  def test_summary_carries_a_complete_provenance_block(self):
+    scan = _scan([("CVE-1", "HIGH", "libc6", "1.0", None)])
+    advisories = triage_container_os._advisories_from_scan(scan)
+    triage_container_os._classify(advisories, {"libc6"})
+    summary = triage_container_os._summary(advisories, scan, _probe(["libc6"]))
+    self.assertIn("provenance", summary)
+    for key in ("git_head", "architecture", "package_versions", "script_sha256"):
+      self.assertIn(key, summary["provenance"])
+    json.dumps(summary)
+
 
 class DocumentTest(unittest.TestCase):
 

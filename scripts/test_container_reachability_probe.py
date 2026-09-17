@@ -13,6 +13,7 @@ tests drive those cases with synthetic input, so they run anywhere rather than
 only inside the container.
 """
 
+import json
 import pathlib
 import subprocess
 import tempfile
@@ -162,6 +163,44 @@ class InstalledPackagesTest(unittest.TestCase):
     with mock.patch.object(probe.subprocess, "run", return_value=completed):
       packages = probe._installed_packages()
     self.assertEqual([p["name"] for p in packages], ["libc6"])
+
+
+class ProvenanceWiringTest(unittest.TestCase):
+  """Exercises the provenance-merging code path without a real container.
+
+  `main()` otherwise requires `/proc/self/maps`, `dpkg-query`, and importing
+  `scenarioplanner` -- none of which are available on this host -- so the
+  workflow-exercising and system-inspection steps are mocked and only the
+  evidence-assembly and JSON-writing code is exercised for real.
+  """
+
+  def test_written_evidence_carries_a_complete_provenance_block(self):
+    with tempfile.TemporaryDirectory() as directory:
+      out = pathlib.Path(directory) / "probe.json"
+      with mock.patch.object(
+          probe, "_exercise_analysis_stack",
+          return_value={"backend_env": "test", "steps_performed": []},
+      ), mock.patch.object(
+          probe, "_mapped_files", return_value=["/lib/libc.so.6"]
+      ), mock.patch.object(
+          probe, "_packages_for_paths",
+          return_value=({"libc6": ["/lib/libc.so.6"]}, []),
+      ), mock.patch.object(
+          probe, "_installed_packages",
+          return_value=[{"name": "libc6", "version": "2.41", "arch": "arm64"}],
+      ):
+        status = probe.main(["--output", str(out)])
+
+      self.assertEqual(status, 0)
+      written = json.loads(out.read_text(encoding="utf-8"))
+
+    self.assertIn("provenance", written)
+    for key in ("git_head", "architecture", "package_versions", "script_sha256"):
+      self.assertIn(key, written["provenance"])
+    # The pre-existing top-level "platform" key must survive unchanged; only
+    # "provenance" was added.
+    self.assertIn("platform", written)
+    self.assertIn("loaded_os_packages", written)
 
 
 if __name__ == "__main__":

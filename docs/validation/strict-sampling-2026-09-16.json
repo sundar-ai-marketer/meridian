@@ -22,6 +22,7 @@
     "target_accept_prob": 0.99
   },
   "blocking_issues": [],
+  "date": "2026-09-16",
   "divergences": {
     "n_divergences": 0,
     "per_chain": [

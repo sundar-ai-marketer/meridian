@@ -1,0 +1,337 @@
+{
+  "accelerator_can_run_model": true,
+  "accelerator_visible": true,
+  "capability": {
+    "dtype": "float32",
+    "operations": {
+      "cholesky": {
+        "needed_for": "multivariate normal draws in the hierarchical geo prior",
+        "ok": true,
+        "value": 22.627416610717773
+      },
+      "cumsum": {
+        "needed_for": "adstock accumulation",
+        "ok": true,
+        "value": 128.0
+      },
+      "dot_general": {
+        "needed_for": "every tensor contraction: media transforms and the linear predictor",
+        "ok": true,
+        "value": 48.0
+      },
+      "erf": {
+        "needed_for": "normal CDFs in the likelihood",
+        "ok": true,
+        "value": 0.5204998850822449
+      },
+      "gammaln": {
+        "needed_for": "gamma and negative-binomial log densities",
+        "ok": true,
+        "value": 1.200974464416504
+      },
+      "grad": {
+        "needed_for": "the gradient each leapfrog step of HMC needs",
+        "ok": true,
+        "value": 0.7310585975646973
+      },
+      "random_normal": {
+        "needed_for": "draw generation",
+        "ok": true,
+        "value": 0.9791147708892822
+      },
+      "scan": {
+        "needed_for": "the sampler's trajectory loop",
+        "ok": true,
+        "value": 2016.0
+      },
+      "sort": {
+        "needed_for": "posterior quantiles and rank-normalised R-hat",
+        "ok": true,
+        "value": -2.416254758834839
+      },
+      "while_loop": {
+        "needed_for": "NUTS tree building",
+        "ok": true,
+        "value": 32
+      }
+    },
+    "probed": true,
+    "unsupported": [],
+    "x64_enabled": false
+  },
+  "comparison": {
+    "channels": [
+      {
+        "channel": "channel_0",
+        "combined_mcse": 0.4504065587601761,
+        "cpu_posterior_mean": 2.3841729164123535,
+        "difference": 0.8668850660324097,
+        "gpu_posterior_mean": 1.5172878503799438,
+        "relative_difference_pct": 36.359991343953254,
+        "z": 1.9246723858077566
+      },
+      {
+        "channel": "channel_1",
+        "combined_mcse": 0.3513900933387462,
+        "cpu_posterior_mean": 3.1509039402008057,
+        "difference": -0.30806827545166016,
+        "gpu_posterior_mean": 3.458972215652466,
+        "relative_difference_pct": -9.777139554182256,
+        "z": -0.8767130357163397
+      },
+      {
+        "channel": "channel_2",
+        "combined_mcse": 0.18211105361640098,
+        "cpu_posterior_mean": 2.1055753231048584,
+        "difference": 0.14671754837036133,
+        "gpu_posterior_mean": 1.958857774734497,
+        "relative_difference_pct": 6.968050335716,
+        "z": 0.8056487810970959
+      }
+    ],
+    "channels_compared": 3,
+    "channels_total": 3,
+    "comparable": true,
+    "interpretation": "z is the CPU-versus-GPU difference in posterior mean ROI divided by the combined Monte Carlo standard error. Two correct samplers give z values that behave like standard normal draws. Identical draws are not expected: XLA reorders floating-point work per device and an MCMC trajectory amplifies that difference.",
+    "max_abs_z": 1.9246723858077566,
+    "verdict": "consistent within Monte Carlo error"
+  },
+  "date": "2026-09-17",
+  "devices": {
+    "jax": {
+      "available": true,
+      "default_backend": "mps",
+      "device_kinds": [
+        "gpu"
+      ],
+      "devices": [
+        "MPS:0"
+      ],
+      "x64_enabled": false
+    },
+    "tensorflow": {
+      "available": true,
+      "built_with_cuda": false,
+      "gpus": []
+    }
+  },
+  "git_head": "22b8faea983739cf0c96e50393f5722a66f7d3b4",
+  "host": {
+    "machine": "arm64",
+    "platform": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+    "python": "3.13.7"
+  },
+  "legs": {
+    "cpu": {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ess_bulk": 16.710676576936326,
+          "mcse": 0.27762473136873334,
+          "median": 2.259620189666748,
+          "posterior_mean": 2.3841729164123535,
+          "posterior_sd": 1.1348936557769775,
+          "true_roi": 0.9938070850096082
+        },
+        {
+          "channel": "channel_1",
+          "ess_bulk": 31.7443917131185,
+          "mcse": 0.1669542660804697,
+          "median": 3.230269432067871,
+          "posterior_mean": 3.1509039402008057,
+          "posterior_sd": 0.9406564235687256,
+          "true_roi": 2.0034118036547373
+        },
+        {
+          "channel": "channel_2",
+          "ess_bulk": 94.7727837465365,
+          "mcse": 0.13929442544581808,
+          "median": 1.767983078956604,
+          "posterior_mean": 2.1055753231048584,
+          "posterior_sd": 1.3560495376586914,
+          "true_roi": 4.007396913798703
+        }
+      ],
+      "config": {
+        "alpha": 0.6,
+        "confidence_level": 0.9,
+        "max_lag": 4,
+        "n_adapt": 50,
+        "n_burnin": 50,
+        "n_chains": 2,
+        "n_geos": 3,
+        "n_keep": 50,
+        "n_times": 52,
+        "noise_fraction": 0.05,
+        "prior_roi_median": 2.0,
+        "prior_roi_sigma": 0.7,
+        "replications": 1,
+        "response": "concave",
+        "seed": 7,
+        "spend_scale": [
+          3000.0,
+          6000.0,
+          2000.0
+        ],
+        "true_roi": [
+          1.0,
+          2.0,
+          4.0
+        ]
+      },
+      "device": "cpu",
+      "devices": {
+        "jax": {
+          "available": true,
+          "default_backend": "cpu",
+          "device_kinds": [
+            "cpu"
+          ],
+          "devices": [
+            "cpu:0"
+          ],
+          "x64_enabled": false
+        },
+        "tensorflow": {
+          "available": true,
+          "built_with_cuda": false,
+          "gpus": []
+        }
+      },
+      "elapsed_seconds": 14.276066780090332,
+      "max_r_hat": 1.3146527357011195,
+      "ok": true,
+      "package_versions": {
+        "arviz": "0.19.0",
+        "google-meridian": null,
+        "jax": "0.11.1",
+        "jaxlib": "0.11.1",
+        "meridian-mmm-fork": "2.0.0",
+        "numpy": "2.3.5",
+        "protobuf": "6.33.6",
+        "tensorflow": "2.21.0",
+        "tensorflow-probability": null,
+        "tfp-nightly": "0.26.0.dev20260130"
+      }
+    },
+    "gpu": {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ess_bulk": 7.859478941046312,
+          "mcse": 0.35466967266263777,
+          "median": 1.00089693069458,
+          "posterior_mean": 1.5172878503799438,
+          "posterior_sd": 0.9943079948425293,
+          "true_roi": 0.9938070850096082
+        },
+        {
+          "channel": "channel_1",
+          "ess_bulk": 8.844732968707378,
+          "mcse": 0.3091945515919459,
+          "median": 3.738990068435669,
+          "posterior_mean": 3.458972215652466,
+          "posterior_sd": 0.9195475578308105,
+          "true_roi": 2.0034118036547373
+        },
+        {
+          "channel": "channel_2",
+          "ess_bulk": 36.00454629608189,
+          "mcse": 0.1173094151762556,
+          "median": 2.1498067378997803,
+          "posterior_mean": 1.958857774734497,
+          "posterior_sd": 0.703900933265686,
+          "true_roi": 4.007396913798703
+        }
+      ],
+      "config": {
+        "alpha": 0.6,
+        "confidence_level": 0.9,
+        "max_lag": 4,
+        "n_adapt": 50,
+        "n_burnin": 50,
+        "n_chains": 2,
+        "n_geos": 3,
+        "n_keep": 50,
+        "n_times": 52,
+        "noise_fraction": 0.05,
+        "prior_roi_median": 2.0,
+        "prior_roi_sigma": 0.7,
+        "replications": 1,
+        "response": "concave",
+        "seed": 7,
+        "spend_scale": [
+          3000.0,
+          6000.0,
+          2000.0
+        ],
+        "true_roi": [
+          1.0,
+          2.0,
+          4.0
+        ]
+      },
+      "device": "gpu",
+      "devices": {
+        "jax": {
+          "available": true,
+          "default_backend": "mps",
+          "device_kinds": [
+            "gpu"
+          ],
+          "devices": [
+            "MPS:0"
+          ],
+          "x64_enabled": false
+        },
+        "tensorflow": {
+          "available": true,
+          "built_with_cuda": false,
+          "gpus": []
+        }
+      },
+      "elapsed_seconds": 252.37482213974,
+      "max_r_hat": 2.2401259684639334,
+      "ok": true,
+      "package_versions": {
+        "arviz": "0.19.0",
+        "google-meridian": null,
+        "jax": "0.11.1",
+        "jaxlib": "0.11.1",
+        "meridian-mmm-fork": "2.0.0",
+        "numpy": "2.3.5",
+        "protobuf": "6.33.6",
+        "tensorflow": "2.21.0",
+        "tensorflow-probability": null,
+        "tfp-nightly": "0.26.0.dev20260130"
+      }
+    }
+  },
+  "limitations": [
+    "Bit-identical results across devices are not expected and are not tested; XLA reorders floating-point work per device.",
+    "Agreement is judged against Monte Carlo error on one synthetic dataset at one size.",
+    "Timings describe this fit on this hardware and are not a benchmark; a small fit is often slower on a GPU than on a CPU.",
+    "Nothing here covers multi-GPU, mixed precision, or cloud schedulers.",
+    "The capability probe covers the operations listed in _REQUIRED_OPERATIONS at the configured precision. An accelerator that passes it has shown it can run those operations, not that a full fit succeeds."
+  ],
+  "provenance": {
+    "architecture": "Darwin-arm64",
+    "git_head": "22b8faea983739cf0c96e50393f5722a66f7d3b4",
+    "package_versions": {
+      "arviz": "0.19.0",
+      "google-meridian": null,
+      "jax": "0.11.1",
+      "jaxlib": "0.11.1",
+      "meridian-mmm-fork": "2.0.0",
+      "numpy": "2.3.5",
+      "protobuf": "6.33.6",
+      "tensorflow": "2.21.0",
+      "tensorflow-probability": null,
+      "tfp-nightly": "0.26.0.dev20260130"
+    },
+    "script_sha256": "3763d45e4586bd47ff6b24cb17dd156d387a2bb6270451f765adacffac5975c1"
+  },
+  "quick_mode": true,
+  "script": "scripts/gpu_validation.py",
+  "script_sha256": "3763d45e4586bd47ff6b24cb17dd156d387a2bb6270451f765adacffac5975c1"
+}
