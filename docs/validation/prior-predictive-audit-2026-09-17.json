@@ -1,0 +1,166 @@
+{
+  "conclusion": "The default prior places substantial mass on negative revenue, which InputData rejects, so the shipped prior cannot be simulated from. Tightening the observation-noise prior alone changes almost nothing. Tightening the population-level baseline terms roughly halves the rate. Only tightening the hierarchical standard deviations as well -- eta_m, xi_c and beta_m, which sit on the geo-level terms -- removes it entirely. The hierarchical scales are the dominant source of width.",
+  "date": "2026-09-17",
+  "library_default_priors_on_the_scaled_kpi": {
+    "beta_m": "HalfNormal(5)",
+    "gamma_c": "Normal(0, 5)",
+    "knot_values": "Normal(0, 5)",
+    "sigma": "HalfNormal(5)",
+    "tau_g_excl_baseline": "Normal(0, 5)",
+    "xi_c": "HalfNormal(5)"
+  },
+  "limitations": [
+    "Measured on one synthetic dataset shape; the exact percentages depend on the data's scale and the number of geos and periods.",
+    "A weakly informative prior is a legitimate choice. The finding is that this one cannot be simulated from, not that it is wrong.",
+    "Says nothing about posterior behaviour, which is usually dominated by the likelihood."
+  ],
+  "script": "scripts/prior_predictive_audit.py",
+  "shape": {
+    "draws_per_variant": 300,
+    "n_geos": 3,
+    "n_times": 40
+  },
+  "variants": [
+    {
+      "conditional_mean": {
+        "draws_with_a_negative_cell_pct": 99.66666666666667,
+        "min": -7794212.429373573,
+        "negative_cells_pct": 18.7
+      },
+      "draws": 300,
+      "observed_kpi": {
+        "mean": 661802.3675024358,
+        "min": 222303.13534382347,
+        "scaled_stdev_by_construction": 1.0
+      },
+      "prior_predictive": {
+        "draws_with_a_negative_cell_pct": 100.0,
+        "negative_cells_pct": 21.230555555555554
+      },
+      "priors": "library defaults",
+      "scaled_value_where_revenue_reaches_zero": -7.055816937423738,
+      "sigma_prior_draws": {
+        "median": 3.296348627016422,
+        "p90": 7.4892209258699145
+      },
+      "variant": "meridian defaults"
+    },
+    {
+      "conditional_mean": {
+        "draws_with_a_negative_cell_pct": 99.33333333333333,
+        "min": -7782489.18367778,
+        "negative_cells_pct": 17.772222222222222
+      },
+      "draws": 300,
+      "observed_kpi": {
+        "mean": 661802.3675024358,
+        "min": 222303.13534382347,
+        "scaled_stdev_by_construction": 1.0
+      },
+      "prior_predictive": {
+        "draws_with_a_negative_cell_pct": 99.33333333333333,
+        "negative_cells_pct": 17.78611111111111
+      },
+      "priors": {
+        "baseline_sd": 5.0,
+        "roi_median": 2.0,
+        "roi_sigma": 0.7,
+        "sigma_scale": 0.5
+      },
+      "scaled_value_where_revenue_reaches_zero": -7.055816937423738,
+      "sigma_prior_draws": {
+        "median": 0.3296348627016422,
+        "p90": 0.7489220925869915
+      },
+      "variant": "sigma tightened only"
+    },
+    {
+      "conditional_mean": {
+        "draws_with_a_negative_cell_pct": 50.0,
+        "min": -6325003.217442372,
+        "negative_cells_pct": 4.408333333333333
+      },
+      "draws": 300,
+      "observed_kpi": {
+        "mean": 661802.3675024358,
+        "min": 222303.13534382347,
+        "scaled_stdev_by_construction": 1.0
+      },
+      "prior_predictive": {
+        "draws_with_a_negative_cell_pct": 50.66666666666667,
+        "negative_cells_pct": 4.430555555555555
+      },
+      "priors": {
+        "baseline_sd": 0.5,
+        "roi_median": 2.0,
+        "roi_sigma": 0.7,
+        "sigma_scale": 0.5
+      },
+      "scaled_value_where_revenue_reaches_zero": -7.055816937423738,
+      "sigma_prior_draws": {
+        "median": 0.3296348627016422,
+        "p90": 0.7489220925869915
+      },
+      "variant": "sigma and baseline tightened"
+    },
+    {
+      "conditional_mean": {
+        "draws_with_a_negative_cell_pct": 47.66666666666667,
+        "min": -6195448.909332559,
+        "negative_cells_pct": 4.2972222222222225
+      },
+      "draws": 300,
+      "observed_kpi": {
+        "mean": 661802.3675024358,
+        "min": 222303.13534382347,
+        "scaled_stdev_by_construction": 1.0
+      },
+      "prior_predictive": {
+        "draws_with_a_negative_cell_pct": 48.333333333333336,
+        "negative_cells_pct": 4.2972222222222225
+      },
+      "priors": {
+        "baseline_sd": 0.1,
+        "roi_median": 2.0,
+        "roi_sigma": 0.7,
+        "sigma_scale": 0.1
+      },
+      "scaled_value_where_revenue_reaches_zero": -7.055816937423738,
+      "sigma_prior_draws": {
+        "median": 0.06592697254032845,
+        "p90": 0.14978441851739832
+      },
+      "variant": "population-level tightened, hierarchical left at defaults"
+    },
+    {
+      "conditional_mean": {
+        "draws_with_a_negative_cell_pct": 0.0,
+        "min": 261201.74954757598,
+        "negative_cells_pct": 0.0
+      },
+      "draws": 300,
+      "observed_kpi": {
+        "mean": 661802.3675024358,
+        "min": 222303.13534382347,
+        "scaled_stdev_by_construction": 1.0
+      },
+      "prior_predictive": {
+        "draws_with_a_negative_cell_pct": 0.0,
+        "negative_cells_pct": 0.0
+      },
+      "priors": {
+        "baseline_sd": 0.1,
+        "hier_sd": 0.1,
+        "roi_median": 2.0,
+        "roi_sigma": 0.7,
+        "sigma_scale": 0.1
+      },
+      "scaled_value_where_revenue_reaches_zero": -7.055816937423738,
+      "sigma_prior_draws": {
+        "median": 0.06592697254032845,
+        "p90": 0.14978441851739832
+      },
+      "variant": "hierarchical scales tightened too"
+    }
+  ]
+}

@@ -485,6 +485,57 @@ The command records configuration, derived seeds, package versions and source
 hashes. It retains failed subprocess evidence and labels the 1.2 screen and
 fixed-truth coverage limits explicitly.
 
+### The default prior cannot be simulated from
+
+Simulation-based calibration was attempted on 17 September 2026 and could not
+be run against the library's shipped prior. The obstruction is worth recording
+because it is a property of the model, not of the attempt.
+
+Meridian scales the KPI to mean 0 and standard deviation 1 before modelling
+(`KpiTransformer`), and writes its default priors on that scale:
+`knot_values`, `tau_g_excl_baseline` and `gamma_c` are `Normal(0, 5)`;
+`sigma`, `beta_m` and `xi_c` are `HalfNormal(5)`; `eta_m` is `HalfNormal(1)`.
+A prior standard deviation of 5 against data whose standard deviation is 1 by
+construction implies a baseline that swings far below zero. Separately,
+`InputData._validate_no_negative_values` rejects a negative KPI, with the
+stated reason that ROI, CPIK and contribution are expressed relative to total
+outcome and are ill-defined if outcome can be negative.
+
+Together those mean the default prior generates datasets the library refuses to
+load. SBC requires simulating from the prior and refitting; here every
+simulated dataset is rejected, so there is nothing to refit.
+
+Measured over 300 prior draws on a three-geo, forty-period synthetic dataset
+(`scripts/prior_predictive_audit.py`, evidence in
+[prior-predictive-audit-2026-09-17.json](docs/validation/prior-predictive-audit-2026-09-17.json)):
+
+| Prior | Draws whose conditional mean goes negative | Prior predictive |
+| --- | ---: | ---: |
+| Library defaults | 99.7% | 100.0% |
+| `sigma` tightened to `HalfNormal(0.5)` | 99.3% | 99.3% |
+| `sigma` and baseline terms tightened to 0.5 | 50.0% | 50.7% |
+| Population-level terms tightened to 0.1 | 47.7% | 48.3% |
+| Hierarchical scales tightened to 0.1 as well | 0.0% | 0.0% |
+
+The observation-noise prior is not the cause: tightening `sigma` alone changes
+almost nothing. Roughly half the effect comes from the population-level
+baseline terms, and the remainder from the hierarchical standard deviations
+`eta_m`, `xi_c` and `beta_m`, which sit on the geo-level coefficients. Only
+when all three groups are tightened does the prior become simulatable.
+
+This is not a claim that the default prior is wrong. Weakly informative priors
+are a deliberate choice and the posterior is usually dominated by the
+likelihood. The narrow, measured claim is that this prior cannot be simulated
+from without producing data the model rejects, which has two consequences: SBC
+against the shipped default is not possible, and a prior predictive check is
+worth running before committing to a long fit. Recorded as an upstream
+candidate in [TRIAGE.md](TRIAGE.md).
+
+Running SBC therefore requires a deliberately narrowed prior, and any such
+result would validate the sampler and ROI recovery **under that prior**, not
+the prior Meridian ships. That work is not done here; the fixed-truth
+ten-seed study above remains the only measured recovery evidence.
+
 ## Limits and remaining risks
 
 - Passing software checks does not establish causal identification, valid
@@ -504,7 +555,10 @@ fixed-truth coverage limits explicitly.
 - The short synthetic integration fixture is not a recovery study. The
   ten-seed experiment above adds measured recovery evidence at one fixed
   setting. It does not replace simulation-based calibration or validation on
-  a user's own data and modeling assumptions.
+  a user's own data and modeling assumptions. Simulation-based calibration
+  against the shipped prior is not merely undone but blocked: the default
+  prior generates data `InputData` rejects, measured at 100% of draws. See
+  "The default prior cannot be simulated from" above.
 - Real Google Sheets/Looker writes, authenticated cloud MLflow services,
   GPU/CUDA and hosted Codespaces still require the relevant account, hardware
   and environment. Local tests are not live validation of those boundaries.

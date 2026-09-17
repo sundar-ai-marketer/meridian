@@ -105,13 +105,14 @@ Status values:
 | 795 | Carryover model | **Decline, with the precise reason.** Meridian does model carryover, and v2.0.0 ships two decay families. Both are monotonically decreasing in lag -- geometric is `alpha^l`, binomial is `(1 - l/w)^(1/alpha - 1)` (the code reparameterizes alpha via `_map_alpha_for_binomial_decay`) -- so neither can place peak effect at a lag > 0, which is what LightweightMMM's carryover does. Supporting it needs a new decay kernel *and* a new sampled per-channel delay parameter, which touches the priors, the sampler and serde. Not a bolt-on. |
 | 1713 | Support KPIs with occasional negative values | **Decline the feature; improve the refusal.** The input gate is one loop and trivial to relax, but ROI, CPIK and contribution are all expressed relative to total outcome, so a signed KPI makes those quantities ill-defined rather than merely harder to estimate — the model would return plausible-looking numbers that are wrong. The error now states that reasoning, locates the offending value, and points to modelling gross inflow and outflow separately. |
 
-## OPEN — real and unresolved (3)
+## OPEN — real and unresolved (4)
 
 | # | Title | Position |
 |---|---|---|
 | 1778 | MCMC convergence fails below a specific media channel count | Not reproducible without the reporter's data. Their setup (10 geos, 105 weeks, 22–23 channels, 8 national-constant controls) is severely over-parameterised, but the direction is backwards from what over-parameterisation predicts — *more* channels converge. Note they hit a float32/float64 dtype error when trying 64-bit; the coercion fix here removes that obstacle, so it is worth retrying on this fork. |
 | 1624 | MCMC non-convergence on 1.6.0 with official `tfp-nightly` | Version-specific to 1.6.0. Our demo-grade run on v2.0.0 is recorded below. |
 | 1455 | "x" | Empty placeholder issue with no content. Nothing to action. |
+| — | *(found here, not filed upstream)* | The default prior cannot be simulated from. Priors are written on the scaled KPI, where the data has standard deviation 1 by construction, but `knot_values`, `tau_g_excl_baseline` and `gamma_c` are `Normal(0, 5)` and `sigma`, `beta_m` and `xi_c` are `HalfNormal(5)`. The resulting prior predictive is negative in 100% of draws, and `InputData._validate_no_negative_values` rejects a negative KPI. So the library generates data it will not load, which blocks simulation-based calibration entirely. Measured across five prior variants in [AUDIT.md](AUDIT.md); tightening `sigma` alone changes nothing, and only narrowing the hierarchical scales `eta_m`, `xi_c` and `beta_m` as well removes it. Not filed upstream: Google does not accept external pull requests, and this needs a maintainer decision about intended prior scale rather than a patch. Reproduce with `scripts/prior_predictive_audit.py`. |
 
 ---
 
