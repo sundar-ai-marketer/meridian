@@ -86,17 +86,31 @@ _PROVENANCE_SUBFIELDS = (
 _ALIAS_EXEMPT_TOP_LEVEL_FIELDS: frozenset[str] = frozenset()
 
 # Evidence committed before `scripts/evidence.py` grew `provenance()` and the
-# producers were wired to call it. These files record measurements that were
+# producers were wired to call it. These record measurements that were
 # genuinely taken, and the provenance they lack cannot be reconstructed: the
-# git HEAD and package versions of the run are not recoverable after the fact,
-# and inventing them would be worse than their absence. Three of them
-# (the container families) cannot be regenerated on a macOS host at all --
-# they need Docker and Trivy.
+# git HEAD and package versions of a past run are not recoverable after the
+# fact, and inventing them would be worse than their absence.
 #
-# So they are grandfathered by name rather than by a date cutoff, which keeps
-# the list finite and shrinking: re-running any producer writes provenance,
-# and the file's name changes with its date, so the new file is covered by the
-# gate automatically and the old entry can be deleted from this list.
+# Grandfathered by name rather than by a date cutoff, because a name is exact
+# and a cutoff silently covers whatever else lands before it. The entries fall
+# into three groups, which is what decides whether an entry can ever go away:
+#
+#   Producer-backed, and re-runnable. coverage-grid, prior-sensitivity,
+#   prior-predictive-audit and recovery each come from a script in `scripts/`
+#   that now calls `provenance()`. Re-running one writes a file named for the
+#   new date, which this gate covers automatically, and the old entry can then
+#   be deleted. Doing so also changes the figures AUDIT.md quotes, so it is a
+#   re-measurement with prose to update, not a cleanup.
+#
+#   Producer-backed, needs a container. The container-os-inventory,
+#   container-reachability and os-triage-summary families come from Docker plus
+#   Trivy, which `.github/workflows/container-rescan.yml` runs weekly. The next
+#   scheduled rescan retires those three on its own.
+#
+#   No producer at all. strict-quickstart and strict-sampling were assembled by
+#   hand during the audit from a single recorded run; there is no script to
+#   re-run. They stay here until someone writes one, and that is the honest
+#   position rather than a pending chore.
 #
 # Nothing may be added here. A new evidence file comes from a producer that
 # already calls `provenance()`.
