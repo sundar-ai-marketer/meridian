@@ -3,7 +3,13 @@
 # Licensed under the Apache License, Version 2.0.
 # NOTICE: This file is new in this fork; see NOTICE at the repository root.
 
-"""Run the complete scientific suite with bounded worker memory.
+"""Run the repository's Python test suite with bounded worker memory.
+
+Covers every test file under ``meridian/``, ``scenarioplanner/``, and
+``scripts/`` — see ``test_phases()`` for the handful of ``scripts/`` files
+that are deliberately excluded because CI runs them directly as their own
+steps. ``scripts/test_phase_coverage.py`` enforces that nothing under the
+three roots is silently missed by every phase below.
 
 Each phase gets fresh processes so numerical compilation caches are released.
 Fit-heavy suites run serially to avoid retaining duplicate model fits. A failed
@@ -25,11 +31,37 @@ FIT_SUITES = (
     'meridian/validation',
     'meridian/math_invariants_test.py',
     'meridian/upstream_issues_test.py',
+    # Runs a handful of real (small) MCMC fits to compare GPU/CPU numerics;
+    # measured at ~50s, in line with the other suites above -- worth its own
+    # serial phase so parallel workers don't hold multiple fits in memory at
+    # once, same reasoning as the meridian suites.
+    'scripts/test_gpu_validation.py',
+)
+# These scripts/test_*.py files are intentionally not part of the phase
+# partition below, and scripts/test_phase_coverage.py knows to exclude them
+# too. Each is run directly as its own CI step, not as a pytest phase:
+# test_end_to_end.py and test_report_browser.py take CLI arguments (an
+# --output-dir, a report path) the phases don't supply; test_mlflow_integration
+# .py stands up a real local MLflow server; test_proto_build.py runs earlier,
+# in the build-distributions job, before the full Meridian install these
+# phases assume. None of the first three even defines a unittest.TestCase --
+# pytest collects zero tests from them today -- and test_proto_build.py's
+# TestCase would just duplicate the build-distributions job's own step.
+STANDALONE_SCRIPTS = (
+    'scripts/test_end_to_end.py',
+    'scripts/test_report_browser.py',
+    'scripts/test_mlflow_integration.py',
+    'scripts/test_proto_build.py',
 )
 
 
 def test_phases(workers: int) -> list[tuple[str, list[str]]]:
-  """Partition the two packages without excluding any test cases."""
+  """Partition meridian, scenarioplanner, and scripts without exclusions.
+
+  Every test file under the three roots is collected by exactly one phase
+  below, except for the CI-owns-it-directly files listed in
+  ``STANDALONE_SCRIPTS`` (see the comment there for why each is excluded).
+  """
   parallel = ['-q', '-n', str(workers), '--dist=worksteal']
   return [
       ('analyzer', parallel + ['meridian/analysis/analyzer_test.py']),
@@ -53,6 +85,19 @@ def test_phases(workers: int) -> list[tuple[str, list[str]]]:
               '--ignore=meridian/analysis',
               '--ignore=meridian/model',
               *(f'--ignore={suite}' for suite in FIT_SUITES),
+          ],
+      ),
+      (
+          'scripts',
+          parallel
+          + [
+              'scripts',
+              *(
+                  f'--ignore={suite}'
+                  for suite in FIT_SUITES
+                  if suite.startswith('scripts/')
+              ),
+              *(f'--ignore={path}' for path in STANDALONE_SCRIPTS),
           ],
       ),
       *((suite, ['-q', suite]) for suite in FIT_SUITES),

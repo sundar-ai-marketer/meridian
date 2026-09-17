@@ -21,13 +21,14 @@ TEST_WORKERS ?= 2
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup verify test test-tf test-e2e demo css build clean distclean all quickstart check-venv
+.PHONY: help setup verify test test-tf test-e2e demo css build clean distclean all quickstart check-venv gpu-check bench lint lint-paths
 
 ## help: Show this list of targets.
 help:
 	@echo "Meridian -- available targets:"
-	@grep -E '^## [a-zA-Z0-9_-]+:' $(MAKEFILE_LIST) | sed -E 's/^## /  /' | \
-		awk -F':' '{printf "  %-12s%s\n", $$1, $$2}'
+	@grep -hE '^## [a-zA-Z0-9_-]+:' $(MAKEFILE_LIST) | \
+		awk '{ sub(/^## /, ""); i = index($$0, ":"); \
+		       printf "  %-12s%s\n", substr($$0, 1, i - 1), substr($$0, i + 1) }'
 
 # Internal guard: most targets need a working venv. Fails fast with a clear
 # message instead of a confusing "no such file or directory" from python3.
@@ -62,6 +63,32 @@ test-e2e: check-venv
 demo: check-venv
 	"$(VENV_PY)" examples/quickstart.py
 
+## gpu-check: Report what this machine's accelerator can do for Meridian.
+# Seconds, not an hour: it probes the operations the sampler needs rather than
+# running a fit. Exit 3 means a device registered but cannot run the model,
+# which is the answer on Apple Silicon -- see docs/validation/gpu-metal-*.json.
+gpu-check: check-venv
+	"$(VENV_PY)" scripts/gpu_validation.py --capability-only
+
+## bench: Measure this machine's sampling throughput (meridian.benchmark).
+bench: check-venv
+	"$(VENV_PY)" -m meridian.benchmark
+
+# The paths this fork owns. Upstream `meridian` modules are excluded: see the
+# scope note in .pylintrc-gate.
+LINT_PATHS ?= scripts examples meridian/validation meridian/benchmark \
+              meridian/mlflow meridian/analysis/review
+
+## lint: Gated static analysis: duplicate code and unused names (.pylintrc-gate).
+lint: check-venv
+	"$(VENV_PY)" -m pylint --rcfile=.pylintrc-gate --score=n $(LINT_PATHS)
+
+# The lint scope, for a caller that brings its own interpreter (CI installs
+# pylint alone rather than the whole scientific stack). Printing the list here
+# keeps one definition of it instead of a copy in the workflow that can drift.
+lint-paths:
+	@echo $(LINT_PATHS)
+
 ## css: Compile the report stylesheet (scripts/compile_report_css.py).
 css: check-venv
 	"$(VENV_PY)" scripts/compile_report_css.py
@@ -73,11 +100,13 @@ build: check-venv
 
 ## clean: Remove build artifacts and generated output. Never touches the venv.
 clean:
-	rm -rf build dist *.egg-info google_meridian.egg-info proto/dist proto/*.egg-info
+	rm -rf build dist *.egg-info proto/dist proto/*.egg-info proto/build
 	rm -rf quickstart_output
 	rm -f meridian/templates/style.css
+	find proto/mmm -name '*_pb2.py' -exec rm -f {} +
 	find . -type d -name '__pycache__' -not -path './.venv/*' -exec rm -rf {} +
 	find . -type d -name '.pytest_cache' -not -path './.venv/*' -exec rm -rf {} +
+	find . -type d -name '.pytype' -not -path './.venv/*' -exec rm -rf {} +
 	@echo "Cleaned build artifacts and generated output. '$(VENV)' was left untouched."
 
 ## distclean: clean, then also delete the venv. Asks for confirmation first.
