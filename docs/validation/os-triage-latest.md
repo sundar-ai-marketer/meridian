@@ -6,8 +6,8 @@
 
 Generated: 2026-09-17. Review by: **2026-12-16**.
 
-Image OS: debian 13.7. Scanned artifact: `meridian:triage`.
-Sources: scan `scan-built.json`, load evidence `container-reachability-latest.json` (probe ran on aarch64, Python 3.11.16, glibc 2.41).
+Image OS: debian 13.7. Scanned artifact: `meridian:rescan`.
+Sources: scan `container-os-full.json`, load evidence `container-reachability-latest.json` (probe ran on x86_64, Python 3.11.16, glibc 2.41).
 
 ## What this document is
 

@@ -2,7 +2,7 @@
   "advisories_total": 64,
   "advisories_with_vendor_fix": 0,
   "advisories_without_vendor_fix": 64,
-  "artifact": "meridian:triage",
+  "artifact": "meridian:rescan",
   "date": "2026-09-17",
   "image_os": {
     "Family": "debian",
@@ -30,7 +30,7 @@
   ],
   "probe_platform": {
     "libc": "glibc 2.41",
-    "machine": "aarch64",
+    "machine": "x86_64",
     "python": "3.11.16"
   },
   "remaining_advisories": [
