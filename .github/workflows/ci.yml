@@ -137,10 +137,19 @@ jobs:
 
       # Audits the locked dependency set rather than whatever resolves today,
       # so the result describes what this revision actually installs.
+      #
+      # The extras are the ones scripts/setup.sh installs, so the audit covers
+      # what is actually tested. Deliberately not `--all-extras`: that pulls
+      # `and-cuda`, whose Linux-only CUDA wheels cannot be resolved on every
+      # platform and add gigabytes to a dependency-resolution dry run without
+      # covering anything this project tests. `--no-emit-project` drops the
+      # editable `-e .` line, which is this repository, not a dependency.
       - name: Check dependency advisories
         run: |
           python -m pip install 'pip-audit==2.10.1' 'uv==0.9.9'
-          uv export --frozen --no-hashes --all-extras \
+          uv export --frozen --no-hashes --no-emit-project \
+            --extra dev --extra colab --extra schema \
+            --extra mlflow --extra geox --extra scenarioplanner \
             --output-file "$RUNNER_TEMP/locked-requirements.txt"
           python -m pip_audit --strict --requirement \
             "$RUNNER_TEMP/locked-requirements.txt"
