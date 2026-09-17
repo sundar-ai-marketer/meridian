@@ -147,6 +147,7 @@ Files added by this fork:
   docs/validation/os-triage-latest.md
   docs/validation/prior-predictive-audit-2026-09-17.json
   docs/validation/prior-sensitivity-2026-09-17.json
+  docs/validation/coverage-grid-2026-09-17.json
   uv.lock
   .github/dependabot.yml
   .github/actions/version-check/check_version.sh

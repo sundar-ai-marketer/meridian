@@ -15,7 +15,7 @@ it is not certification of any dataset's causal validity or ROI accuracy.
 No claim is made that every possible defect or every upstream issue has been
 resolved. The repository's Actions page records the clean-runner CI results.
 
-Two measurements added on 17 September 2026 bear on how output from this
+Three measurements added on 17 September 2026 bear on how output from this
 library should be used, and belong here rather than buried in a subsection.
 
 **A reported ROI can be mostly prior.** Refitting one fixed synthetic dataset
@@ -31,6 +31,15 @@ revenue in 100% of prior draws, and the library's own `InputData` rejects a
 negative KPI. That blocks simulation-based calibration against the defaults
 entirely and is worth knowing before relying on a prior predictive workflow.
 See "The default prior cannot be simulated from".
+
+**A 90% interval does not always cover 90% of the time.** Across ten
+replications at five dataset shapes, three channel-cells under-covered by more
+than sampling noise. At the audit's own baseline setting the highest-ROI
+channel covered 0.70 while understating the level by 45.6%; fitting the concave
+saturation to a linear truth halved one channel's coverage to 0.50 and biased
+it upward by 44.2%. Read an ROI interval as conditional on the response shape
+being right, and treat the top channel's level with particular caution. See
+"Coverage beyond one setting".
 
 ## Scope and architecture
 
@@ -610,10 +619,48 @@ against the model's concave assumption -- reporting empirical coverage per
 channel with a Wilson interval, because coverage measured over ten trials is
 itself noisy.
 
-The tool is verified to run end to end across all five cells. A full run at ten
-replications is fifty simulate-and-fit cycles, roughly two hours of laptop CPU,
-and has not been run here; `--dry-run` prints the plan and the estimate. No
-coverage figure beyond the baseline is claimed until that evidence file exists.
+Run on 17 September 2026: fifty simulate-and-fit cycles, 24.7 minutes, ten
+replications per cell, nominal interval 90%. Evidence in
+[coverage-grid-2026-09-17.json](docs/validation/coverage-grid-2026-09-17.json).
+
+| Cell | channel_0 | channel_1 | channel_2 |
+| --- | --- | --- | --- |
+| baseline | 1.00 | 1.00 | **0.70** [0.40, 0.89] |
+| short history | 1.00 | 1.00 | 0.90 |
+| few geos | 1.00 | 1.00 | **0.70** [0.40, 0.89] |
+| high noise | 1.00 | 1.00 | 1.00 |
+| misspecified response | 0.90 | **0.50** [0.24, 0.76] | 1.00 |
+
+Three cells have a Wilson upper bound below the nominal 90%, so those are
+under-coverage rather than sampling noise:
+
+- **baseline, channel_2**: 0.70, with a median relative error of **-45.6%**.
+  This is the highest-ROI channel (true ROI 4.0) at the exact setting the
+  ten-seed study used. Its 90% interval covered the truth in seven runs out of
+  ten while understating the level by nearly half.
+- **few geos, channel_2**: 0.70, median relative error -53.9%. Dropping from
+  five geos to two makes the same channel worse.
+- **misspecified response, channel_1**: 0.50, median relative error **+44.2%**.
+  Fitting Meridian's concave saturation to a linear truth biases ROI upward and
+  halves the interval's coverage.
+
+This replicates, with ten fits per setting rather than one, the direction the
+single-fit table in the README already showed: concave truth with carryover
+understates the top channel (-43% there, -45.6% here), and linear truth
+overstates (+71% there, +44.2% here). The README's anecdote is now a
+measurement.
+
+High noise did not degrade coverage; misspecification and thin geo coverage
+did. Noise widens intervals along with the error, while a wrong response shape
+moves the estimate without widening anything.
+
+Caveats that belong with these numbers. Ten replications give wide Wilson
+intervals, which is why only the three cells whose bound clears the nominal
+level are called under-coverage. One replication in each of four cells failed
+the 1.2 R-hat screen (cell maxima 1.30 to 1.58) and was not excluded, so part
+of the spread is sampling quality rather than coverage. Fixed-truth frequentist
+coverage is not Bayesian calibration. These are synthetic datasets; a real
+one's identifiability depends on its own spend variation and collinearity.
 
 ## Limits and remaining risks
 
