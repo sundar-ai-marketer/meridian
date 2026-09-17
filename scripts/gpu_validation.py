@@ -81,58 +81,20 @@ from typing import Any
 
 import numpy as np
 
+# Runs both as `python scripts/x.py` and as `python -m unittest scripts.test_x`,
+# so anchor the repo root before importing the shared helpers.
+_REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+  sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.evidence import (  # pylint: disable=g-import-not-at-top,g-bad-import-order
+    git_head,
+    json_safe,
+    package_versions,
+    sha256,
+)
+
 _CHILD_TIMEOUT_SECONDS = 60 * 60
-
-
-def _json_safe(value: Any) -> Any:
-  if isinstance(value, dict):
-    return {str(k): _json_safe(v) for k, v in value.items()}
-  if isinstance(value, (list, tuple)):
-    return [_json_safe(v) for v in value]
-  # `bool` subclasses `int`, so it has to be tested first or every True
-  # serializes as 1.
-  if isinstance(value, (np.bool_, bool)):
-    return bool(value)
-  if isinstance(value, (np.floating, float)):
-    number = float(value)
-    return None if not np.isfinite(number) else number
-  if isinstance(value, (np.integer, int)):
-    return int(value)
-  return value
-
-
-def _sha256(path: pathlib.Path) -> str | None:
-  try:
-    digest = hashlib.sha256()
-    digest.update(path.read_bytes())
-    return digest.hexdigest()
-  except OSError:
-    return None
-
-
-def _git_head() -> str | None:
-  try:
-    result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return result.stdout.strip()
-  except (OSError, subprocess.CalledProcessError):
-    return None
-
-
-def _package_versions() -> dict[str, str | None]:
-  import importlib.metadata as metadata  # pylint: disable=g-import-not-at-top
-
-  versions: dict[str, str | None] = {}
-  for name in ("meridian-mmm-fork", "tensorflow", "jax", "jaxlib", "numpy", "arviz"):
-    try:
-      versions[name] = metadata.version(name)
-    except metadata.PackageNotFoundError:
-      versions[name] = None
-  return versions
 
 
 def _device_report() -> dict[str, Any]:
@@ -264,7 +226,7 @@ def _fit_once(
       "channels": channels,
       "max_r_hat": max(per_variable) if per_variable else float("nan"),
       "devices": _device_report(),
-      "package_versions": _package_versions(),
+      "package_versions": package_versions(),
   }
 
 
@@ -435,7 +397,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         quick=args.quick,
     )
     args.output.write_text(
-        json.dumps(_json_safe(payload), indent=2, sort_keys=True) + "\n",
+        json.dumps(json_safe(payload), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return 0
@@ -443,7 +405,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   devices = _device_report()
   accelerator = _has_accelerator(devices)
   print("devices visible to this process:")
-  print(json.dumps(_json_safe(devices), indent=2))
+  print(json.dumps(json_safe(devices), indent=2))
   if not accelerator:
     print(
         "\nNo GPU is visible. Recording the environment and stopping: running "
@@ -480,8 +442,8 @@ def main(argv: Sequence[str] | None = None) -> int:
   evidence: dict[str, Any] = {
       "date": datetime.date.today().isoformat(),
       "script": "scripts/gpu_validation.py",
-      "script_sha256": _sha256(pathlib.Path(__file__).resolve()),
-      "git_head": _git_head(),
+      "script_sha256": sha256(pathlib.Path(__file__).resolve()),
+      "git_head": git_head(),
       "host": {
           "platform": platform.platform(),
           "machine": platform.machine(),
@@ -515,7 +477,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   if args.output is not None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
-        json.dumps(_json_safe(evidence), indent=2, sort_keys=True) + "\n",
+        json.dumps(json_safe(evidence), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     print(f"\nwrote {args.output}")

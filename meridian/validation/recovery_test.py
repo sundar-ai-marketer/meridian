@@ -417,7 +417,6 @@ class MultiRecoveryResultTest(absltest.TestCase):
     )
     summary = multi.channel_summaries()[0]
     self.assertAlmostEqual(summary.rank_fraction_median, 0.5)
-    self.assertTrue(np.isnan(summary.rank_ks_threshold))
 
     report = multi.format_report()
     self.assertIn('rank fraction', report)

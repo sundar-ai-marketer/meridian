@@ -19,6 +19,7 @@ import os
 import unittest
 from unittest import mock
 
+from scripts import evidence
 from scripts import gpu_validation
 
 
@@ -39,29 +40,6 @@ def _leg(means, mcses, channels=None):
           for name, mean, mcse in zip(names, means, mcses)
       ],
   }
-
-
-class JsonSafeTest(unittest.TestCase):
-
-  def test_booleans_survive_as_booleans(self):
-    # bool subclasses int; an int-first branch silently writes 1 and 0, which
-    # turns "no GPU was visible" into something a reader has to decode.
-    result = gpu_validation._json_safe({"a": True, "b": False})
-    self.assertIs(result["a"], True)
-    self.assertIs(result["b"], False)
-    self.assertEqual(json.dumps(result), '{"a": true, "b": false}')
-
-  def test_non_finite_floats_become_null_rather_than_invalid_json(self):
-    result = gpu_validation._json_safe(
-        {"nan": float("nan"), "inf": float("inf")}
-    )
-    self.assertIsNone(result["nan"])
-    self.assertIsNone(result["inf"])
-    json.dumps(result)
-
-  def test_nested_structures_are_converted_throughout(self):
-    result = gpu_validation._json_safe({"a": [{"b": (True, 1.5)}]})
-    self.assertEqual(result, {"a": [{"b": [True, 1.5]}]})
 
 
 class AcceleratorDetectionTest(unittest.TestCase):
@@ -158,7 +136,7 @@ class ComparisonTest(unittest.TestCase):
 
   def test_comparison_is_json_serializable(self):
     result = gpu_validation._compare(_leg([2.0], [0.0]), _leg([2.0], [0.0]))
-    json.dumps(gpu_validation._json_safe(result))
+    json.dumps(evidence.json_safe(result))
 
 
 class FitPathTest(unittest.TestCase):
@@ -182,7 +160,7 @@ class FitPathTest(unittest.TestCase):
 
     self.assertGreater(result["elapsed_seconds"], 0.0)
     self.assertIn("devices", result)
-    json.dumps(gpu_validation._json_safe(result))
+    json.dumps(evidence.json_safe(result))
 
   def test_mcse_is_derived_from_the_effective_sample_size(self):
     # The comparison divides by this; if it were the plain standard error the

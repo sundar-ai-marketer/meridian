@@ -684,33 +684,13 @@ def _wilson_interval(
   return max(0.0, float(low)), min(1.0, float(high))
 
 
-def _ks_statistic_vs_uniform(values: np.ndarray) -> float:
-  """Returns a legacy, uncalibrated distance from Uniform(0, 1).
-
-  `rank_ks_statistic` is retained in `ChannelReplicationSummary` for API
-  compatibility. This recovery experiment fixes the data-generating truth
-  instead of drawing it from the fitting prior, so this value is not an SBC
-  statistic and has no calibrated uniform-null threshold. Use the rank-fraction
-  summaries instead.
-  """
-  x = np.sort(np.asarray(values, dtype=float))
-  n = x.size
-  if n == 0:
-    return float('nan')
-  ecdf_upper = np.arange(1, n + 1) / n
-  ecdf_lower = np.arange(0, n) / n
-  return float(max(np.max(ecdf_upper - x), np.max(x - ecdf_lower)))
-
-
 @dataclasses.dataclass(frozen=True)
 class ChannelReplicationSummary:
   """One channel's recovery statistics aggregated across replications.
 
-  `rank_ks_statistic` and `rank_ks_threshold` are retained for API
-  compatibility. The former is an uncalibrated descriptive distance from a
-  uniform distribution; the latter is `NaN` because a fixed-truth recovery
-  experiment has no valid uniform-null threshold. Read the rank-fraction
-  summaries rather than using either field as an SBC test.
+  The rank fractions are descriptive. This experiment fixes the
+  data-generating truth instead of drawing it from the fitting prior, so they
+  are not SBC ranks and have no calibrated uniform null to test against.
   """
 
   channel: str
@@ -722,8 +702,6 @@ class ChannelReplicationSummary:
   coverage_ci_low: float
   coverage_ci_high: float
   median_ci_width: float
-  rank_ks_statistic: float
-  rank_ks_threshold: float
   rank_fraction_median: float = float('nan')
   rank_fraction_iqr_low: float = float('nan')
   rank_fraction_iqr_high: float = float('nan')
@@ -799,8 +777,6 @@ class MultiRecoveryResult:
               coverage_ci_low=coverage_low,
               coverage_ci_high=coverage_high,
               median_ci_width=float(np.median(widths)),
-              rank_ks_statistic=_ks_statistic_vs_uniform(rank_fracs),
-              rank_ks_threshold=float('nan'),
               rank_fraction_median=float(np.median(rank_fracs)),
               rank_fraction_iqr_low=float(np.quantile(rank_fracs, 0.25)),
               rank_fraction_iqr_high=float(np.quantile(rank_fracs, 0.75)),
@@ -821,8 +797,6 @@ class MultiRecoveryResult:
                 'coverage_ci_low': s.coverage_ci_low,
                 'coverage_ci_high': s.coverage_ci_high,
                 'median_ci_width': s.median_ci_width,
-                'rank_ks_statistic': s.rank_ks_statistic,
-                'rank_ks_threshold': s.rank_ks_threshold,
                 'rank_fraction_median': s.rank_fraction_median,
                 'rank_fraction_iqr_low': s.rank_fraction_iqr_low,
                 'rank_fraction_iqr_high': s.rank_fraction_iqr_high,

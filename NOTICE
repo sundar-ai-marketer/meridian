@@ -126,11 +126,13 @@ Files added by this fork:
   scripts/test_run_recovery_study.py
   scripts/test_mlflow_integration.py
   scripts/container_reachability_probe.py
+  scripts/evidence.py
   scripts/triage_container_os.py
   scripts/prior_predictive_audit.py
   scripts/gpu_validation.py
   scripts/prior_sensitivity.py
   scripts/coverage_grid.py
+  scripts/test_evidence.py
   scripts/test_triage_container_os.py
   scripts/test_container_reachability_probe.py
   scripts/test_gpu_validation.py

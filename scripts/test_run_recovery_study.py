@@ -92,8 +92,6 @@ class _FakeSummary:
   coverage_ci_low: float = 0.1
   coverage_ci_high: float = 0.9
   median_ci_width: float = 1.0
-  rank_ks_statistic: float = 0.4
-  rank_ks_threshold: float = float('nan')
 
 
 class _FakeMulti:
@@ -271,7 +269,6 @@ class RecoveryStudyContractTest(unittest.TestCase):
       self.assertIn(
           'screening check only', aggregate['r_hat_screening']['description']
       )
-      self.assertIsNone(aggregate['channel_summaries'][0]['rank_ks_threshold'])
       self.assertIn('not simulation-based calibration', aggregate['rank_note'])
 
       for index, (command, kwargs) in enumerate(calls, 1):

@@ -21,10 +21,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 from datetime import datetime, timezone
-import hashlib
-import importlib.metadata as package_metadata
 import json
-import math
 import os
 from pathlib import Path
 import platform
@@ -34,6 +31,15 @@ import time
 from typing import Any, Callable, Mapping, Sequence
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+  sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.evidence import (  # pylint: disable=g-import-not-at-top,g-bad-import-order
+    git_head as _git_head,
+    json_safe as _json_safe,
+    package_versions as _package_versions,
+    sha256 as _sha256,
+)
 _RECOVERY_SOURCE = Path('meridian/validation/recovery.py')
 _R_HAT_SCREENING_THRESHOLD = 1.2
 _DEFAULT_OUTPUT_DIR = Path('recovery-study')
@@ -61,19 +67,6 @@ def _positive_integer(value: str) -> int:
   return parsed
 
 
-def _json_safe(value: Any) -> Any:
-  """Converts dataclass values to JSON values, mapping non-finite numbers null."""
-  if isinstance(value, float):
-    return value if math.isfinite(value) else None
-  if dataclasses.is_dataclass(value):
-    return _json_safe(dataclasses.asdict(value))
-  if isinstance(value, Mapping):
-    return {str(key): _json_safe(item) for key, item in value.items()}
-  if isinstance(value, (list, tuple)):
-    return [_json_safe(item) for item in value]
-  return value
-
-
 def _write_json(path: Path, value: Any) -> None:
   path.write_text(
       json.dumps(_json_safe(value), indent=2, sort_keys=True, allow_nan=False)
@@ -83,50 +76,6 @@ def _write_json(path: Path, value: Any) -> None:
 
 def _read_json(path: Path) -> Any:
   return json.loads(path.read_text())
-
-
-def _sha256(path: Path) -> str:
-  digest = hashlib.sha256()
-  with path.open('rb') as handle:
-    for block in iter(lambda: handle.read(1024 * 1024), b''):
-      digest.update(block)
-  return digest.hexdigest()
-
-
-def _git_head() -> str | None:
-  try:
-    result = subprocess.run(
-        ['git', 'rev-parse', 'HEAD'],
-        cwd=REPO_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-  except (OSError, subprocess.CalledProcessError):
-    return None
-  return result.stdout.strip() or None
-
-
-def _package_versions() -> dict[str, str | None]:
-  names = (
-      'google-meridian',
-      'meridian-mmm-fork',
-      'jax',
-      'jaxlib',
-      'tensorflow',
-      'tensorflow-probability',
-      'tfp-nightly',
-      'numpy',
-      'arviz',
-      'protobuf',
-  )
-  versions = {}
-  for name in names:
-    try:
-      versions[name] = package_metadata.version(name)
-    except package_metadata.PackageNotFoundError:
-      versions[name] = None
-  return versions
 
 
 def _backend_info(recovery_module) -> dict[str, str | None]:

@@ -140,6 +140,7 @@ jobs:
           python -m unittest \
             scripts.test_run_tests \
             scripts.test_run_recovery_study \
+            scripts.test_evidence \
             scripts.test_triage_container_os \
             scripts.test_container_reachability_probe \
             scripts.test_gpu_validation \

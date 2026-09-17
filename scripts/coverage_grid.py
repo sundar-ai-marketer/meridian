@@ -67,6 +67,14 @@ from typing import Any, Literal
 
 import numpy as np
 
+# Runs both as `python scripts/x.py` and as `python -m unittest scripts.test_x`,
+# so anchor the repo root before importing the shared helpers.
+_REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+  sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.evidence import json_safe  # pylint: disable=g-import-not-at-top,g-bad-import-order
+
 # (label, n_geos, n_times, noise_fraction, response). Chosen to vary one thing
 # at a time from the audit's baseline so a coverage drop is attributable.
 _GRID: tuple[tuple[str, int, int, float, Literal["linear", "concave"]], ...] = (
@@ -76,21 +84,6 @@ _GRID: tuple[tuple[str, int, int, float, Literal["linear", "concave"]], ...] = (
     ("high noise", 5, 104, 0.20, "concave"),
     ("misspecified response", 5, 104, 0.05, "linear"),
 )
-
-
-def _json_safe(value: Any) -> Any:
-  if isinstance(value, dict):
-    return {str(k): _json_safe(v) for k, v in value.items()}
-  if isinstance(value, (list, tuple)):
-    return [_json_safe(v) for v in value]
-  if isinstance(value, (np.bool_, bool)):
-    return bool(value)
-  if isinstance(value, (np.floating, float)):
-    number = float(value)
-    return None if not np.isfinite(number) else number
-  if isinstance(value, (np.integer, int)):
-    return int(value)
-  return value
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -228,7 +221,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   if args.output is not None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
-        json.dumps(_json_safe(evidence), indent=2, sort_keys=True) + "\n",
+        json.dumps(json_safe(evidence), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     print(f"wrote {args.output}")

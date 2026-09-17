@@ -14,6 +14,7 @@ import json
 import math
 import unittest
 
+from scripts import evidence
 from scripts import prior_sensitivity
 
 
@@ -121,19 +122,7 @@ class SummarizeTest(unittest.TestCase):
   def test_summary_is_json_serializable(self):
     fits = [_fit("a", [1.0]), _fit("b", [2.0])]
     summary = prior_sensitivity.summarize(fits, ["channel_0"], [1.0])
-    json.dumps(prior_sensitivity._json_safe(summary))
-
-
-class JsonSafeTest(unittest.TestCase):
-
-  def test_booleans_survive_as_booleans(self):
-    result = prior_sensitivity._json_safe({"covered": True})
-    self.assertIs(result["covered"], True)
-
-  def test_nan_becomes_null(self):
-    result = prior_sensitivity._json_safe({"share": float("nan")})
-    self.assertIsNone(result["share"])
-    json.dumps(result)
+    json.dumps(evidence.json_safe(summary))
 
 
 if __name__ == "__main__":
