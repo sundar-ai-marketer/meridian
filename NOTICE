@@ -129,6 +129,8 @@ Files added by this fork:
   scripts/triage_container_os.py
   scripts/prior_predictive_audit.py
   scripts/gpu_validation.py
+  scripts/prior_sensitivity.py
+  scripts/coverage_grid.py
   .github/workflows/container-rescan.yml
   docs/validation/recovery-2026-09-16.json
   docs/validation/strict-sampling-2026-09-16.json
@@ -138,6 +140,7 @@ Files added by this fork:
   docs/validation/container-reachability-latest.json
   docs/validation/os-triage-latest.md
   docs/validation/prior-predictive-audit-2026-09-17.json
+  docs/validation/prior-sensitivity-2026-09-17.json
   uv.lock
   .github/dependabot.yml
   .github/actions/version-check/check_version.sh

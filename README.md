@@ -513,7 +513,7 @@ means the arithmetic behind reported ROI changed. Do not paper over it.
 
 ### Standing checks
 
-Four checks exist because their claims decay if nobody re-runs them. Each one
+These checks exist because their claims decay if nobody re-runs them. Each one
 writes dated evidence into `docs/validation/` rather than printing a verdict
 and forgetting it.
 
@@ -532,6 +532,15 @@ python scripts/triage_container_os.py --scan scan.json \
 # defaults the answer is no, which is why SBC is not run here.
 python scripts/prior_predictive_audit.py --draws 400 \
     --output docs/validation/prior-predictive-audit-$(date +%F).json
+
+# How much of a reported ROI is the prior rather than the data?
+python scripts/prior_sensitivity.py \
+    --output docs/validation/prior-sensitivity-$(date +%F).json
+
+# Does the interval still cover at other dataset shapes? ~2 hours;
+# --dry-run prints the plan and the estimate without fitting.
+python scripts/coverage_grid.py --replications 10 \
+    --output docs/validation/coverage-grid-$(date +%F).json
 
 # Does a GPU fit agree with a CPU fit within Monte Carlo error?
 # Needs a machine with a card; it refuses to run without one.

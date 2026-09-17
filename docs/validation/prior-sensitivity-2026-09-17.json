@@ -1,0 +1,252 @@
+{
+  "config": {
+    "alpha": 0.6,
+    "confidence_level": 0.9,
+    "max_lag": 4,
+    "n_adapt": 500,
+    "n_burnin": 500,
+    "n_chains": 4,
+    "n_geos": 5,
+    "n_keep": 500,
+    "n_times": 104,
+    "noise_fraction": 0.05,
+    "prior_roi_median": 2.0,
+    "prior_roi_sigma": 0.7,
+    "replications": 1,
+    "response": "concave",
+    "seed": 7,
+    "spend_scale": [
+      3000.0,
+      6000.0,
+      2000.0
+    ],
+    "true_roi": [
+      1.0,
+      2.0,
+      4.0
+    ]
+  },
+  "date": "2026-09-17",
+  "fits": [
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 1.2050308838658845,
+          "ci_low": 0.47372544302767217,
+          "median": 0.7527782300233026
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 1.319511618855321,
+          "ci_low": 0.5938163697136759,
+          "median": 0.8960274249095308
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 1.3221304521617763,
+          "ci_low": 0.5001098952046432,
+          "median": 0.8204926093096532
+        }
+      ],
+      "elapsed_seconds": 24.92513155937195,
+      "label": "sceptical, tight",
+      "max_r_hat": 1.018811622921525,
+      "prior_roi_median": 0.8,
+      "prior_roi_sigma": 0.3
+    },
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 1.5273709934468176,
+          "ci_low": 0.14329174124814645,
+          "median": 0.5209799266344854
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 1.8839596380507213,
+          "ci_low": 0.5060660350810132,
+          "median": 1.060063171430877
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 3.2149584233923076,
+          "ci_low": 0.2206121686134234,
+          "median": 0.9098721930120917
+        }
+      ],
+      "elapsed_seconds": 20.244513988494873,
+      "label": "sceptical, loose",
+      "max_r_hat": 1.0185751994862895,
+      "prior_roi_median": 0.8,
+      "prior_roi_sigma": 0.9
+    },
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.2017218546662325,
+          "ci_low": 0.4093884718832192,
+          "median": 1.0348094986432113
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.15119925388304,
+          "ci_low": 0.7062907758673203,
+          "median": 1.3232507135789597
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 4.609959268801792,
+          "ci_low": 0.7173728348663581,
+          "median": 2.0437873934599526
+        }
+      ],
+      "elapsed_seconds": 24.907814264297485,
+      "label": "neutral",
+      "max_r_hat": 1.0496886473985119,
+      "prior_roi_median": 2.0,
+      "prior_roi_sigma": 0.7
+    },
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 5.3715017790546575,
+          "ci_low": 2.1752296438553556,
+          "median": 3.4318335186614863
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 4.636603998447512,
+          "ci_low": 1.9958907286201848,
+          "median": 2.9553292267382667
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 6.712899090634734,
+          "ci_low": 2.91732896275511,
+          "median": 4.519998958841715
+        }
+      ],
+      "elapsed_seconds": 35.2267119884491,
+      "label": "optimistic, tight",
+      "max_r_hat": 1.0592678859585085,
+      "prior_roi_median": 5.0,
+      "prior_roi_sigma": 0.3
+    },
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "ci_high": 2.9090283978500415,
+          "ci_low": 0.458981358752252,
+          "median": 1.2815982162551458
+        },
+        {
+          "channel": "channel_1",
+          "ci_high": 2.600562964944556,
+          "ci_low": 0.8269655542719858,
+          "median": 1.51527189672582
+        },
+        {
+          "channel": "channel_2",
+          "ci_high": 6.684102340634088,
+          "ci_low": 1.177638113026275,
+          "median": 3.3471947916732
+        }
+      ],
+      "elapsed_seconds": 32.97735285758972,
+      "label": "optimistic, loose",
+      "max_r_hat": 1.0241262904247252,
+      "prior_roi_median": 5.0,
+      "prior_roi_sigma": 0.9
+    }
+  ],
+  "interpretation": "One dataset, refitted under five ROI priors. Movement in the posterior median is attributable to the prior alone. prior_share_of_true_roi is that movement as a fraction of the channel's true ROI.",
+  "limitations": [
+    "Measures sensitivity, not accuracy: it does not say which prior is right.",
+    "Synthetic data with known truth. A real dataset's identifiability depends on its own spend variation and collinearity.",
+    "Sensitivity to the prior is not the same as a miscalibrated interval.",
+    "Short chains when --quick is set; those runs are not evidence."
+  ],
+  "per_channel": [
+    {
+      "channel": "channel_0",
+      "every_interval_covers_truth": false,
+      "median_by_prior": {
+        "neutral": 1.0348094986432113,
+        "optimistic, loose": 1.2815982162551458,
+        "optimistic, tight": 3.4318335186614863,
+        "sceptical, loose": 0.5209799266344854,
+        "sceptical, tight": 0.7527782300233026
+      },
+      "prior_share_of_true_roi": 2.909868171285769,
+      "spread": 2.910853592027001,
+      "true_roi": 1.0003386478985392
+    },
+    {
+      "channel": "channel_1",
+      "every_interval_covers_truth": false,
+      "median_by_prior": {
+        "neutral": 1.3232507135789597,
+        "optimistic, loose": 1.51527189672582,
+        "optimistic, tight": 2.9553292267382667,
+        "sceptical, loose": 1.060063171430877,
+        "sceptical, tight": 0.8960274249095308
+      },
+      "prior_share_of_true_roi": 1.0310678319924576,
+      "spread": 2.059301801828736,
+      "true_roi": 1.9972515269429916
+    },
+    {
+      "channel": "channel_2",
+      "every_interval_covers_truth": false,
+      "median_by_prior": {
+        "neutral": 2.0437873934599526,
+        "optimistic, loose": 3.3471947916732,
+        "optimistic, tight": 4.519998958841715,
+        "sceptical, loose": 0.9098721930120917,
+        "sceptical, tight": 0.8204926093096532
+      },
+      "prior_share_of_true_roi": 0.9260736788448415,
+      "spread": 3.6995063495320615,
+      "true_roi": 3.994829389975453
+    }
+  ],
+  "priors": [
+    {
+      "label": "sceptical, tight",
+      "roi_median": 0.8,
+      "roi_sigma": 0.3
+    },
+    {
+      "label": "sceptical, loose",
+      "roi_median": 0.8,
+      "roi_sigma": 0.9
+    },
+    {
+      "label": "neutral",
+      "roi_median": 2.0,
+      "roi_sigma": 0.7
+    },
+    {
+      "label": "optimistic, tight",
+      "roi_median": 5.0,
+      "roi_sigma": 0.3
+    },
+    {
+      "label": "optimistic, loose",
+      "roi_median": 5.0,
+      "roi_sigma": 0.9
+    }
+  ],
+  "quick_mode": false,
+  "script": "scripts/prior_sensitivity.py",
+  "true_roi": [
+    1.0003386478985392,
+    1.9972515269429916,
+    3.994829389975453
+  ]
+}

@@ -536,6 +536,59 @@ result would validate the sampler and ROI recovery **under that prior**, not
 the prior Meridian ships. That work is not done here; the fixed-truth
 ten-seed study above remains the only measured recovery evidence.
 
+### How much of a reported ROI is the prior
+
+The question a client actually needs answered is not whether the sampler is
+correct but how much of the reported number came from the data. ROI in a mix
+model is weakly identified, and when the data cannot separate channels the
+prior does it quietly.
+
+`scripts/prior_sensitivity.py` holds one simulated dataset fixed, with a known
+true ROI per channel, and refits it under five ROI priors that are all
+defensible before seeing data. Any movement in the posterior is attributable to
+the prior and nothing else. Measured on 17 September 2026, five geos, 104
+periods, four chains, all fits converging (max rank-normalized R-hat 1.019 to
+1.059), evidence in
+[prior-sensitivity-2026-09-17.json](docs/validation/prior-sensitivity-2026-09-17.json):
+
+| Prior (median, log-sd) | channel_0 | channel_1 | channel_2 |
+| --- | ---: | ---: | ---: |
+| sceptical (0.8, 0.3) | 0.75 | 0.90 | 0.82 |
+| sceptical (0.8, 0.9) | 0.52 | 1.06 | 0.91 |
+| neutral (2.0, 0.7) | 1.03 | 1.32 | 2.04 |
+| optimistic (5.0, 0.3) | 3.43 | 2.96 | 4.52 |
+| optimistic (5.0, 0.9) | 1.28 | 1.52 | 3.35 |
+| **true ROI** | **1.00** | **2.00** | **3.99** |
+
+The spread of the median across priors, as a fraction of the channel's true
+ROI, is 291%, 103% and 93%. For every channel at least one prior's 90%
+interval excludes the truth.
+
+On this dataset the prior is deciding the answer. That is a property of the
+identification problem, not a defect in the implementation: 104 periods of
+correlated spend does not contain enough information to pin three channels'
+ROI, and no sampler fixes that. The practical consequence is that a single
+Meridian ROI figure should not be presented as a measurement without stating
+the prior it rests on, and a budget decision that flips between two defensible
+priors is not supported by the data.
+
+This measures sensitivity, not accuracy: it does not say which prior is right.
+Run the same sweep on your own data before quoting a number from it.
+
+### Coverage beyond one setting
+
+The ten-seed study above measures one shape. `scripts/coverage_grid.py` runs
+the same replication machinery across five shapes -- the baseline, a short
+history, few geos, high noise, and a deliberately misspecified linear response
+against the model's concave assumption -- reporting empirical coverage per
+channel with a Wilson interval, because coverage measured over ten trials is
+itself noisy.
+
+The tool is verified to run end to end across all five cells. A full run at ten
+replications is fifty simulate-and-fit cycles, roughly two hours of laptop CPU,
+and has not been run here; `--dry-run` prints the plan and the estimate. No
+coverage figure beyond the baseline is claimed until that evidence file exists.
+
 ## Limits and remaining risks
 
 - Passing software checks does not establish causal identification, valid
