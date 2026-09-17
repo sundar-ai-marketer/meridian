@@ -7,7 +7,7 @@ description = """\
   A Meridian submodule for MMM model representation in protobuf form.\
   """
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license-files = ["LICENSE", "NOTICE"]
 authors = [
   {name = "The Meridian Authors", email="no-reply@google.com"},
@@ -43,7 +43,6 @@ documentation = "https://developers.google.com/meridian/docs/user-guide/mmm-unif
 # poetry, setuptools,...). All backends are supported by `pip install`
 requires = [
   "setuptools >= 77.0.3",
-  "tomli; python_version < '3.11'",
   "grpcio-tools >= 1.66.0, < 1.70.0",
 ]
 build-backend = "setuptools.build_meta"

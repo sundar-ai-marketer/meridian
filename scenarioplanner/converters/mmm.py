@@ -28,7 +28,7 @@ Typical Usage:
 
 ```python
 from mmm.v1 import mmm_pb2
-from lookerstudio.converters import mmm
+from scenarioplanner.converters import mmm
 
 # Assume `mmm_proto` is a populated instance of the Mmm proto
 mmm_proto = mmm_pb2.Mmm()

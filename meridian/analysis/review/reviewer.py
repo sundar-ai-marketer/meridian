@@ -18,7 +18,6 @@ from collections.abc import MutableMapping, Sequence
 import dataclasses
 import typing
 from typing import Any
-import warnings
 import arviz as az
 import immutabledict
 from meridian import constants
@@ -234,20 +233,9 @@ class ModelReviewer:
       convergence_check_config: configs.ConvergenceConfig | None = None,
       post_convergence_checks: ChecksBattery | None = None,
   ):
-    if meridian is not None:
-      warnings.warn(
-          "The `meridian` argument is deprecated. "
-          "Please use `model_context` and `inference_data` instead.",
-          category=DeprecationWarning,
-          stacklevel=2,
-      )
-      model_context = meridian.model_context
-      inference_data = meridian.inference_data
-    if model_context is None or inference_data is None:
-      raise ValueError(
-          "ModelReviewer requires either (model_context AND inference_data) "
-          "or the deprecated (meridian) object."
-      )
+    model_context, inference_data = checks.resolve_model_inputs(
+        meridian, model_context, inference_data, "ModelReviewer"
+    )
 
     self._model_context = model_context
     self._inference_data = inference_data

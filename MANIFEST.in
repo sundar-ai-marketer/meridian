@@ -9,6 +9,7 @@ include NOTICE
 include TRIAGE.md
 include AUDIT.md
 recursive-include docs/validation *.json
+include docs/validation/os-triage-latest.md
 # Must come last. MANIFEST.in directives are applied in order, so an earlier
 # global-exclude is undone by the `include meridian/templates/*` above, which
 # is how meridian/templates/formatter_test.py used to reach the wheel.
