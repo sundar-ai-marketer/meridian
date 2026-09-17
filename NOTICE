@@ -128,6 +128,7 @@ Files added by this fork:
   scripts/container_reachability_probe.py
   scripts/triage_container_os.py
   scripts/prior_predictive_audit.py
+  scripts/gpu_validation.py
   .github/workflows/container-rescan.yml
   docs/validation/recovery-2026-09-16.json
   docs/validation/strict-sampling-2026-09-16.json

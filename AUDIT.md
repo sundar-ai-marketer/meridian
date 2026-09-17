@@ -563,6 +563,10 @@ ten-seed study above remains the only measured recovery evidence.
   GPU/CUDA and hosted Codespaces still require the relevant account, hardware
   and environment. Local tests are not live validation of those boundaries.
   MLflow's loopback HTTP tracking/artifact service is now tested end to end.
+  For GPU, `scripts/gpu_validation.py` is runnable on a machine with a card
+  and writes dated evidence; it has been exercised only on a CPU-only host,
+  where it correctly refuses to compare a device with itself. No GPU result
+  is claimed here until that file exists.
 - Standard reports render offline. Following documentation links or rendering
   caller-supplied chart specifications with remote data still needs a network.
   Embedded assets increase HTML size. Browser and keyboard checks are not a
