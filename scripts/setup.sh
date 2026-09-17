@@ -69,13 +69,59 @@ fi
 VENV="$($PYTHON -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).expanduser().resolve())' "$VENV")"
 
 say "Creating virtual environment at $VENV"
+REUSED_VENV=0
 if [ -d "$VENV" ]; then
   printf '    already exists, reusing it\n'
+  REUSED_VENV=1
 else
   "$PYTHON" -m venv "$VENV"
 fi
 VENV_PY="$VENV/bin/python"
 [ -x "$VENV_PY" ] || die "venv looks broken: no interpreter at $VENV_PY"
+
+if [ "$REUSED_VENV" = 1 ]; then
+  # A reused venv can still carry an editable install of this project under a
+  # distribution name from before a `[project].name` rename (e.g. this repo
+  # was renamed google-meridian -> meridian-mmm-fork). Both installs then
+  # provide the same `meridian` import path from the same source tree, and
+  # which one wins is filesystem-order-dependent -- it is not portable across
+  # machines. Detect and remove anything stale so only the current
+  # distribution remains.
+  say "Checking the reused venv for a distribution left over from a previous package name"
+  # `packages_distributions()` maps the top-level `meridian` import to every
+  # distribution that claims it. This is used instead of inspecting each
+  # distribution's `Distribution.files`, which for an editable install of
+  # this checkout's own `*.egg-info` at the repo root only lists real package
+  # files when the repo root happens to be on `sys.path` -- true by accident
+  # in some invocations (e.g. a stdin script run from the repo root) and not
+  # in others, so it cannot be relied on here.
+  STALE_CHECK="$("$VENV_PY" - "$REPO_ROOT" <<'PYEOF'
+import importlib.metadata as metadata
+import pathlib
+import sys
+import tomllib
+
+repo_root = pathlib.Path(sys.argv[1])
+with open(repo_root / "pyproject.toml", "rb") as f:
+  project_name = tomllib.load(f)["project"]["name"]
+
+owners = metadata.packages_distributions().get("meridian", [])
+stale = sorted(name for name in owners if name != project_name)
+print(project_name)
+for name in stale:
+  print(name)
+PYEOF
+)"
+  PROJECT_NAME="$(printf '%s\n' "$STALE_CHECK" | head -n1)"
+  STALE_DISTS="$(printf '%s\n' "$STALE_CHECK" | tail -n +2)"
+  if [ -n "$STALE_DISTS" ]; then
+    while IFS= read -r dist_name; do
+      [ -n "$dist_name" ] || continue
+      say "Uninstalling stale distribution '$dist_name' (superseded by '$PROJECT_NAME')"
+      "$VENV_PY" -m pip uninstall -y "$dist_name"
+    done <<< "$STALE_DISTS"
+  fi
+fi
 
 UV=""
 if [ "$INSTALL_MODE" = uv ]; then
