@@ -606,11 +606,24 @@ saturation jointly from 520 geo-weeks is simply harder than estimating
 saturation alone. Rank channels and allocate on the interval; do not quote a
 median ROI to two decimals off a model this size and call it a measurement.
 
-**Re-measure before citing any of this.** Each row is one simulated dataset and
-one fit — enough to size the effect, not enough to separate systematic bias from
-an unlucky draw, and NUTS is not bit-reproducible across library or hardware
-versions even at a fixed seed. Use many seeds to measure recovery coverage
-and bias. The module also reports descriptive posterior rank fractions for
+**3. Repeated fits confirm it, and the top channel is the one that suffers.**
+The table above is one fit per row. `scripts/coverage_grid.py` repeats the
+experiment ten times at each of five dataset shapes. At the same baseline —
+5 geos, 104 weeks — the highest-ROI channel's 90% interval covered the truth in
+**7 runs out of 10** while running **45.6% low**. Against a linear truth, one
+channel's coverage fell to **5 in 10** while running **44.2% high**. Dropping to
+2 geos left coverage at 7 in 10 but deepened the understatement to 53.9%. Each
+of those three has a Wilson upper bound below 90%, so it is under-coverage
+rather than sampling noise. Raising the noise level did *not* degrade coverage:
+noise widens the interval along with the error, while a wrong response shape
+moves the estimate without widening anything. [AUDIT.md](AUDIT.md) has the full
+grid, the convergence caveats, and the evidence file.
+
+**Re-measure before citing any of this.** The grid above is ten fits per shape
+on synthetic data at one scale — enough to establish that coverage degrades and
+roughly where, not enough to pin the size precisely, and NUTS is not
+bit-reproducible across library or hardware versions even at a fixed seed. Run
+the same measurement at the shape and scale of *your* data. The module also reports descriptive posterior rank fractions for
 fixed synthetic truths. Those are not simulation-based calibration (SBC):
 SBC requires drawing the truth from the same prior used to fit the model,
 which this module does not implement. Run it at the shape and scale of *your*

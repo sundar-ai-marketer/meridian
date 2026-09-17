@@ -105,7 +105,6 @@ def _render(
     advisories: dict[str, dict],
     scan: dict,
     probe: dict,
-    scan_path: pathlib.Path,
     probe_path: pathlib.Path,
     review_by: str,
 ) -> str:
@@ -140,8 +139,12 @@ def _render(
       f"Image OS: {os_info.get('Family', '?')} {os_info.get('Name', '?')}. "
       f"Scanned artifact: `{scan.get('ArtifactName', '?')}`."
   )
+  # The scan is a transient full report -- in CI it lives in the runner's
+  # temp directory -- so naming its file tells a reader nothing. Point at the
+  # committed summary instead, and name the load evidence, which is committed.
   add(
-      f"Sources: scan `{scan_path.name}`, load evidence `{probe_path.name}` "
+      f"Sources: a full Trivy OS report of this image, summarised in "
+      f"`container-os-latest.json`; load evidence `{probe_path.name}` "
       f"(probe ran on {probe.get('platform', {}).get('machine', '?')}, "
       f"Python {probe.get('platform', {}).get('python', '?')}, "
       f"{probe.get('platform', {}).get('libc', '?')})."
@@ -383,9 +386,7 @@ def main(argv: Sequence[str] | None = None) -> int:
       datetime.date.today() + datetime.timedelta(days=args.review_in_days)
   ).isoformat()
 
-  document = _render(
-      advisories, scan, probe, args.scan, args.probe, review_by
-  )
+  document = _render(advisories, scan, probe, args.probe, review_by)
   args.output.parent.mkdir(parents=True, exist_ok=True)
   args.output.write_text(document, encoding="utf-8")
 
