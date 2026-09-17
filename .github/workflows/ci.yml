@@ -115,9 +115,14 @@ jobs:
       - name: Install pylint
         run: python -m pip install 'pylint>=4.0'
       - name: Run the gated checks
-        # `make lint-paths` so the scope has one definition (the Makefile),
-        # not a copy here that can drift out of step with it.
-        run: python -m pylint --rcfile=.pylintrc-gate --score=n $(make -s lint-paths)
+        shell: bash
+        run: |
+          # `make lint-paths` so the scope has one definition (the Makefile),
+          # not a copy here that can drift out of step with it. Reading it into
+          # an array says the word-splitting is deliberate: the target prints
+          # several paths and pylint needs them as separate arguments.
+          read -r -a lint_paths <<< "$(make -s lint-paths)"
+          python -m pylint --rcfile=.pylintrc-gate --score=n "${lint_paths[@]}"
 
   # AUDIT.md recorded pip-audit and actionlint as run once by hand, which meant
   # a dependency advisory published afterwards, or a workflow edit that broke
