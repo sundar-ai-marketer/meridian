@@ -163,6 +163,8 @@ Files added by this fork:
   scripts/test_apple_silicon_benchmark.py
   scripts/test_phase_coverage.py
   scripts/test_evidence_provenance.py
+  scripts/test_verify_environment.py
+  scripts/test_notebooks.py
   AGENTS.md
   .pylintrc-gate
   uv.lock

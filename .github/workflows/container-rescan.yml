@@ -89,7 +89,12 @@ jobs:
       # user, so a mounted write would fail on permissions.
       - name: Measure which OS packages the default workflow loads
         run: |
+          # The image has no git and no .git (.dockerignore excludes it), so
+          # the probe cannot discover its own revision. Hand it in, or its
+          # evidence records a null git_head and the provenance gate in
+          # scripts/test_evidence_provenance.py rejects the file.
           docker run --name reachability-probe \
+            --env "MERIDIAN_GIT_HEAD=$GITHUB_SHA" \
             --entrypoint python meridian:rescan \
             scripts/container_reachability_probe.py --output /tmp/probe.json
           docker cp reachability-probe:/tmp/probe.json \

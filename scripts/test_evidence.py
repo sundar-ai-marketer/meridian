@@ -239,14 +239,29 @@ class GitHeadTest(unittest.TestCase):
       self.assertEqual(evidence.git_head(), 'a' * 40)
     self.assertEqual(captured['cwd'], evidence.REPO_ROOT)
 
+  # These two assert the *git* path alone, so the environment fallback has to
+  # be out of the picture. Without clearing it they pass locally and fail on
+  # any GitHub Actions runner, where GITHUB_SHA is always set.
+  # GitHeadFallbackTest covers the fallback itself.
+  def _without_revision_env(self):
+    return mock.patch.dict(
+        os.environ,
+        {
+            key: value
+            for key, value in os.environ.items()
+            if key not in ('MERIDIAN_GIT_HEAD', 'GITHUB_SHA')
+        },
+        clear=True,
+    )
+
   def test_a_failure_returns_none(self):
-    with mock.patch.object(
+    with self._without_revision_env(), mock.patch.object(
         evidence.subprocess, 'run', side_effect=OSError('no git')
     ):
       self.assertIsNone(evidence.git_head())
 
   def test_empty_output_returns_none(self):
-    with mock.patch.object(
+    with self._without_revision_env(), mock.patch.object(
         evidence.subprocess, 'run', return_value=mock.Mock(stdout='  \n')
     ):
       self.assertIsNone(evidence.git_head())
@@ -300,6 +315,68 @@ class RepoRootTest(unittest.TestCase):
   def test_repo_root_is_the_checkout_containing_this_file(self):
     self.assertTrue((evidence.REPO_ROOT / 'scripts').is_dir())
     self.assertTrue((evidence.REPO_ROOT / 'meridian').is_dir())
+
+
+class GitHeadFallbackTest(unittest.TestCase):
+  """A producer that cannot run git must still be able to say its revision.
+
+  The runtime container is the case: `.dockerignore` excludes `.git` and the
+  image does not install git, so the reachability probe running inside it has
+  no way to discover HEAD. Its evidence then records a null revision, which
+  `scripts/test_evidence_provenance.py` rejects -- so the weekly container
+  rescan would commit a file its own CI refuses. The workflow passes the
+  revision in through the environment instead.
+  """
+
+  def _with_broken_git(self):
+    return mock.patch.object(
+        evidence.subprocess, "run", side_effect=FileNotFoundError("no git")
+    )
+
+  def test_git_is_preferred_when_it_answers(self):
+    completed = mock.Mock(stdout="  abc123\n  ", returncode=0)
+    with mock.patch.object(
+        evidence.subprocess, "run", return_value=completed
+    ), mock.patch.dict(os.environ, {"MERIDIAN_GIT_HEAD": "from-env"}):
+      self.assertEqual(evidence.git_head(), "abc123")
+
+  def test_explicit_env_var_is_used_when_git_is_absent(self):
+    with self._with_broken_git(), mock.patch.dict(
+        os.environ, {"MERIDIAN_GIT_HEAD": "deadbeef"}, clear=False
+    ):
+      self.assertEqual(evidence.git_head(), "deadbeef")
+
+  def test_github_sha_is_the_second_choice(self):
+    env = {k: v for k, v in os.environ.items() if k != "MERIDIAN_GIT_HEAD"}
+    env["GITHUB_SHA"] = "runner-sha"
+    with self._with_broken_git(), mock.patch.dict(
+        os.environ, env, clear=True
+    ):
+      self.assertEqual(evidence.git_head(), "runner-sha")
+
+  def test_explicit_var_wins_over_github_sha(self):
+    with self._with_broken_git(), mock.patch.dict(
+        os.environ,
+        {"MERIDIAN_GIT_HEAD": "explicit", "GITHUB_SHA": "runner-sha"},
+        clear=False,
+    ):
+      self.assertEqual(evidence.git_head(), "explicit")
+
+  def test_none_when_nothing_knows_the_revision(self):
+    # Better than a fabricated value: the provenance gate then says so.
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k not in ("MERIDIAN_GIT_HEAD", "GITHUB_SHA")
+    }
+    with self._with_broken_git(), mock.patch.dict(os.environ, env, clear=True):
+      self.assertIsNone(evidence.git_head())
+
+  def test_a_blank_env_var_does_not_count_as_a_revision(self):
+    with self._with_broken_git(), mock.patch.dict(
+        os.environ, {"MERIDIAN_GIT_HEAD": "   ", "GITHUB_SHA": ""}, clear=False
+    ):
+      self.assertIsNone(evidence.git_head())
 
 
 if __name__ == '__main__':

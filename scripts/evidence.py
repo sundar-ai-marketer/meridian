@@ -40,6 +40,7 @@ import hashlib
 import importlib.metadata as package_metadata
 import json
 import math
+import os
 import pathlib
 import platform
 import subprocess
@@ -155,8 +156,23 @@ def sha256(path: pathlib.Path) -> str:
   return digest.hexdigest()
 
 
+# Read when git cannot answer, most-specific first. `GITHUB_SHA` is set by
+# every GitHub Actions runner; `MERIDIAN_GIT_HEAD` is for anything else that
+# knows the revision and cannot run git.
+_GIT_HEAD_ENV_VARS = ('MERIDIAN_GIT_HEAD', 'GITHUB_SHA')
+
+
 def git_head() -> str | None:
-  """Returns this repository's HEAD, regardless of the caller's directory."""
+  """Returns this repository's HEAD, regardless of the caller's directory.
+
+  Falls back to the environment when git cannot answer. The runtime container
+  is the case that matters: `.dockerignore` excludes `.git` and the image does
+  not install git, so a producer running inside it -- the container
+  reachability probe -- has no way to discover its own revision. Without the
+  fallback its evidence records a null revision, and
+  `scripts/test_evidence_provenance.py` rejects evidence that cannot say which
+  code produced it. The workflow passes the revision in instead.
+  """
   try:
     result = subprocess.run(
         ['git', 'rev-parse', 'HEAD'],
@@ -166,8 +182,17 @@ def git_head() -> str | None:
         text=True,
     )
   except (OSError, subprocess.CalledProcessError):
-    return None
-  return result.stdout.strip() or None
+    pass
+  else:
+    head = result.stdout.strip()
+    if head:
+      return head
+
+  for name in _GIT_HEAD_ENV_VARS:
+    value = os.environ.get(name, '').strip()
+    if value:
+      return value
+  return None
 
 
 def package_versions(names: Iterable[str] = DEFAULT_PACKAGES) -> dict[str, str | None]:
