@@ -398,10 +398,13 @@ Meridian and scenarioplanner, performs real tensor work and a report-module
 import, then reads `/proc/self/maps` and attributes every mapped file to its
 dpkg package.
 
-Measured on an `arm64` rebuild on 17 September 2026: **87 OS packages
-installed, 11 loaded** by that workflow. That rebuild independently reproduced
-the published counts — 149 rows, 64 unique advisories, none with a vendor fix,
-8 high — on a different architecture and a later scanner database.
+Measured on 17 September 2026: **87 OS packages installed, 11 loaded** by that
+workflow. The committed evidence is the `linux/amd64` rebuild produced by the
+scheduled workflow on a clean runner. An independent `arm64` rebuild on the
+maintainer's machine returned the same figures — 87 installed, 11 loaded, 149
+advisory rows, 64 unique advisories, none with a vendor fix, 8 high — so the
+published counts reproduce across architectures and across two scanner database
+fetches.
 
 Of the 64, **27 involve at least one loaded package and 37 involve none**. Four
 of the eight high findings (`ncurses`, `systemd`, `libacl1`, `perl-base`) touch
