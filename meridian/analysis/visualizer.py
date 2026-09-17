@@ -49,6 +49,32 @@ __all__ = [
 alt.data_transformers.disable_max_rows()
 
 
+def _categorical_color_scale(categories: Sequence[str]) -> alt.Scale:
+  """An explicit colour-blind-safe range for a categorical colour encoding.
+
+  Vega-Lite's default categorical scheme fails a chroma floor and an
+  adjacent-pair contrast check -- see the comment on
+  `c.CATEGORICAL_COLOR_RANGE` -- so any encoding with more than two categories
+  has to set `range=` itself. Omitting it is silent: the chart still renders,
+  in the default palette, and only a look at the output shows it.
+
+  Args:
+    categories: The category values, in the order the legend should show them.
+
+  Returns:
+    A scale pinning those categories to the fork's categorical range, cycled
+    if there are more categories than colours.
+  """
+  ordered = list(categories)
+  return alt.Scale(
+      domain=ordered,
+      range=[
+          c.CATEGORICAL_COLOR_RANGE[i % len(c.CATEGORICAL_COLOR_RANGE)]
+          for i in range(len(ordered))
+      ],
+  )
+
+
 def _get_channels_to_exclude(
     channels: xr.DataArray | None, spec: list[str] | str | None
 ) -> Generator[str, None, None]:
@@ -1144,6 +1170,9 @@ class MediaEffects:
         if self._use_kpi
         else summary_text.INC_OUTCOME_LABEL
     )
+    response_curve_color_scale = _categorical_color_scale(
+        sorted(response_curves_df[c.CHANNEL].unique())
+    )
     base = (
         alt.Chart(response_curves_df, width=c.VEGALITE_FACET_DEFAULT_WIDTH)
         .transform_calculate(
@@ -1173,7 +1202,9 @@ class MediaEffects:
                     **formatter.Y_AXIS_TITLE_CONFIG,  # pyrefly: ignore[bad-argument-type]
                 ),
             ),
-            color=f'{c.CHANNEL}:N',
+            color=alt.Color(
+                f'{c.CHANNEL}:N', scale=response_curve_color_scale
+            ),
         )
     )
 
@@ -1196,9 +1227,13 @@ class MediaEffects:
         .transform_filter(alt.datum.spend_multiplier == 1.0)
     )
     if plot_separately:
-      define_color = alt.Color(f'{c.CHANNEL}:N', legend=None)
+      define_color = alt.Color(
+          f'{c.CHANNEL}:N', scale=response_curve_color_scale, legend=None
+      )
     else:
-      define_color = alt.Color(f'{c.CHANNEL}:N')
+      define_color = alt.Color(
+          f'{c.CHANNEL}:N', scale=response_curve_color_scale
+      )
 
     band = base.mark_area(opacity=0.5).encode(
         x=f'{c.SPEND}:Q',
@@ -2438,6 +2473,9 @@ class MediaSummary:
             ),
             color=alt.Color(
                 f'{c.CHANNEL}:N',
+                scale=_categorical_color_scale(
+                    sorted(plot_df[c.CHANNEL].unique())
+                ),
                 legend=alt.Legend(
                     orient='bottom',
                     title=None,
