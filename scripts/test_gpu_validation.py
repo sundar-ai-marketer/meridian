@@ -161,6 +161,49 @@ class ComparisonTest(unittest.TestCase):
     json.dumps(gpu_validation._json_safe(result))
 
 
+class FitPathTest(unittest.TestCase):
+  """The fit itself, run for real on whatever device this host has.
+
+  Without this the only untested code in the script is the part that runs on
+  the user's expensive GPU. A quick fit is cheap enough to keep in CI and
+  proves the summaries the comparison consumes are actually produced.
+  """
+
+  def test_a_quick_fit_returns_the_fields_the_comparison_needs(self):
+    result = gpu_validation._fit_once(seed=11, n_geos=2, n_times=24, quick=True)
+
+    self.assertIn("channels", result)
+    self.assertEqual(len(result["channels"]), 3)
+    for channel in result["channels"]:
+      for key in ("posterior_mean", "posterior_sd", "ess_bulk", "mcse"):
+        self.assertIn(key, channel)
+      self.assertTrue(math.isfinite(channel["posterior_mean"]))
+      self.assertGreater(channel["posterior_sd"], 0.0)
+
+    self.assertGreater(result["elapsed_seconds"], 0.0)
+    self.assertIn("devices", result)
+    json.dumps(gpu_validation._json_safe(result))
+
+  def test_mcse_is_derived_from_the_effective_sample_size(self):
+    # The comparison divides by this; if it were the plain standard error the
+    # test would be far too strict and would fail on correct hardware.
+    result = gpu_validation._fit_once(seed=11, n_geos=2, n_times=24, quick=True)
+    channel = result["channels"][0]
+    if math.isfinite(channel["ess_bulk"]) and channel["ess_bulk"] > 0:
+      expected = channel["posterior_sd"] / math.sqrt(channel["ess_bulk"])
+      self.assertAlmostEqual(channel["mcse"], expected, places=9)
+
+  def test_two_quick_fits_of_the_same_seed_agree_with_themselves(self):
+    # Same device, same seed: the comparison must report agreement, which is
+    # the sanity check that the z statistic is not simply always large.
+    first = gpu_validation._fit_once(seed=11, n_geos=2, n_times=24, quick=True)
+    second = gpu_validation._fit_once(seed=11, n_geos=2, n_times=24, quick=True)
+    first["ok"] = second["ok"] = True
+    comparison = gpu_validation._compare(first, second)
+    self.assertTrue(comparison["comparable"])
+    self.assertLess(comparison["max_abs_z"], 3.0)
+
+
 class CommandLineTest(unittest.TestCase):
 
   def test_without_an_accelerator_it_records_and_exits_cleanly(self):

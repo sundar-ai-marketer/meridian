@@ -180,8 +180,16 @@ def _has_accelerator(report: dict[str, Any]) -> bool:
   return bool(tf_report.get("available") and tf_report.get("gpus"))
 
 
-def _fit_once(seed: int, n_geos: int, n_times: int) -> dict[str, Any]:
-  """Fits the synthetic recovery dataset and returns ROI posterior summaries."""
+def _fit_once(
+    seed: int, n_geos: int, n_times: int, quick: bool = False
+) -> dict[str, Any]:
+  """Fits the synthetic recovery dataset and returns ROI posterior summaries.
+
+  `quick` shortens the chains so the path can be exercised cheaply -- by the
+  test suite, and by anyone wanting to confirm the script works on their card
+  before spending an hour of GPU time on the real thing. A quick fit's Monte
+  Carlo error is large, so the comparison it feeds is not evidence.
+  """
   import arviz as az  # pylint: disable=g-import-not-at-top
   from meridian.analysis import analyzer as analyzer_module  # pylint: disable=g-import-not-at-top
   from meridian.validation import recovery  # pylint: disable=g-import-not-at-top
@@ -189,16 +197,16 @@ def _fit_once(seed: int, n_geos: int, n_times: int) -> dict[str, Any]:
   config = recovery.RecoveryConfig(
       n_geos=n_geos,
       n_times=n_times,
-      n_chains=4,
-      n_adapt=500,
-      n_burnin=500,
-      n_keep=500,
+      n_chains=2 if quick else 4,
+      n_adapt=50 if quick else 500,
+      n_burnin=50 if quick else 500,
+      n_keep=50 if quick else 500,
       seed=seed,
   )
   started = time.time()
   frame, realised_roi = recovery.simulate(config)
   model = recovery._build_model(frame, config)  # pylint: disable=protected-access
-  model.sample_prior(100, seed=config.seed)
+  model.sample_prior(20 if quick else 100, seed=config.seed)
   model.sample_posterior(
       n_chains=config.n_chains,
       n_adapt=config.n_adapt,
@@ -298,7 +306,12 @@ def _child_environment(device: str) -> dict[str, str]:
 
 
 def _run_child(
-    device: str, seed: int, n_geos: int, n_times: int, output: pathlib.Path
+    device: str,
+    seed: int,
+    n_geos: int,
+    n_times: int,
+    output: pathlib.Path,
+    quick: bool = False,
 ) -> dict[str, Any]:
   command = [
       sys.executable,
@@ -315,6 +328,8 @@ def _run_child(
       "--output",
       str(output),
   ]
+  if quick:
+    command.append("--quick")
   result = subprocess.run(
       command,
       env=_child_environment(device),
@@ -398,6 +413,14 @@ def main(argv: Sequence[str] | None = None) -> int:
       help="Also grow the geo count until the fit fails, and record where.",
   )
   parser.add_argument("--max-geos", type=int, default=160)
+  parser.add_argument(
+      "--quick",
+      action="store_true",
+      help=(
+          "Short chains. Confirms the script runs on your card; the resulting"
+          " comparison is not evidence."
+      ),
+  )
   parser.add_argument("--child", action="store_true", help=argparse.SUPPRESS)
   parser.add_argument("--device", default="cpu", help=argparse.SUPPRESS)
   args = parser.parse_args(argv)
@@ -405,7 +428,12 @@ def main(argv: Sequence[str] | None = None) -> int:
   if args.child:
     if args.output is None:
       parser.error("--child requires --output")
-    payload = _fit_once(seed=args.seed, n_geos=args.geos, n_times=args.times)
+    payload = _fit_once(
+        seed=args.seed,
+        n_geos=args.geos,
+        n_times=args.times,
+        quick=args.quick,
+    )
     args.output.write_text(
         json.dumps(_json_safe(payload), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -433,7 +461,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     for device in ("cpu", "gpu"):
       print(f"\nfitting on {device} ...")
       legs[device] = _run_child(
-          device, args.seed, args.geos, args.times, scratch / f"{device}.json"
+          device,
+          args.seed,
+          args.geos,
+          args.times,
+          scratch / f"{device}.json",
+          quick=args.quick,
       )
       status = "ok" if legs[device].get("ok") else "FAILED"
       print(f"  {device}: {status}")
@@ -454,6 +487,7 @@ def main(argv: Sequence[str] | None = None) -> int:
           "machine": platform.machine(),
           "python": platform.python_version(),
       },
+      "quick_mode": bool(args.quick),
       "accelerator_visible": accelerator,
       "devices": devices,
       "legs": legs,

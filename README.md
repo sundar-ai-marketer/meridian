@@ -550,6 +550,8 @@ python scripts/coverage_grid.py --replications 10 \
 
 # Does a GPU fit agree with a CPU fit within Monte Carlo error?
 # Needs a machine with a card; it refuses to run without one.
+# --quick first to confirm it works on your card before the real run.
+python scripts/gpu_validation.py --quick
 python scripts/gpu_validation.py --output docs/validation/gpu-$(date +%F).json
 ```
 
