@@ -639,7 +639,8 @@ under-coverage rather than sampling noise:
   ten-seed study used. Its 90% interval covered the truth in seven runs out of
   ten while understating the level by nearly half.
 - **few geos, channel_2**: 0.70, median relative error -53.9%. Dropping from
-  five geos to two makes the same channel worse.
+  five geos to two leaves coverage unchanged but deepens the understatement,
+  from -45.6% to -53.9%.
 - **misspecified response, channel_1**: 0.50, median relative error **+44.2%**.
   Fitting Meridian's concave saturation to a linear truth biases ROI upward and
   halves the interval's coverage.
