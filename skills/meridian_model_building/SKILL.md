@@ -68,7 +68,7 @@ CHECKPOINT**s. At each checkpoint, you MUST:
         ('revenue' or 'non_revenue') based on the columns (e.g., 'revenue' or
         'sales' implying 'revenue', and 'conversions' or 'leads' implying
         'non_revenue').
-    *   **Robust Mapping**: If the user prompt specifies mapping a column name
+    *   **Fuzzy-name mapping**: If the user prompt specifies mapping a column name
         that does not exist in the CSV, do not assume it is a literal name if it
         looks like a description (e.g., 'media_impressions' vs
         'ChannelX_impression'). Use heuristics to find matching columns and

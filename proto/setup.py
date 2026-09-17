@@ -31,15 +31,9 @@ _FULL_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 def _toml_load(path):
-  if sys.version_info[:2] >= (3, 11):
-    import tomllib  # pylint: disable=g-import-not-at-top
+  import tomllib  # pylint: disable=g-import-not-at-top
 
-    return tomllib.load(path)
-  else:
-    # for python<3.11
-    import tomli  # pylint: disable=g-import-not-at-top
-
-    return tomli.load(path)
+  return tomllib.load(path)
 
 
 class ProtoBuild(setuptools.Command):

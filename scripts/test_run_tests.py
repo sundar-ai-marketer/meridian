@@ -25,9 +25,9 @@ class TestRunnerContractTest(unittest.TestCase):
     return status, run
 
   def test_failed_phase_does_not_hide_later_results(self):
-    status, run = self.run_with_codes([1] + [0] * 8)
+    status, run = self.run_with_codes([1] + [0] * 10)
     self.assertEqual(status, 1)
-    self.assertEqual(run.call_count, 9)
+    self.assertEqual(run.call_count, 11)
     self.assertTrue(
         all(
             call.kwargs['cwd'] == run_tests.REPO_ROOT
@@ -36,7 +36,7 @@ class TestRunnerContractTest(unittest.TestCase):
     )
 
   def test_empty_collection_is_failure(self):
-    status, _ = self.run_with_codes([0] * 8 + [5])
+    status, _ = self.run_with_codes([0] * 10 + [5])
     self.assertEqual(status, 1)
 
   def test_cancellation_does_not_start_more_fits(self):
@@ -45,12 +45,12 @@ class TestRunnerContractTest(unittest.TestCase):
     self.assertEqual(run.call_count, 2)
 
   def test_collection_error_does_not_hide_other_phases(self):
-    status, run = self.run_with_codes([2] + [0] * 8)
+    status, run = self.run_with_codes([2] + [0] * 10)
     self.assertEqual(status, 1)
-    self.assertEqual(run.call_count, 9)
+    self.assertEqual(run.call_count, 11)
 
   def test_all_phases_pass(self):
-    status, _ = self.run_with_codes([0] * 9)
+    status, _ = self.run_with_codes([0] * 11)
     self.assertEqual(status, 0)
 
   def test_invalid_worker_counts_fail_before_running(self):
@@ -62,6 +62,26 @@ class TestRunnerContractTest(unittest.TestCase):
               run_tests.main(['--workers', value])
           self.assertEqual(error.exception.code, 2)
           run.assert_not_called()
+
+  def test_scripts_is_covered_by_a_named_phase(self):
+    names = [name for name, _ in run_tests.test_phases(2)]
+    self.assertIn('scripts', names)
+
+  def test_scripts_phase_ignores_the_standalone_scripts(self):
+    phases = dict(run_tests.test_phases(2))
+    for path in run_tests.STANDALONE_SCRIPTS:
+      self.assertIn(f'--ignore={path}', phases['scripts'])
+
+  def test_scripts_phase_does_not_rerun_its_own_fit_suite(self):
+    phases = dict(run_tests.test_phases(2))
+    for suite in run_tests.FIT_SUITES:
+      if suite.startswith('scripts/'):
+        self.assertIn(f'--ignore={suite}', phases['scripts'])
+
+  def test_every_fit_suite_gets_its_own_serial_phase(self):
+    phases = dict(run_tests.test_phases(2))
+    for suite in run_tests.FIT_SUITES:
+      self.assertEqual(phases[suite], ['-q', suite])
 
 
 if __name__ == '__main__':

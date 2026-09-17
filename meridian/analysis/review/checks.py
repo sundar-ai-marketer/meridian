@@ -57,6 +57,50 @@ ConfigType = TypeVar("ConfigType", bound=configs.BaseConfig)
 ResultType = TypeVar("ResultType", bound=results.CheckResult)
 
 
+def resolve_model_inputs(
+    meridian: Any | None,
+    model_context: context.ModelContext | None,
+    inference_data: az.InferenceData | None,
+    owner: str,
+) -> tuple[context.ModelContext, az.InferenceData]:
+  """Accepts either the current pair or the deprecated `meridian` object.
+
+  Both `BaseCheck` and `ModelReviewer` take the same three arguments for the
+  same reason, so the acceptance rule lives here once. Drifting copies of it
+  would let one entry point keep accepting an input the other had stopped
+  accepting.
+
+  Args:
+    meridian: The deprecated `Meridian` object, or None.
+    model_context: The model context, required unless `meridian` is given.
+    inference_data: The inference data, required unless `meridian` is given.
+    owner: The calling class's name, for the error message.
+
+  Returns:
+    The resolved `(model_context, inference_data)` pair.
+
+  Raises:
+    ValueError: If neither the pair nor `meridian` was supplied.
+  """
+  if meridian is not None:
+    warnings.warn(
+        "The `meridian` argument is deprecated. "
+        "Please use `model_context` and `inference_data` instead.",
+        category=DeprecationWarning,
+        # 3, not 2: this helper sits between the warning and the caller's
+        # `__init__`, and the warning belongs at the user's call site.
+        stacklevel=3,
+    )
+    model_context = meridian.model_context
+    inference_data = meridian.inference_data
+  if model_context is None or inference_data is None:
+    raise ValueError(
+        f"{owner} requires either (model_context AND inference_data) "
+        "or the deprecated (meridian) object."
+    )
+  return model_context, inference_data
+
+
 class BaseCheck(abc.ABC, Generic[ConfigType, ResultType]):
   """A generic, abstract base class for a single, runnable quality check."""
 
@@ -72,20 +116,9 @@ class BaseCheck(abc.ABC, Generic[ConfigType, ResultType]):
       selected_geos: Sequence[str] | None = None,
       selected_times: Sequence[str] | None = None,
   ):
-    if meridian is not None:
-      warnings.warn(
-          "The `meridian` argument is deprecated. "
-          "Please use `model_context` and `inference_data` instead.",
-          category=DeprecationWarning,
-          stacklevel=2,
-      )
-      model_context = meridian.model_context
-      inference_data = meridian.inference_data
-    if model_context is None or inference_data is None:
-      raise ValueError(
-          "BaseCheck requires either (model_context AND inference_data) "
-          "or the deprecated (meridian) object."
-      )
+    model_context, inference_data = resolve_model_inputs(
+        meridian, model_context, inference_data, "BaseCheck"
+    )
     self._model_context = model_context
     self._inference_data = inference_data
     self._analyzer = analyzer

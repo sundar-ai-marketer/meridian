@@ -145,9 +145,16 @@ def autolog(
   Args:
     disable: Whether to disable autologging.
     silent: Whether to suppress all event logs and warnings from MLflow.
-    log_metrics: Whether model metrics should be logged. Enabling this option
-      involves the creation of post-modeling objects to compute relevant
-      performance metrics. Metrics include R-Squared, MAPE, and wMAPE values.
+    log_metrics: Whether model metrics should be logged. When `True`,
+      `Meridian.sample_posterior()` is patched so that, immediately after a
+      successful posterior sampling call (once the drawn samples have been
+      merged into the model's `inference_data`), `R_Squared`, `MAPE`, and
+      `wMAPE` are computed via `visualizer.ModelDiagnostics.
+      predictive_accuracy_table()` and logged as MLflow metrics. If this
+      computation raises an exception (for example, because of a degenerate
+      fit), a warning is emitted with the underlying error and no metrics are
+      logged, but the `sample_posterior()` call itself still succeeds and
+      returns normally.
   """
 
   def patch_meridian_init(
@@ -181,24 +188,43 @@ def autolog(
           f"sample_posterior.{param}", kwargs.get(param, "default")
       )
 
+    return original(self, *args, **kwargs)
+
+  def patch_meridian_sample_posterior(
+      original: Callable[..., Any], self, *args, **kwargs
+  ):
     result = original(self, *args, **kwargs)
-    if log_metrics:
-      # TODO: Direct injection of `model.Meridian` object into
-      # `PosteriorMCMCSampler` is deprecated. Revisit patching method here.
-      if self.model is not None:
-        model_diagnostics = visualizer.ModelDiagnostics(self.model)
-        df_diag = model_diagnostics.predictive_accuracy_table()
+    if not log_metrics:
+      return result
 
-        get_metric = lambda n: df_diag[df_diag.metric == n].value.to_list()[0]
+    # By the time `original` (`Meridian.sample_posterior`) has returned, the
+    # freshly drawn posterior samples have already been merged into `self`'s
+    # `inference_data` (see `Meridian.sample_posterior`'s implementation), and
+    # `self` is the `Meridian` instance regardless of whether it was
+    # constructed via the standard `model.Meridian(...)` path or the
+    # deprecated `PosteriorMCMCSampler(meridian=...)` path. This is why
+    # metrics are computed here rather than inside
+    # `PosteriorMCMCSampler.__call__`, where `inference_data` has not yet been
+    # updated and the standard construction path leaves no `Meridian`
+    # reference to compute diagnostics from at all.
+    try:
+      model_diagnostics = visualizer.ModelDiagnostics(self)
+      df_diag = model_diagnostics.predictive_accuracy_table()
+      get_metric = lambda n: df_diag[df_diag.metric == n].value.to_list()[0]
+      r_squared = get_metric("R_Squared")
+      mape = get_metric("MAPE")
+      wmape = get_metric("wMAPE")
+    except (ValueError, KeyError, IndexError, ArithmeticError, RuntimeError) as e:
+      warnings.warn(
+          "log_metrics=True: failed to compute posterior predictive accuracy"
+          f" metrics (R_Squared, MAPE, wMAPE); no metrics were logged. Reason:"
+          f" {e!r}"
+      )
+      return result
 
-        mlflow.log_metric("R_Squared", get_metric("R_Squared"))
-        mlflow.log_metric("MAPE", get_metric("MAPE"))
-        mlflow.log_metric("wMAPE", get_metric("wMAPE"))
-      else:
-        warnings.warn(
-            "log_metrics=True is not supported when PosteriorMCMCSampler is"
-            " initialized with model_context."
-        )
+    mlflow.log_metric("R_Squared", r_squared)
+    mlflow.log_metric("MAPE", mape)
+    mlflow.log_metric("wMAPE", wmape)
     return result
 
   safe_patch(FLAVOR_NAME, model.Meridian, "__init__", patch_meridian_init)
@@ -213,4 +239,10 @@ def autolog(
       posterior_sampler.PosteriorMCMCSampler,
       "__call__",
       patch_posterior_sampling,
+  )
+  safe_patch(
+      FLAVOR_NAME,
+      model.Meridian,
+      "sample_posterior",
+      patch_meridian_sample_posterior,
   )

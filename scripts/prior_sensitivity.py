@@ -58,7 +58,6 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import datetime
-import json
 import pathlib
 import sys
 import time
@@ -73,7 +72,7 @@ _REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(_REPO_ROOT))
 
-from scripts.evidence import json_safe  # pylint: disable=g-import-not-at-top,g-bad-import-order
+from scripts.evidence import provenance, write_evidence  # pylint: disable=g-import-not-at-top,g-bad-import-order
 
 # (label, prior median ROI, prior log-scale sigma). The spread is deliberate:
 # a sceptical analyst, the library's own documented idiom, and an optimistic
@@ -89,8 +88,8 @@ _PRIOR_GRID: tuple[tuple[str, float, float], ...] = (
 
 def _fit_under_prior(recovery, frame, config, median: float, sigma: float):
   """Refits the SAME data under one ROI prior; returns per-channel summaries."""
-  import arviz as az  # pylint: disable=g-import-not-at-top
   from meridian.analysis import analyzer as analyzer_module  # pylint: disable=g-import-not-at-top
+  from meridian.analysis import sampling_diagnostics  # pylint: disable=g-import-not-at-top
 
   tuned = dataclasses.replace(
       config, prior_roi_median=median, prior_roi_sigma=sigma
@@ -113,15 +112,9 @@ def _fit_under_prior(recovery, frame, config, median: float, sigma: float):
   draws = roi.reshape(-1, roi.shape[-1])
   tail = (1.0 - tuned.confidence_level) / 2.0
 
-  r_hat = az.rhat(  # pytype: disable=attribute-error
-      model.inference_data.posterior, method="rank"
+  max_r_hat = sampling_diagnostics.max_rank_normalized_rhat(
+      model.inference_data.posterior
   )
-  per_variable = []
-  for name in r_hat.data_vars:  # pytype: disable=attribute-error
-    values = np.asarray(r_hat[name].values, dtype=float)
-    finite = values[~np.isnan(values)]
-    if finite.size:
-      per_variable.append(float(finite.max()))
 
   return {
       "channels": [
@@ -133,7 +126,7 @@ def _fit_under_prior(recovery, frame, config, median: float, sigma: float):
           }
           for i, name in enumerate(tuned.channels)
       ],
-      "max_r_hat": max(per_variable) if per_variable else float("nan"),
+      "max_r_hat": max_r_hat,
   }
 
 
@@ -245,6 +238,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   evidence = {
       "date": datetime.date.today().isoformat(),
       "script": "scripts/prior_sensitivity.py",
+      "provenance": provenance(pathlib.Path(__file__).resolve()),
       "quick_mode": bool(args.quick),
       "config": dataclasses.asdict(config),
       "true_roi": [float(v) for v in true_roi],
@@ -272,11 +266,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   }
 
   if args.output is not None:
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(json_safe(evidence), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    write_evidence(args.output, evidence)
     print(f"\nwrote {args.output}")
   return 0
 

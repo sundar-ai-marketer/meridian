@@ -137,6 +137,38 @@ _RHAT_OK_UPSTREAM = 'rhat_ok_upstream'
 _ESS_OK = 'ess_ok'
 
 
+def max_rank_normalized_rhat(posterior) -> float:
+  """Worst ArviZ rank-normalized split R-hat across a posterior's variables.
+
+  This is `az.rhat(posterior, method='rank')` reduced to a single number, and
+  it is a DIFFERENT statistic from `SamplingDiagnostics.rhat_max`, which
+  reports the upstream TFP potential-scale-reduction R-hat via
+  `Analyzer.get_rhat()`. The two do not agree in value, so they are not
+  interchangeable and neither can be swapped in for the other to remove a
+  duplicate.
+
+  Deterministic parameters -- hierarchical terms pinned to zero in a national
+  model, Hill parameters for a linear channel -- have no between-chain
+  variance, so ArviZ returns an all-NaN R-hat for them. Those variables are
+  dropped rather than reducing over a NaN slice. An infinite R-hat is kept: it
+  has to stay visible and fail convergence.
+
+  Args:
+    posterior: An ArviZ posterior group, e.g. `inference_data.posterior`.
+
+  Returns:
+    The maximum finite-or-infinite R-hat, or `NaN` when no variable has one.
+  """
+  rhat = az.rhat(posterior, method='rank')  # pytype: disable=attribute-error
+  per_variable = []
+  for name in rhat.data_vars:  # pytype: disable=attribute-error
+    values = np.asarray(rhat[name].values, dtype=float)
+    non_nan = values[~np.isnan(values)]
+    if non_nan.size:
+      per_variable.append(float(non_nan.max()))
+  return max(per_variable) if per_variable else float('nan')
+
+
 def _nan_reduce(values: np.ndarray, reducer) -> float:
   """Reduces `values` over non-NaN cells, `NaN` if every cell is NaN.
 

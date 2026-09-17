@@ -92,7 +92,7 @@ Severity describes the consequence of the defect, not exploitability.
 | Medium | Recovery output used an unqualified convergence label and a fixed 90% interval heading even with a different configured level. | Reject non-finite R-hat values, label the 1.2 comparison as a screening threshold, and print the configured interval level. Focused regression tests cover these cases. |
 | High | Docker's unprivileged user could not write the default report/model output under root-owned `/app`. | Copy the runtime application with the runtime user's ownership; verify a real container fit and output workflow. |
 | High | First publication without release tags made the version action fail before reaching its first-release branch. | A tested helper validates versions and handles a tagless repository. |
-| Medium | Composite actions lacked required metadata; the schema version action used unsupported top-level environment metadata and ignored its Python-version input. The core version job installed the numerical stack for a metadata read. | Supply valid action metadata and read project versions without scientific dependencies. `actionlint` validates the corrected workflows. |
+| Medium | Composite actions lacked required metadata; the schema version action used unsupported top-level environment metadata and ignored its Python-version input. The core version job installed the numerical stack for a metadata read. | Supply valid action metadata and read project versions without scientific dependencies. `actionlint`, run by hand once against these workflows (not a CI job), confirmed the fix. |
 | Medium | `make test` omitted Scenario Planner although it was described as the full suite. A commit-message escape could skip CI tests. | Include both packages and remove the silent test bypass. |
 | Medium | MLflow autolog tests left process-wide patches enabled, suppressing a later regression test's expected warning and writing to shared tracking storage. | Reproduced with 1 failure/14 passes; isolate each test's SQLite database and disable autologging on cleanup. The same sequence then passed all 15 checks. |
 | Medium | Local unit tests did not by themselves prove the real fit-to-report integration. | Add `make test-e2e` and run the real fit, optimizer, save/load, and report workflow in CI. |
@@ -154,9 +154,13 @@ Additional verification:
   using a relative environment path containing spaces. Its environment check
   passed all installed extras, stylesheet compilation and a real fit with
   finite ROI.
-- `actionlint` 1.7.12 and ShellCheck passed after correcting action metadata
-  and shell quoting. Version-action contract tests and the then-five schema
-  build contracts passed; the follow-up below expands those contracts to seven.
+- `actionlint` 1.7.12 and ShellCheck were run once by hand against revision
+  `3983667` on 16 September 2026 and passed after correcting action metadata
+  and shell quoting. `actionlint` 1.7.12 now also runs on every push and pull
+  request, from a pinned release with a verified checksum, in CI's `security`
+  job; ShellCheck remains a manual check. Version-action contract tests and
+  the then-five schema build contracts passed; the follow-up below expands
+  those contracts to seven.
 - The first GitHub run passed package, Docker and version jobs, but a hosted
   runner shut down during the TensorFlow/Python 3.11 suite. No test assertion
   failed before the interruption; matrix fail-fast cancelled the other legs.
@@ -233,13 +237,23 @@ Additional verification:
   recovery (59), mathematical invariants (21), and upstream regressions (19)
   cover all 5,779 test identifiers exactly once. Every phase runs even if an
   earlier phase fails; any failed phase fails the job.
-- `pip-audit` checked 173 local and 172 Linux-container dependency versions
-  against its public advisory service and reported no known vulnerabilities
-  on the audit date. This is a point-in-time advisory check, not proof of zero risk.
-- Gitleaks 8.30.1 reported zero findings for the current source tree and the
-  history scan using `--log-opts='--all'` (1,182 commits scanned; 1,190
-  reachable commits). Additional high-confidence credential and private-key
-  checks found no matches. Existing upstream author metadata is preserved.
+- `pip-audit`, run by hand once on 16 September 2026, checked 173 local and 172
+  Linux-container dependency versions against its public advisory service and
+  reported no known vulnerabilities on that date. This is a point-in-time
+  advisory check, not proof of zero risk: it reports what the advisory
+  database held on the day it ran. `pip-audit` 2.10.1 now runs on every push
+  and pull request in CI's `security` job, against the exported lock rather
+  than a fresh resolution, so an advisory published later fails the build
+  instead of waiting for someone to re-run it.
+- Gitleaks 8.30.1, run by hand once on 16 September 2026, reported zero
+  findings for the current source tree and the history scan using
+  `--log-opts='--all'` (1,182 commits scanned; 1,190 reachable commits).
+  Additional high-confidence credential and private-key checks found no
+  matches. Existing upstream author metadata is preserved. Gitleaks is not
+  wired into any CI workflow; a secret introduced after this date would not
+  be caught until the next manual run. Unlike `pip-audit` and `actionlint`,
+  it is not gated: it needs a pinned third-party action or binary that has
+  not been vetted here yet.
 
 ## Reproduce the checks
 
@@ -350,7 +364,7 @@ The rebuilt Debian 13.7 image has **zero critical findings and zero findings
 with a vendor fix available** in that database snapshot. It still has 149
 advisory/package rows representing 64 distinct advisories, including eight
 high-severity advisory IDs without a listed vendor fix. The
-[complete retained inventory](docs/validation/container-os-2026-09-16.json)
+[complete retained inventory](docs/validation/container-os-inventory-2026-09-16.json)
 records package versions and vendor-tracker links. These are scanner findings;
 package-level matches do not by themselves prove reachable exploits in this
 non-root, local-analysis container. They must not be described as resolved.

@@ -1,0 +1,139 @@
+{
+  "accelerator_can_run_model": false,
+  "accelerator_visible": true,
+  "capability": {
+    "dtype": "float64",
+    "operations": {
+      "cholesky": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "multivariate normal draws in the hierarchical geo prior",
+        "ok": false
+      },
+      "cumsum": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "adstock accumulation",
+        "ok": false
+      },
+      "dot_general": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "every tensor contraction: media transforms and the linear predictor",
+        "ok": false
+      },
+      "erf": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "normal CDFs in the likelihood",
+        "ok": false
+      },
+      "gammaln": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "gamma and negative-binomial log densities",
+        "ok": false
+      },
+      "grad": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "the gradient each leapfrog step of HMC needs",
+        "ok": false
+      },
+      "random_normal": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "draw generation",
+        "ok": false
+      },
+      "scan": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "the sampler's trajectory loop",
+        "ok": false
+      },
+      "sort": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "posterior quantiles and rank-normalised R-hat",
+        "ok": false
+      },
+      "while_loop": {
+        "error": "JaxRuntimeError",
+        "message": "UNKNOWN: -:0:0: error: unknown attribute code: 22 (-:0:0: note: in bytecode version 6 produced by: StableHLO_v1.13.7)",
+        "needed_for": "NUTS tree building",
+        "ok": false
+      }
+    },
+    "probed": true,
+    "unsupported": [
+      "cholesky",
+      "cumsum",
+      "dot_general",
+      "erf",
+      "gammaln",
+      "grad",
+      "random_normal",
+      "scan",
+      "sort",
+      "while_loop"
+    ],
+    "x64_enabled": true
+  },
+  "comparison": {
+    "comparable": false,
+    "reason": "the accelerator cannot run every operation the model needs: cholesky, cumsum, dot_general, erf, gammaln, grad, random_normal, scan, sort, while_loop"
+  },
+  "date": "2026-09-17",
+  "devices": {
+    "jax": {
+      "available": true,
+      "default_backend": "METAL",
+      "device_kinds": [
+        "Metal"
+      ],
+      "devices": [
+        "METAL:0"
+      ],
+      "x64_enabled": false
+    },
+    "tensorflow": {
+      "available": false,
+      "error": "No module named 'tensorflow'"
+    }
+  },
+  "git_head": "22b8faea983739cf0c96e50393f5722a66f7d3b4",
+  "host": {
+    "machine": "arm64",
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "python": "3.11.4"
+  },
+  "legs": {},
+  "limitations": [
+    "Bit-identical results across devices are not expected and are not tested; XLA reorders floating-point work per device.",
+    "Agreement is judged against Monte Carlo error on one synthetic dataset at one size.",
+    "Timings describe this fit on this hardware and are not a benchmark; a small fit is often slower on a GPU than on a CPU.",
+    "Nothing here covers multi-GPU, mixed precision, or cloud schedulers.",
+    "The capability probe covers the operations listed in _REQUIRED_OPERATIONS at the configured precision. An accelerator that passes it has shown it can run those operations, not that a full fit succeeds."
+  ],
+  "provenance": {
+    "architecture": "Darwin-arm64",
+    "git_head": "22b8faea983739cf0c96e50393f5722a66f7d3b4",
+    "package_versions": {
+      "arviz": "None",
+      "google-meridian": "None",
+      "jax": "0.10.2",
+      "jaxlib": "0.10.2",
+      "meridian-mmm-fork": "None",
+      "numpy": "2.4.6",
+      "protobuf": "None",
+      "tensorflow": "None",
+      "tensorflow-probability": "None",
+      "tfp-nightly": "None"
+    },
+    "script_sha256": "c431ff8a6c8c3da45f54081c941da4ccfb8f4bad5d6f7eafdbb694abf5430def"
+  },
+  "quick_mode": false,
+  "script": "scripts/gpu_validation.py",
+  "script_sha256": "c431ff8a6c8c3da45f54081c941da4ccfb8f4bad5d6f7eafdbb694abf5430def"
+}

@@ -7,7 +7,7 @@
 Generated: 2026-09-17. Review by: **2026-12-16**.
 
 Image OS: debian 13.7. Scanned artifact: `meridian:triage`.
-Sources: a full Trivy OS report of this image, summarised in `container-os-latest.json`; load evidence `container-reachability-latest.json` (probe ran on x86_64, Python 3.11.16, glibc 2.41).
+Sources: a full Trivy OS report of this image, summarised in `os-triage-summary-latest.json`; load evidence `container-reachability-latest.json` (probe ran on x86_64, Python 3.11.16, glibc 2.41).
 
 ## What this document is
 
@@ -126,8 +126,10 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 
 ```
 docker build --pull -t meridian:triage .
+# The full report is kept out of docs/validation/: it is close to a
+# megabyte and only the compact summary below is meant to be committed.
 trivy image --scanners vuln --pkg-types os --ignorefile /dev/null \
-    --format json --output docs/validation/container-os-latest.json \
+    --format json --output /tmp/container-os-full.json \
     meridian:triage
 # Copy the probe result out rather than writing through a mount: the
 # container runs as uid 1000 and will not own your working tree.
@@ -137,9 +139,10 @@ docker cp probe:/tmp/probe.json \
     docs/validation/container-reachability-latest.json
 docker rm probe
 python scripts/triage_container_os.py \
-    --scan docs/validation/container-os-latest.json \
+    --scan /tmp/container-os-full.json \
     --probe docs/validation/container-reachability-latest.json \
-    --output docs/validation/os-triage-latest.md
+    --output docs/validation/os-triage-latest.md \
+    --summary-output docs/validation/os-triage-summary-latest.json
 ```
 
 The scheduled `container-rescan` workflow runs this weekly and opens an issue when a new fixable high or critical finding appears.

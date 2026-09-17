@@ -1,0 +1,281 @@
+{
+  "benchmark_args": [],
+  "by_precision": {
+    "float32": {
+      "config": {
+        "max_lag": 8,
+        "n_adapt": 100,
+        "n_burnin": 100,
+        "n_chains": 2,
+        "n_controls": 2,
+        "n_geos": 10,
+        "n_keep": 100,
+        "n_media_channels": 4,
+        "n_prior_draws": 100,
+        "n_times": 104,
+        "seed": 0
+      },
+      "environment": {
+        "jax": "0.10.2",
+        "jax_devices": [
+          "cpu:0"
+        ],
+        "jax_x64": false,
+        "machine": "arm64",
+        "meridian": "2.0.0",
+        "meridian_backend": "JAX",
+        "meridian_precision": "FLOAT32",
+        "numpy": "2.3.5",
+        "platform": "macOS-26.5.1-arm64-arm-64bit",
+        "processor": "arm",
+        "python": "3.11.8",
+        "tensorflow": "2.21.0",
+        "tf_gpus": []
+      },
+      "metrics": {
+        "throughput.mcmc_draws_per_sec": {
+          "max": 41.20424746698026,
+          "median": 39.30892614809825,
+          "min": 30.88753444706141,
+          "values": [
+            41.20424746698026,
+            39.30892614809825,
+            30.88753444706141
+          ]
+        },
+        "throughput.seconds_per_1k_mcmc_draws": {
+          "max": 32.375520348311206,
+          "median": 25.439514583340497,
+          "min": 24.26934264001223,
+          "values": [
+            24.26934264001223,
+            25.439514583340497,
+            32.375520348311206
+          ]
+        },
+        "timings_seconds.build_model": {
+          "max": 1.2710639579890994,
+          "median": 0.9540974160045153,
+          "min": 0.9478541659918847,
+          "values": [
+            0.9478541659918847,
+            0.9540974160045153,
+            1.2710639579890994
+          ]
+        },
+        "timings_seconds.sample_posterior": {
+          "max": 19.425312208986725,
+          "median": 15.263708750004298,
+          "min": 14.561605584007339,
+          "values": [
+            14.561605584007339,
+            15.263708750004298,
+            19.425312208986725
+          ]
+        },
+        "timings_seconds.sample_prior": {
+          "max": 2.2744364169921027,
+          "median": 1.7342302499891957,
+          "min": 1.6339747500023805,
+          "values": [
+            1.6339747500023805,
+            1.7342302499891957,
+            2.2744364169921027
+          ]
+        },
+        "timings_seconds.total": {
+          "max": 23.023794583961717,
+          "median": 17.99632108300284,
+          "min": 17.185244625012274,
+          "values": [
+            17.185244625012274,
+            17.99632108300284,
+            23.023794583961717
+          ]
+        }
+      },
+      "peak_rss_bytes": {
+        "max": 2234548224,
+        "median": 2174287872,
+        "min": 2169765888
+      },
+      "repetitions": 3,
+      "repetitions_usable": 3
+    },
+    "float64": {
+      "config": {
+        "max_lag": 8,
+        "n_adapt": 100,
+        "n_burnin": 100,
+        "n_chains": 2,
+        "n_controls": 2,
+        "n_geos": 10,
+        "n_keep": 100,
+        "n_media_channels": 4,
+        "n_prior_draws": 100,
+        "n_times": 104,
+        "seed": 0
+      },
+      "environment": {
+        "jax": "0.10.2",
+        "jax_devices": [
+          "cpu:0"
+        ],
+        "jax_x64": true,
+        "machine": "arm64",
+        "meridian": "2.0.0",
+        "meridian_backend": "JAX",
+        "meridian_precision": "FLOAT64",
+        "numpy": "2.3.5",
+        "platform": "macOS-26.5.1-arm64-arm-64bit",
+        "processor": "arm",
+        "python": "3.11.8",
+        "tensorflow": "2.21.0",
+        "tf_gpus": []
+      },
+      "metrics": {
+        "throughput.mcmc_draws_per_sec": {
+          "max": 44.176630438721205,
+          "median": 43.941375906237226,
+          "min": 42.860636381697105,
+          "values": [
+            42.860636381697105,
+            43.941375906237226,
+            44.176630438721205
+          ]
+        },
+        "throughput.seconds_per_1k_mcmc_draws": {
+          "max": 23.331431458330673,
+          "median": 22.75759416668734,
+          "min": 22.636402778322616,
+          "values": [
+            23.331431458330673,
+            22.75759416668734,
+            22.636402778322616
+          ]
+        },
+        "timings_seconds.build_model": {
+          "max": 0.9659080000128597,
+          "median": 0.9269078340003034,
+          "min": 0.916429374992731,
+          "values": [
+            0.9659080000128597,
+            0.916429374992731,
+            0.9269078340003034
+          ]
+        },
+        "timings_seconds.sample_posterior": {
+          "max": 13.998858874998405,
+          "median": 13.654556500012404,
+          "min": 13.581841666993569,
+          "values": [
+            13.998858874998405,
+            13.654556500012404,
+            13.581841666993569
+          ]
+        },
+        "timings_seconds.sample_prior": {
+          "max": 1.7141619589965558,
+          "median": 1.690370124997571,
+          "min": 1.6851734590018168,
+          "values": [
+            1.690370124997571,
+            1.7141619589965558,
+            1.6851734590018168
+          ]
+        },
+        "timings_seconds.total": {
+          "max": 16.699879792009597,
+          "median": 16.326681250997353,
+          "min": 16.235482959993533,
+          "values": [
+            16.699879792009597,
+            16.326681250997353,
+            16.235482959993533
+          ]
+        }
+      },
+      "peak_rss_bytes": {
+        "max": 2355920896,
+        "median": 2352447488,
+        "min": 2348417024
+      },
+      "repetitions": 3,
+      "repetitions_usable": 3
+    }
+  },
+  "comparison": {
+    "float32": {
+      "comparable": true,
+      "metrics": {
+        "throughput.mcmc_draws_per_sec": {
+          "float32_median": 39.30892614809825,
+          "float64_median": 43.941375906237226,
+          "percent_change": -10.54234115932957,
+          "ranges_overlap": false
+        },
+        "throughput.seconds_per_1k_mcmc_draws": {
+          "float32_median": 25.439514583340497,
+          "float64_median": 22.75759416668734,
+          "percent_change": 11.784727317876875,
+          "ranges_overlap": false
+        },
+        "timings_seconds.build_model": {
+          "float32_median": 0.9540974160045153,
+          "float64_median": 0.9269078340003034,
+          "percent_change": 2.933364139007044,
+          "ranges_overlap": true
+        },
+        "timings_seconds.sample_posterior": {
+          "float32_median": 15.263708750004298,
+          "float64_median": 13.654556500012404,
+          "percent_change": 11.784727317876875,
+          "ranges_overlap": false
+        },
+        "timings_seconds.sample_prior": {
+          "float32_median": 1.7342302499891957,
+          "float64_median": 1.690370124997571,
+          "percent_change": 2.594705404633646,
+          "ranges_overlap": true
+        },
+        "timings_seconds.total": {
+          "float32_median": 17.99632108300284,
+          "float64_median": 16.326681250997353,
+          "percent_change": 10.226449615432355,
+          "ranges_overlap": false
+        }
+      }
+    }
+  },
+  "date": "2026-09-17",
+  "host": {
+    "machine": "arm64",
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "processor": "arm",
+    "python": "3.11.8"
+  },
+  "limitations": [
+    "Wall-clock time for a fixed number of kept draws, on one machine, at one model size. Not a cross-machine benchmark.",
+    "Changing precision changes the numerical trajectory NUTS explores, so a throughput difference is not purely an arithmetic-speed difference.",
+    "Medians over a handful of repetitions on a laptop. Compare the reported ranges before treating a small difference as real.",
+    "Says nothing about accuracy. A precision change can alter results, which this does not measure."
+  ],
+  "provenance": {
+    "architecture": "Darwin-arm64",
+    "git_head": "22b8faea983739cf0c96e50393f5722a66f7d3b4",
+    "package_versions": {
+      "arviz": "0.19.0",
+      "google-meridian": "None",
+      "jax": "0.10.2",
+      "jaxlib": "0.10.2",
+      "meridian-mmm-fork": "2.0.0",
+      "numpy": "2.3.5",
+      "protobuf": "6.33.6",
+      "tensorflow": "2.21.0",
+      "tensorflow-probability": "None",
+      "tfp-nightly": "0.26.0.dev20260130"
+    },
+    "script_sha256": "6a94d7d76a592fce3f35954feb73ce62fd9776612d7562fd2d66a3b1a1432bb9"
+  },
+  "script": "scripts/apple_silicon_benchmark.py"
+}

@@ -19,9 +19,10 @@
 """Joins a Trivy OS report to measured load evidence and writes a triage table.
 
     python scripts/triage_container_os.py \
-        --scan container-os-advisories.json \
-        --probe docs/validation/container-reachability-2026-09-17.json \
-        --output docs/validation/os-triage-2026-09-17.md
+        --scan /tmp/container-os-full.json \
+        --probe docs/validation/container-reachability-latest.json \
+        --output docs/validation/os-triage-latest.md \
+        --summary-output docs/validation/os-triage-summary-latest.json
 
 Why this exists. The container carries OS advisories that Debian has not fixed
 and this fork therefore cannot fix. Publishing the raw count and stopping there
@@ -30,7 +31,7 @@ would be worse. The middle path is to say, for every advisory, whether the
 default analysis workflow loads any of the affected packages at all -- measured
 by `scripts/container_reachability_probe.py`, not asserted.
 
-The classification is deliberately crude and has exactly two values:
+The classification uses exactly two values, by design:
 
   `loaded`      at least one affected binary package was mapped into the
                 analysis process during the probe.
@@ -56,6 +57,14 @@ import json
 import pathlib
 import sys
 from collections.abc import Sequence
+
+# Runs both as `python scripts/x.py` and as `python -m unittest scripts.test_x`,
+# so anchor the repo root before importing the shared helpers.
+_REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+  sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.evidence import json_safe, provenance  # pylint: disable=g-import-not-at-top,g-bad-import-order
 
 _SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"]
 
@@ -144,7 +153,7 @@ def _render(
   # committed summary instead, and name the load evidence, which is committed.
   add(
       f"Sources: a full Trivy OS report of this image, summarised in "
-      f"`container-os-latest.json`; load evidence `{probe_path.name}` "
+      f"`os-triage-summary-latest.json`; load evidence `{probe_path.name}` "
       f"(probe ran on {probe.get('platform', {}).get('machine', '?')}, "
       f"Python {probe.get('platform', {}).get('python', '?')}, "
       f"{probe.get('platform', {}).get('libc', '?')})."
@@ -257,8 +266,10 @@ def _render(
   add("")
   add("```")
   add("docker build --pull -t meridian:triage .")
+  add("# The full report is kept out of docs/validation/: it is close to a")
+  add("# megabyte and only the compact summary below is meant to be committed.")
   add("trivy image --scanners vuln --pkg-types os --ignorefile /dev/null \\")
-  add("    --format json --output docs/validation/container-os-latest.json \\")
+  add("    --format json --output /tmp/container-os-full.json \\")
   add("    meridian:triage")
   add("# Copy the probe result out rather than writing through a mount: the")
   add("# container runs as uid 1000 and will not own your working tree.")
@@ -268,9 +279,10 @@ def _render(
   add("    docs/validation/container-reachability-latest.json")
   add("docker rm probe")
   add("python scripts/triage_container_os.py \\")
-  add("    --scan docs/validation/container-os-latest.json \\")
+  add("    --scan /tmp/container-os-full.json \\")
   add("    --probe docs/validation/container-reachability-latest.json \\")
-  add("    --output docs/validation/os-triage-latest.md")
+  add("    --output docs/validation/os-triage-latest.md \\")
+  add("    --summary-output docs/validation/os-triage-summary-latest.json")
   add("```")
   add("")
   add(
@@ -306,6 +318,7 @@ def _summary(
 
   return {
       "date": datetime.date.today().isoformat(),
+      "provenance": provenance(pathlib.Path(__file__).resolve()),
       "image_os": scan.get("Metadata", {}).get("OS", {}),
       "artifact": scan.get("ArtifactName", ""),
       "probe_platform": probe.get("platform", {}),
@@ -393,7 +406,11 @@ def main(argv: Sequence[str] | None = None) -> int:
   if args.summary_output is not None:
     args.summary_output.parent.mkdir(parents=True, exist_ok=True)
     args.summary_output.write_text(
-        json.dumps(_summary(advisories, scan, probe), indent=2, sort_keys=True)
+        json.dumps(
+            json_safe(_summary(advisories, scan, probe)),
+            indent=2,
+            sort_keys=True,
+        )
         + "\n",
         encoding="utf-8",
     )

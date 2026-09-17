@@ -130,6 +130,7 @@ import pandas as pd
 from meridian import backend
 from meridian import constants as c
 from meridian.analysis import analyzer as analyzer_module
+from meridian.analysis import sampling_diagnostics
 from meridian.data import data_frame_input_data_builder as dfb
 from meridian.model import model
 from meridian.model import prior_distribution
@@ -566,23 +567,12 @@ def _fit_and_recover(
       seed=config.seed,
   )
 
-  import arviz as az  # pylint: disable=g-import-not-at-top
 
-  r_hat = az.rhat(  # pytype: disable=attribute-error
-      mmm.inference_data.posterior, method='rank'
+  max_r_hat = sampling_diagnostics.max_rank_normalized_rhat(
+      mmm.inference_data.posterior
   )
-  # Deterministic parameters -- hierarchical terms pinned to zero in a national
-  # model, for instance -- have no between-chain variance, so arviz returns
-  # all-NaN r_hat for them. Drop those rather than reducing over a NaN slice.
-  per_variable = []
-  for name in r_hat.data_vars:
-    values = np.asarray(r_hat[name].values, dtype=float)
-    non_nan = values[~np.isnan(values)]
-    if non_nan.size:
-      per_variable.append(float(non_nan.max()))
   # NaN when every parameter is deterministic; `converged` then reads False,
   # which is the safe direction.
-  max_r_hat = max(per_variable) if per_variable else float('nan')
 
   roi = np.asarray(
       analyzer_module.Analyzer(

@@ -143,13 +143,30 @@ Files added by this fork:
   docs/validation/recovery-2026-09-16.json
   docs/validation/strict-sampling-2026-09-16.json
   docs/validation/strict-quickstart-2026-09-16.json
-  docs/validation/container-os-2026-09-16.json
-  docs/validation/container-os-latest.json
+  docs/validation/container-os-inventory-2026-09-16.json
+  docs/validation/container-reachability-2026-09-17.json
   docs/validation/container-reachability-latest.json
+  docs/validation/os-triage-summary-2026-09-17.json
+  docs/validation/os-triage-summary-latest.json
   docs/validation/os-triage-latest.md
   docs/validation/prior-predictive-audit-2026-09-17.json
   docs/validation/prior-sensitivity-2026-09-17.json
   docs/validation/coverage-grid-2026-09-17.json
+  docs/validation/gpu-metal-2026-09-17.json
+  docs/validation/gpu-metal-jax0.4.34-float32-2026-09-17.json
+  docs/validation/gpu-metal-jax0.4.34-float64-2026-09-17.json
+  docs/validation/gpu-metal-jax-mps-2026-09-17.json
+  docs/validation/gpu-metal-jax-mps-async-2026-09-17.json
+  docs/validation/apple-silicon-benchmark-2026-09-17.json
+  scripts/test_verify_environment.py
+  scripts/apple_silicon_benchmark.py
+  scripts/test_apple_silicon_benchmark.py
+  scripts/test_phase_coverage.py
+  scripts/test_evidence_provenance.py
+  scripts/test_verify_environment.py
+  scripts/test_notebooks.py
+  AGENTS.md
+  .pylintrc-gate
   uv.lock
   .github/dependabot.yml
   .github/actions/version-check/check_version.sh
@@ -161,6 +178,16 @@ Files added by this fork:
   .github/ISSUE_TEMPLATE/config.yml
   .github/ISSUE_TEMPLATE/bug_report.yml
   .github/ISSUE_TEMPLATE/feature_request.yml
+
+Files removed in this fork:
+
+  schema.py
+    An upstream top-level re-export shim for `meridian.schema`, declared as a
+    distributed module via `py-modules`. Installed non-editable it becomes
+    `site-packages/schema.py`, which shadows the unrelated `schema`
+    distribution on PyPI for any environment holding both. Nothing in the
+    repository imported it, and upstream's own comment marked it for removal.
+    Use `from meridian.schema import ...`.
 
 Summary of behavioural changes to existing code:
 
@@ -204,6 +231,23 @@ Summary of behavioural changes to existing code:
     boundary. Local and CI suites use the same bounded-memory test phases.
   * The frozen setup uses a dependency lock; schema source dependencies and
     GitHub Actions use full commit pins.
+  * `autolog(log_metrics=True)` logs R-squared, MAPE and wMAPE for a model
+    built the documented way. It previously required the deprecated
+    `PosteriorMCMCSampler(meridian=...)` constructor, which no supported code
+    path uses, so it only ever emitted an unsupported-configuration warning.
+  * Accelerator support is measured rather than assumed:
+    `scripts/gpu_validation.py --capability-only` reports which XLA operations
+    a visible device can actually run, and distinguishes a device that cannot
+    run the model from a device that is absent. A CPU-versus-GPU comparison no
+    longer reports agreement when Monte Carlo error is unavailable for every
+    channel, and a crashed fit leg no longer exits zero.
+  * The max rank-normalized split R-hat reported by the recovery study, the
+    prior-sensitivity study and the GPU comparison comes from one shared
+    implementation. It is deliberately distinct from
+    `SamplingDiagnostics.rhat_max`, which reports upstream's TFP
+    potential-scale-reduction statistic.
+  * Every evidence file under `docs/validation/` records the git revision,
+    host architecture, package versions and producer hash that produced it.
 
 Third-party report assets, unmodified and redistributed with their licenses:
 

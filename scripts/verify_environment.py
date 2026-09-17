@@ -26,7 +26,9 @@ Run this immediately after installing, before trusting anything:
 Every check here corresponds to a real failure that cost time. The most
 expensive was a `tensorflow-metal` plugin left over in the environment, which
 makes `import meridian` die with a symbol-not-found error inside
-`libmetal_plugin.dylib` and says nothing about the actual cause.
+`libmetal_plugin.dylib` and says nothing about the actual cause. The
+accelerator check reports the same class of answer for `jax-metal`, which
+registers a Metal device that cannot compile this model.
 
 Exit code is 0 when everything required passes, 1 otherwise.
 """
@@ -37,7 +39,12 @@ import argparse
 import importlib
 import importlib.metadata as metadata
 import pathlib
+import platform
+import re
+import subprocess
+import tempfile
 import sys
+import tomllib
 from collections.abc import Sequence
 
 
@@ -52,6 +59,23 @@ _OPTIONAL_DEPENDENCIES = [
 _GREEN = 'PASS'
 _RED = 'FAIL'
 _AMBER = 'WARN'
+
+
+def _normalized(name: str | None) -> str | None:
+  """PEP 503 name normalization, so `-`/`_`/case differences do not read as
+  two distributions."""
+  if name is None:
+    return None
+  return re.sub(r'[-_.]+', '-', name).lower()
+
+
+def _expected_distribution_name(repo_root: pathlib.Path) -> str | None:
+  """Reads the current `[project].name` from the repo's pyproject.toml."""
+  try:
+    with (repo_root / 'pyproject.toml').open('rb') as f:
+      return tomllib.load(f)['project']['name']
+  except Exception:  # pylint: disable=broad-except
+    return None
 
 
 class Report:
@@ -112,7 +136,7 @@ def check_meridian_import(report: Report, repo_root: pathlib.Path) -> bool:
 
   report.add(_GREEN, 'import meridian', f'version {meridian.__version__}')
 
-  # Importing a PyPI copy instead of this checkout is a silent trap: edits and
+  # Importing a PyPI copy instead of this checkout means edits and
   # fixes in the working tree simply do not take effect.
   module_file = getattr(meridian, '__file__', None)
   if module_file is None:
@@ -164,6 +188,181 @@ def check_conflicting_packages(report: Report) -> None:
       f'{metal} installed. It is not compatible with the pinned TensorFlow'
       ' and breaks `import meridian`. Fix: pip uninstall -y tensorflow-metal',
   )
+
+
+def check_import_is_path_independent(
+    report: Report, repo_root: pathlib.Path
+) -> None:
+  """Imports meridian from a directory that is not the repository.
+
+  Running from the repository root puts the source tree on `sys.path`, so
+  `import meridian` succeeds there even when the install is not actually
+  working. Every other consumer -- a notebook elsewhere, a cron job, a
+  different working directory -- gets an ImportError.
+
+  This was a real environment: the editable `.pth` in site-packages carried
+  the macOS `hidden` flag, left over from a manual workaround, and CPython's
+  `site` module silently skips a hidden `.pth`. The finder never installed,
+  every check here still passed, and the package was importable only from one
+  directory.
+  """
+  probe = (
+      "import meridian, pathlib, sys;"
+      "sys.stdout.write(str(pathlib.Path(meridian.__file__).resolve()))"
+  )
+  with tempfile.TemporaryDirectory() as elsewhere:
+    result = subprocess.run(
+        [sys.executable, "-c", probe],
+        cwd=elsewhere,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+  if result.returncode != 0:
+    tail = (result.stderr or "").strip().splitlines()
+    report.add(
+        _RED,
+        "import from elsewhere",
+        f"`import meridian` fails outside the repository: "
+        f"{tail[-1] if tail else 'no detail'}. The package is importable only "
+        "because the repository root is on `sys.path`. On macOS check for a "
+        "hidden `.pth`: "
+        "ls -lO .venv/lib/python*/site-packages/__editable__*.pth, then "
+        "chflags nohidden on it. Otherwise re-run `make setup`.",
+    )
+    return
+
+  resolved = pathlib.Path(result.stdout.strip())
+  try:
+    resolved.relative_to(repo_root.resolve())
+  except ValueError:
+    report.add(
+        _AMBER,
+        "import from elsewhere",
+        f"resolves to {resolved}, which is outside this checkout",
+    )
+    return
+  report.add(_GREEN, "import from elsewhere", "resolves to this checkout")
+
+
+def check_accelerator(report: Report) -> None:
+  """Reports what this machine's accelerator can do for Meridian.
+
+  On Apple Silicon the honest answer is "nothing yet", and saying so here
+  saves the afternoon it otherwise takes to find out. Both Metal plugins were
+  measured on an M4 Max on 17 September 2026; see
+  `docs/validation/gpu-metal-*.json` for the operation-by-operation record and
+  `scripts/gpu_validation.py --capability-only` to reproduce it on your own
+  machine.
+  """
+  try:
+    import jax  # pylint: disable=g-import-not-at-top
+
+    backend = jax.default_backend()
+    devices = [str(d) for d in jax.devices()]
+  except Exception as e:  # pylint: disable=broad-except
+    report.add(_RED, 'accelerator', f'{type(e).__name__}: {e}')
+    return
+
+  try:
+    metal = metadata.version('jax-metal')
+  except metadata.PackageNotFoundError:
+    metal = None
+
+  if metal is not None:
+    # jax-metal registers a device and then fails to compile for it, so a
+    # device list alone would read as success.
+    report.add(
+        _RED,
+        'jax-metal',
+        f'{metal} installed. It registers a Metal device that cannot run this'
+        ' model: on the supported JAX range it rejects the compiler output'
+        ' outright, and on the JAX version it was built for it cannot lower'
+        ' matrix multiplication or Cholesky. Fix: pip uninstall -y jax-metal',
+    )
+    return
+
+  if backend.lower() == 'cpu':
+    detail = f'CPU ({", ".join(devices)})'
+    if platform.system() == 'Darwin' and platform.machine() == 'arm64':
+      detail += ' -- the supported path on Apple Silicon; no Metal GPU backend'
+    report.add(_GREEN, 'compute device', detail)
+    return
+
+  report.add(_GREEN, 'compute device', f'{backend} ({", ".join(devices)})')
+
+
+def check_duplicate_distribution(
+    report: Report, repo_root: pathlib.Path
+) -> None:
+  """Fails if more than one installed distribution owns `import meridian`.
+
+  This repo was renamed `google-meridian` -> `meridian-mmm-fork`. A venv
+  created before the rename and reused afterwards can end up with both
+  installed editable from the same source tree; which one Python resolves is
+  then filesystem-order-dependent, not something to rely on.
+
+  Uses `packages_distributions()`, which maps the top-level `meridian` import
+  to every distribution that claims it, rather than hardcoding the two known
+  names -- a future rename away from `meridian-mmm-fork` is caught the same
+  way, and an editable install's own `*.egg-info` (which is not reliably on
+  `sys.path` and so is not something `Distribution.files` can be trusted to
+  see) never has to be located directly.
+  """
+  expected = _normalized(_expected_distribution_name(repo_root))
+  # Deduplicate by normalized name. `packages_distributions()` reports one
+  # entry per metadata directory that claims the import, so a single editable
+  # install can appear twice -- once from its `*.dist-info` in site-packages
+  # and once from the `*.egg-info` at the repo root, whenever the repo root is
+  # on `sys.path`. Counting registrations rather than distributions made this
+  # check's verdict depend on how it was invoked (`python scripts/x.py` put
+  # `scripts/` on the path and passed; anything with the repo root on the path
+  # failed) and told the user to uninstall the only copy they had.
+  # A real conflict is two *different* names owning the same import.
+  owners = sorted({
+      _normalized(name)
+      for name in metadata.packages_distributions().get('meridian', [])
+  })
+  if len(owners) <= 1:
+    report.add(
+        _GREEN,
+        'meridian distribution',
+        owners[0] if owners else 'not installed as a distribution',
+    )
+    return
+  stale = [name for name in owners if name != expected]
+  uninstall_targets = stale or owners[1:]
+  report.add(
+      _RED,
+      'meridian distribution',
+      f'multiple installed distributions own the `meridian` import path:'
+      f' {", ".join(owners)}. Only one may be installed at a time.'
+      f' Fix: pip uninstall -y {" ".join(uninstall_targets)}',
+  )
+
+
+def check_stale_egg_info(report: Report, repo_root: pathlib.Path) -> None:
+  """Warns about a root `*.egg-info` left over from a previous project name.
+
+  `make clean` removes these; a stale one from before a rename does not break
+  anything by itself, but it is a sign the build tree was never cleaned.
+  """
+  expected = _expected_distribution_name(repo_root)
+  if expected is None:
+    return
+  expected_dir = expected.replace('-', '_') + '.egg-info'
+  stale = sorted(
+      p.name
+      for p in repo_root.glob('*.egg-info')
+      if p.is_dir() and p.name != expected_dir
+  )
+  if stale:
+    report.add(
+        _AMBER,
+        'stale egg-info',
+        f'{", ".join(stale)} at the repo root does not match the current'
+        f' project ({expected_dir}). Fix: make clean',
+    )
 
 
 def check_core_versions(report: Report) -> None:
@@ -281,8 +480,12 @@ def main(argv: Sequence[str] | None = None) -> int:
   check_python(report)
   imported = check_meridian_import(report, repo_root)
   check_conflicting_packages(report)
+  check_duplicate_distribution(report, repo_root)
+  check_stale_egg_info(report, repo_root)
   if imported:
+    check_import_is_path_independent(report, repo_root)
     check_backend(report)
+    check_accelerator(report)
     check_core_versions(report)
     check_optional_dependencies(report)
     check_report_stylesheet(report, repo_root)

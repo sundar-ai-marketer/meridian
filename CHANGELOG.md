@@ -24,6 +24,41 @@ To release a new version (e.g. from `1.0.0` -> `2.0.0`):
 ## [Unreleased]
 
 *   Add `get_selected_dates_str` to TimeCoordinates.
+*   Measure accelerator support instead of deferring it.
+    `scripts/gpu_validation.py --capability-only` (also `make gpu-check`)
+    reports which XLA operations a visible device can run, and names the part
+    of the model each one serves. Records that Apple Metal cannot run this
+    model, with the reason, under `docs/validation/gpu-metal-*.json`.
+*   Fix three ways the GPU comparison could report success without evidence:
+    a comparison where Monte Carlo error was unavailable for every channel
+    reported "consistent"; a crashed fit leg exited zero; and the memory probe
+    ran in-process, so a driver-level abort discarded every result collected
+    before it.
+*   Fix `autolog(log_metrics=True)`, which could not log metrics for a model
+    built the documented way and only emitted an unsupported-configuration
+    warning.
+*   Add `scripts/apple_silicon_benchmark.py` and document Apple Silicon as a
+    tested target. Measured: the default float64 precision is faster than
+    float32 on an M4 Max.
+*   Record what a Metal GPU does for this model. Apple's `jax-metal` and
+    `tensorflow-metal` do not run it; the third-party `jax-mps` does, at
+    float32, and measured 18x slower than the same machine's CPU on an
+    unconverged fit. CPU remains the supported path on Apple Silicon.
+*   Remove the top-level `schema.py` shim. Installed non-editable it shadowed
+    the unrelated `schema` distribution on PyPI. Use `meridian.schema`.
+*   Collapse three hand-rolled copies of the max rank-normalized split R-hat
+    statistic into `sampling_diagnostics.max_rank_normalized_rhat`, and route
+    every evidence writer through `evidence.write_evidence`.
+*   Every `docs/validation/` artefact now records the git revision, host
+    architecture, package versions and producer hash that produced it, and
+    `scripts/test_evidence_provenance.py` enforces it.
+*   Add gates: `make lint` (duplicate code and unused names, `.pylintrc-gate`),
+    `scripts/test_phase_coverage.py` (no test file is missed by every phase),
+    and CI jobs running `pip-audit`, `actionlint` and `verify_environment.py`.
+*   Add `AGENTS.md`.
+*   Detect a duplicate or shadowed Meridian install and a stale egg-info in
+    `scripts/setup.sh` and `scripts/verify_environment.py`; a venv reused
+    across the distribution rename produced one.
 
 ## [2.0.0] - 2026-09-02
 

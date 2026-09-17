@@ -20,7 +20,7 @@ def main():
 
     # 1. Define Prior Distributions
     # You can customize the priors for ROI, media effects, Adstock, and Hill functions.
-    # The defaults are generally robust, but overriding them is common when incorporating past experiment data.
+    # The defaults work for most datasets; override them when incorporating past experiment data.
     prior_distribution = PriorDistribution(
         # Example: Setting a tighter prior on ROI if we have strong beliefs from past MMMs.
         # By default, Meridian uses a log-normal distribution for ROI priors.

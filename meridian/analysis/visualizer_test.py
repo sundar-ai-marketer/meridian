@@ -1279,6 +1279,45 @@ class MediaEffectsTest(parameterized.TestCase):
     self.assertEqual(band_encoding.y.shorthand, f"{c.CI_LO}:Q")
     self.assertEqual(band_encoding.y2.shorthand, f"{c.CI_HI}:Q")
 
+  # Response curves omitted `range=` on both the shared base encoding and the
+  # credible-interval band, so Vega-Lite coloured the channels with its own
+  # scheme. Both layers are checked: fixing one and not the other would give a
+  # chart whose line and band disagree on a channel's colour.
+  def test_response_curves_pin_the_categorical_range_on_every_layer(self):
+    plot = self.media_effects_kpi_type_revenue.plot_response_curves(
+        plot_separately=False
+    )
+    for index, layer in enumerate(plot.layer):
+      color = layer.encoding.color
+      if color is alt.Undefined or color is None:
+        continue
+      with self.subTest(layer=index):
+        color_range = color["scale"]["range"]
+        self.assertTrue(
+            color_range, f"layer {index} left the colour range to Vega-Lite"
+        )
+        for value in color_range:
+          self.assertIn(value, c.CATEGORICAL_COLOR_RANGE)
+
+  def test_response_curves_faceted_mode_also_pins_the_range(self):
+    # The faceted branch builds its own colour object with legend=None, which
+    # is exactly where a second omission would hide.
+    plot = self.media_effects_kpi_type_revenue.plot_response_curves(
+        plot_separately=True
+    )
+    spec = plot.spec if hasattr(plot, "spec") else plot
+    layers = getattr(spec, "layer", [])
+    checked = 0
+    for index, layer in enumerate(layers):
+      color = layer.encoding.color
+      if color is alt.Undefined or color is None:
+        continue
+      with self.subTest(layer=index):
+        for value in color["scale"]["range"]:
+          self.assertIn(value, c.CATEGORICAL_COLOR_RANGE)
+        checked += 1
+    self.assertGreater(checked, 0, "no coloured layer was inspected")
+
   def test_media_effects_plot_response_curves_no_ci(self):
     plot_no_band = self.media_effects_kpi_type_revenue.plot_response_curves(
         plot_separately=False, include_ci=False
@@ -3021,6 +3060,35 @@ class MediaSummaryTest(parameterized.TestCase):
     self.assertIsNone(plot.encoding.size["legend"])
     self.assertEqual(plot.encoding.color.shorthand, f"{c.CHANNEL}:N")
     self.assertEqual(plot.encoding.y["axis"]["titleY"], -20)
+
+  # Vega-Lite applies its own categorical scheme when `range=` is absent, and
+  # the chart still renders -- so an omission is invisible in every test that
+  # checks shorthands and titles. These three charts shipped that way: a
+  # rendered report showed them in #4c78a8/#f58518/#e45756/#72b7b2 while every
+  # other chart used the fork's range, contradicting what NOTICE claims.
+  @parameterized.named_parameters(
+      ("roi_vs_effectiveness", "plot_roi_vs_effectiveness"),
+      ("roi_vs_mroi", "plot_roi_vs_mroi"),
+  )
+  def test_bubble_chart_pins_the_categorical_range(self, method_name):
+    plot = getattr(self.media_summary_revenue, method_name)()
+    color_range = plot.encoding.color["scale"]["range"]
+    self.assertTrue(
+        color_range, f"{method_name} left the colour range to Vega-Lite"
+    )
+    for value in color_range:
+      self.assertIn(value, c.CATEGORICAL_COLOR_RANGE)
+
+  @parameterized.named_parameters(
+      ("roi_vs_effectiveness", "plot_roi_vs_effectiveness"),
+      ("roi_vs_mroi", "plot_roi_vs_mroi"),
+  )
+  def test_bubble_chart_colour_domain_covers_every_channel(self, method_name):
+    plot = getattr(self.media_summary_revenue, method_name)()
+    domain = plot.encoding.color["scale"]["domain"]
+    color_range = plot.encoding.color["scale"]["range"]
+    # One colour per category, or Vega-Lite recycles and two channels collide.
+    self.assertLen(color_range, len(domain))
 
   def test_media_summary_plot_roi_vs_effectiveness_correct_title(self):
     plot = self.media_summary_revenue.plot_roi_vs_effectiveness()

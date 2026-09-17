@@ -57,13 +57,20 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import json
 import pathlib
 import sys
 from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
+
+# Runs both as `python scripts/x.py` and as `python -m unittest scripts.test_x`,
+# so anchor the repo root before importing the shared helpers.
+_REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+  sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.evidence import provenance, write_evidence  # pylint: disable=g-import-not-at-top,g-bad-import-order
 
 
 def _build_model(template, config, priors: dict[str, Any] | None):
@@ -301,6 +308,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   evidence = {
       "date": datetime.date.today().isoformat(),
       "script": "scripts/prior_predictive_audit.py",
+      "provenance": provenance(pathlib.Path(__file__).resolve()),
       "shape": {
           "n_geos": args.geos,
           "n_times": args.times,
@@ -337,10 +345,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   }
 
   if args.output is not None:
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    write_evidence(args.output, evidence)
     print(f"wrote {args.output}")
   return 0
 

@@ -97,7 +97,6 @@ dev = [
 # Installed through `pip install -e .[colab]`
 colab = [
   "psutil",
-  "python-calamine",  # For parsing the included simulated .xlsx files.
 ]
 
 # GPU deps
@@ -110,14 +109,6 @@ and-cuda = [
 # MLflow deps
 # Installed through `pip install -e .[mlflow]`
 mlflow = ["mlflow"]
-
-# JAX backend dependencies.
-# Installed through `pip install -e .[jax]`
-jax = [
-  "jax >= 0.7.2, < 1.0.0",
-  "jaxlib >= 0.7.2, < 1.0.0",
-  "tfp-nightly[substrates-jax] == 0.26.0.dev20260130",
-]
 
 # MMM proto schema.
 schema = [
@@ -157,7 +148,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 include-package-data = true
-py-modules = ["schema"]  # TODO: Remove this shim.
+# No `py-modules`. A top-level module named `schema` installs as
+# `site-packages/schema.py` and shadows the `schema` distribution on PyPI (a
+# data-validation library) for anyone who installs both. The import path here
+# is `meridian.schema`.
 
 [tool.setuptools.packages.find]
 include = ["meridian*", "scenarioplanner*"]

@@ -100,6 +100,78 @@ jobs:
           semver_prefix: proto-v
           current_version: ${{ steps.get_proto_version.outputs.value}}
 
+  # Duplicate code and unused names, on the paths this fork owns. Fast: it
+  # needs only the [dev] extra, not the scientific stack, because
+  # .pylintrc-gate leaves import-error off.
+  lint:
+    name: Lint (duplicate code, unused names)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.USE_PYTHON_VERSION }}
+      - name: Install pylint
+        run: python -m pip install 'pylint>=4.0'
+      - name: Run the gated checks
+        shell: bash
+        run: |
+          # `make lint-paths` so the scope has one definition (the Makefile),
+          # not a copy here that can drift out of step with it. Reading it into
+          # an array says the word-splitting is deliberate: the target prints
+          # several paths and pylint needs them as separate arguments.
+          read -r -a lint_paths <<< "$(make -s lint-paths)"
+          python -m pylint --rcfile=.pylintrc-gate --score=n "${lint_paths[@]}"
+
+  # AUDIT.md recorded pip-audit and actionlint as run once by hand, which meant
+  # a dependency advisory published afterwards, or a workflow edit that broke
+  # its own schema, would go unnoticed until someone re-ran them. Both are
+  # cheap, so both run here. Kept as a separate job: an advisory against a
+  # pinned dependency is a real finding, and it should be visible without
+  # taking the whole test matrix down with it.
+  security:
+    name: Advisories and workflow lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.USE_PYTHON_VERSION }}
+
+      # Audits the locked dependency set rather than whatever resolves today,
+      # so the result describes what this revision actually installs.
+      #
+      # The extras are the ones scripts/setup.sh installs, so the audit covers
+      # what is actually tested. Deliberately not `--all-extras`: that pulls
+      # `and-cuda`, whose Linux-only CUDA wheels cannot be resolved on every
+      # platform and add gigabytes to a dependency-resolution dry run without
+      # covering anything this project tests. `--no-emit-project` drops the
+      # editable `-e .` line, which is this repository, not a dependency.
+      - name: Check dependency advisories
+        run: |
+          python -m pip install 'pip-audit==2.10.1' 'uv==0.9.9'
+          uv export --frozen --no-hashes --no-emit-project \
+            --extra dev --extra colab --extra schema \
+            --extra mlflow --extra geox --extra scenarioplanner \
+            --output-file "$RUNNER_TEMP/locked-requirements.txt"
+          python -m pip_audit --strict --requirement \
+            "$RUNNER_TEMP/locked-requirements.txt"
+
+      # Pinned version and verified checksum, matching how this repository
+      # already fetches Trivy in the docker job.
+      - name: Lint the workflows
+        run: |
+          tool_dir="$RUNNER_TEMP/actionlint"
+          mkdir -p "$tool_dir"
+          curl --fail --silent --show-error --location \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            --output "$tool_dir/actionlint.tar.gz"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $tool_dir/actionlint.tar.gz" | sha256sum --check -
+          tar -xzf "$tool_dir/actionlint.tar.gz" -C "$tool_dir" actionlint
+          "$tool_dir/actionlint" -color
+
   pytest:
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -137,22 +209,26 @@ jobs:
           ) &
           monitor_pid=$!
           trap 'kill "$monitor_pid" 2>/dev/null || true' EXIT
-          python -m unittest \
-            scripts.test_run_tests \
-            scripts.test_run_recovery_study \
-            scripts.test_evidence \
-            scripts.test_triage_container_os \
-            scripts.test_container_reachability_probe \
-            scripts.test_gpu_validation \
-            scripts.test_prior_sensitivity \
-            scripts.test_coverage_grid \
-            scripts.test_prior_predictive_audit
+          # One test-selection mechanism. `run_tests.py` now partitions
+          # scripts/ alongside meridian/ and scenarioplanner/, and
+          # scripts/test_phase_coverage.py fails the build if any test file
+          # under those roots is claimed by no phase. The hand-maintained
+          # module list that used to sit here could not catch a new file.
           python scripts/run_tests.py
         env:
           MERIDIAN_BACKEND: ${{ matrix.meridian-backend }}
 
       - name: Compile report stylesheet
         run: python scripts/compile_report_css.py
+
+      # Catches a shadowed or duplicate install, a stale egg-info and a
+      # conflicting accelerator plugin. It ran only from scripts/setup.sh
+      # before, so CI never exercised it.
+      - name: Verify the environment is usable
+        if: matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'
+        run: python scripts/verify_environment.py
+        env:
+          MERIDIAN_BACKEND: jax
 
       - name: Test local MLflow service integration
         if: matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'

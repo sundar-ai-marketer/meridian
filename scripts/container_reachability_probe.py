@@ -51,13 +51,20 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import json
 import os
 import pathlib
 import platform
 import subprocess
 import sys
 from collections.abc import Iterable, Sequence
+
+# Runs both as `python scripts/x.py` and as `python -m unittest scripts.test_x`,
+# so anchor the repo root before importing the shared helpers.
+_REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+  sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.evidence import provenance, write_evidence  # pylint: disable=g-import-not-at-top,g-bad-import-order
 
 
 def _installed_packages() -> list[dict[str, str]]:
@@ -213,6 +220,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   evidence = {
       "date": datetime.date.today().isoformat(),
       "probe": "scripts/container_reachability_probe.py",
+      "provenance": provenance(pathlib.Path(__file__).resolve()),
       "platform": {
           "machine": platform.machine(),
           "python": platform.python_version(),
@@ -237,10 +245,7 @@ def main(argv: Sequence[str] | None = None) -> int:
       ],
   }
 
-  args.output.parent.mkdir(parents=True, exist_ok=True)
-  args.output.write_text(
-      json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-  )
+  write_evidence(args.output, evidence)
 
   print(f"installed OS packages: {len(installed)}")
   print(f"loaded by the default workflow: {len(loaded_names)}")

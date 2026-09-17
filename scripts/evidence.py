@@ -35,10 +35,14 @@ run that produced it.
 from __future__ import annotations
 
 import dataclasses
+import datetime
 import hashlib
 import importlib.metadata as package_metadata
+import json
 import math
+import os
 import pathlib
+import platform
 import subprocess
 from collections.abc import Iterable, Mapping
 from typing import Any
@@ -71,6 +75,12 @@ def json_safe(value: Any) -> Any:
   `int`, so an int-first ordering silently writes `1` and `0`, which turns a
   recorded "did this converge" into something the reader has to decode.
   """
+  # `None` is valid JSON and means "not available" throughout this evidence --
+  # an unavailable R-hat, an absent package version. It must reach `null`, not
+  # the catch-all stringifier at the end, which would write the string "None"
+  # and turn a missing measurement into a present-looking one.
+  if value is None:
+    return None
   if isinstance(value, bool):
     return value
   if dataclasses.is_dataclass(value) and not isinstance(value, type):
@@ -79,6 +89,26 @@ def json_safe(value: Any) -> Any:
     return {str(key): json_safe(item) for key, item in value.items()}
   if isinstance(value, (list, tuple, set, frozenset)):
     return [json_safe(item) for item in value]
+
+  # numpy is optional here: the container-side scripts run on a bare
+  # interpreter, so this module must import without it. A multi-element
+  # ndarray is detected by module and class name for the same reason: an
+  # `isinstance` check would require importing numpy unconditionally.
+  module = type(value).__module__
+  if (
+      module
+      and module.startswith('numpy')
+      and type(value).__name__ == 'ndarray'
+  ):
+    return json_safe(value.tolist())
+
+  if isinstance(value, pathlib.PurePath):
+    return str(value)
+  if isinstance(value, datetime.timedelta):
+    return value.total_seconds()
+  if isinstance(value, (datetime.date, datetime.time)):
+    # `datetime.datetime` subclasses `datetime.date`, so this also covers it.
+    return value.isoformat()
 
   # numpy is optional here: the container-side scripts run on a bare
   # interpreter, so this module must import without it.
@@ -90,7 +120,12 @@ def json_safe(value: Any) -> Any:
     return value if math.isfinite(value) else None
   if isinstance(value, int):
     return value
-  return value
+
+  # Anything still unrecognised: make the drift visible rather than handing
+  # `json.dumps` a value it will reject. This must stay the only remaining
+  # fallback -- a second silent stringification branch would hide exactly the
+  # kind of drift this one exists to surface.
+  return str(value)
 
 
 def _as_numpy_scalar(value: Any) -> Any:
@@ -121,8 +156,23 @@ def sha256(path: pathlib.Path) -> str:
   return digest.hexdigest()
 
 
+# Read when git cannot answer, most-specific first. `GITHUB_SHA` is set by
+# every GitHub Actions runner; `MERIDIAN_GIT_HEAD` is for anything else that
+# knows the revision and cannot run git.
+_GIT_HEAD_ENV_VARS = ('MERIDIAN_GIT_HEAD', 'GITHUB_SHA')
+
+
 def git_head() -> str | None:
-  """Returns this repository's HEAD, regardless of the caller's directory."""
+  """Returns this repository's HEAD, regardless of the caller's directory.
+
+  Falls back to the environment when git cannot answer. The runtime container
+  is the case that matters: `.dockerignore` excludes `.git` and the image does
+  not install git, so a producer running inside it -- the container
+  reachability probe -- has no way to discover its own revision. Without the
+  fallback its evidence records a null revision, and
+  `scripts/test_evidence_provenance.py` rejects evidence that cannot say which
+  code produced it. The workflow passes the revision in instead.
+  """
   try:
     result = subprocess.run(
         ['git', 'rev-parse', 'HEAD'],
@@ -132,8 +182,17 @@ def git_head() -> str | None:
         text=True,
     )
   except (OSError, subprocess.CalledProcessError):
-    return None
-  return result.stdout.strip() or None
+    pass
+  else:
+    head = result.stdout.strip()
+    if head:
+      return head
+
+  for name in _GIT_HEAD_ENV_VARS:
+    value = os.environ.get(name, '').strip()
+    if value:
+      return value
+  return None
 
 
 def package_versions(names: Iterable[str] = DEFAULT_PACKAGES) -> dict[str, str | None]:
@@ -145,3 +204,33 @@ def package_versions(names: Iterable[str] = DEFAULT_PACKAGES) -> dict[str, str |
     except package_metadata.PackageNotFoundError:
       versions[name] = None
   return versions
+
+
+def provenance(script_path: pathlib.Path) -> dict[str, Any]:
+  """Everything needed to tell whether an evidence file still applies."""
+  return {
+      'git_head': git_head(),
+      'architecture': f'{platform.system()}-{platform.machine()}',
+      'package_versions': package_versions(),
+      'script_sha256': sha256(script_path),
+  }
+
+
+def write_evidence(path: pathlib.Path, payload: Any) -> None:
+  """Writes one evidence file, in the one format every producer uses.
+
+  Every producer had its own copy of this four-line tail, which is how the
+  drifted-helper problem starts: `sort_keys` on one path and not another makes
+  two runs of the same measurement diff against each other for no reason, and
+  a missing `json_safe` turns a numpy scalar into a crash at write time rather
+  than an error where the value was built.
+
+  Args:
+    path: Destination. Parent directories are created.
+    payload: Any structure `json_safe` can convert.
+  """
+  path.parent.mkdir(parents=True, exist_ok=True)
+  path.write_text(
+      json.dumps(json_safe(payload), indent=2, sort_keys=True) + '\n',
+      encoding='utf-8',
+  )

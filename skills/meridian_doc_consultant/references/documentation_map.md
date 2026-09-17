@@ -6,8 +6,6 @@ answering user questions.
 
 ## Documentation Map
 
-<!-- TODO: Refine the description summary for each doc below. -->
-
 *   **General Introduction & Basics:**
 
     *   `docs/basics/meridian-introduction.md` (Overview of Meridian as an

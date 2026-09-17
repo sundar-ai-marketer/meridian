@@ -1,0 +1,56 @@
+# NOTICE: This file is new in this fork and does not exist in the original
+# google/meridian source.
+#
+# The lint configuration that CI enforces, as distinct from `.pylintrc`, which
+# describes the full Google Python style and is not gated on. This file enables
+# only the checks that correspond to a regression this repository has actually
+# had, so `make lint` starts green and stays meaningful:
+#
+#   duplicate-code   Commit 478fc19d removed four drifted copies of the
+#                    evidence helpers. Three hand-rolled copies of the
+#                    max-rank-normalized-R-hat statistic were found the same
+#                    way. Drift in a duplicated *statistic* silently changes
+#                    published numbers, which is the reason this is gated.
+#   unused-import    Two were found by hand during the same audit, and more
+#                    were introduced within the hour by a refactor that
+#                    centralised evidence writing.
+#   unused-variable  The same class of leftover, for locals.
+#
+# Scope: the paths this fork owns. Running duplicate-code across the whole tree
+# reports 87 pairs inside unmodified upstream code, which is upstream's to
+# resolve and would make the gate unactionable here. `make lint` sets the
+# paths; this file sets the rules.
+
+[MAIN]
+# A cached run can report a stale duplicate set after files move.
+persistent = no
+
+[MESSAGES CONTROL]
+# `disable = all` plus an explicit enable list means nothing else can fire.
+# In particular `unknown-option-value` stays off: the source carries
+# Google-internal pragma names (g-import-not-at-top and friends) that are
+# meaningful to the upstream toolchain but unknown to this pylint build, and
+# reporting each one would bury the checks that matter.
+# `unknown-option-value` is listed explicitly: it is emitted while parsing the
+# source's inline pragmas, before `all` is applied, so it survives `disable =
+# all` on its own.
+disable =
+    all,
+    unknown-option-value
+enable =
+    duplicate-code,
+    unused-import,
+    unused-variable
+
+[SIMILARITIES]
+# 8, measured rather than guessed. At 4 (the `.pylintrc` value) the checker
+# reports licence headers and import blocks, 32 of them, and a gate that noisy
+# gets switched off. At 12 it misses the real evidence-writing duplication this
+# audit found. 8 reports that one and the R-hat one, and nothing spurious.
+min-similarity-lines = 8
+ignore-comments = yes
+ignore-docstrings = yes
+# Import blocks are not duplication worth reporting; several producers
+# legitimately import the same shared helpers.
+ignore-imports = yes
+ignore-signatures = yes
