@@ -24,6 +24,16 @@ import time
 import urllib.error
 import urllib.request
 
+# Allow `from test_end_to_end import run` below to resolve both when this file
+# is run directly (`python scripts/test_mlflow_integration.py`, where Python
+# already puts this file's directory on `sys.path`) and when it's imported as
+# `scripts.test_mlflow_integration` (for example via
+# `python -m unittest scripts.test_mlflow_integration`, run from the repo
+# root, where only the repo root is on `sys.path` by default).
+_SCRIPTS_DIR = str(Path(__file__).resolve().parent)
+if _SCRIPTS_DIR not in sys.path:
+  sys.path.insert(0, _SCRIPTS_DIR)
+
 from test_end_to_end import run
 
 

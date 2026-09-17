@@ -15,6 +15,7 @@
 # NOTICE: This file was modified from the original google/meridian source.
 # See the NOTICE file at the repository root for details.
 
+import math
 import tempfile
 from unittest import mock
 
@@ -24,6 +25,7 @@ import arviz as az
 from meridian import backend
 from meridian import constants
 from meridian.analysis import analyzer
+from meridian.analysis import visualizer
 from meridian.data import test_utils
 from meridian.mlflow import autolog
 import mlflow
@@ -32,6 +34,7 @@ from meridian.model import posterior_sampler
 from meridian.model import prior_sampler
 from meridian.model import spec
 from meridian.version import __version__
+import pandas as pd
 
 
 def _get_input_data():
@@ -224,21 +227,90 @@ class AutologTest(parameterized.TestCase):
     for key, value in expected_log_param_calls:
       self.mock_log_param.assert_any_call(key, value)
 
-  def test_autolog_log_metrics_warning(self):
+  def test_autolog_log_metrics_true_logs_finite_metrics(self):
+    """log_metrics=True logs R_Squared/MAPE/wMAPE for a standard model."""
+    fake_diagnostics_table = pd.DataFrame({
+        "metric": ["R_Squared", "MAPE", "wMAPE"],
+        "value": [0.87, 12.5, 9.75],
+    })
     autolog.autolog(log_metrics=True)
-    mmm = model.Meridian(input_data=_get_input_data())
-    mmm.sample_prior(n_draws=100, seed=1)
-    with mock.patch("warnings.warn") as mock_warn:
+    with mock.patch.object(
+        visualizer.ModelDiagnostics,
+        "predictive_accuracy_table",
+        autospec=True,
+        return_value=fake_diagnostics_table,
+    ):
+      # Built the standard way: `model.Meridian(...)` then
+      # `sample_posterior(...)`, never the deprecated
+      # `PosteriorMCMCSampler(meridian=...)` path.
+      mmm = model.Meridian(input_data=_get_input_data())
+      mmm.sample_prior(n_draws=100, seed=1)
       mmm.sample_posterior(
           n_chains=1,
           n_adapt=1,
           n_burnin=1,
           n_keep=1,
       )
-      mock_warn.assert_called_with(
-          "log_metrics=True is not supported when PosteriorMCMCSampler is"
-          " initialized with model_context."
-      )
+
+    logged_metrics = dict(
+        (call.args[0], call.args[1])
+        for call in self.mock_log_metric.call_args_list
+    )
+    for name, expected_value in (
+        ("R_Squared", 0.87),
+        ("MAPE", 12.5),
+        ("wMAPE", 9.75),
+    ):
+      self.assertIn(name, logged_metrics)
+      value = logged_metrics[name]
+      self.assertIsInstance(value, float)
+      self.assertTrue(math.isfinite(value))
+      self.assertEqual(value, expected_value)
+
+  def test_autolog_log_metrics_false_logs_no_metrics(self):
+    """log_metrics=False (the default) logs no metrics."""
+    autolog.autolog(log_metrics=False)
+    mmm = model.Meridian(input_data=_get_input_data())
+    mmm.sample_prior(n_draws=100, seed=1)
+    mmm.sample_posterior(
+        n_chains=1,
+        n_adapt=1,
+        n_burnin=1,
+        n_keep=1,
+    )
+    self.mock_log_metric.assert_not_called()
+
+  def test_autolog_log_metrics_computation_failure_warns_but_succeeds(self):
+    """A raising `predictive_accuracy_table` warns but sampling still works."""
+    autolog.autolog(log_metrics=True)
+    with mock.patch.object(
+        visualizer.ModelDiagnostics,
+        "predictive_accuracy_table",
+        autospec=True,
+        side_effect=ValueError("degenerate fit: singular covariance"),
+    ):
+      mmm = model.Meridian(input_data=_get_input_data())
+      mmm.sample_prior(n_draws=100, seed=1)
+      with mock.patch("warnings.warn") as mock_warn:
+        result = mmm.sample_posterior(
+            n_chains=1,
+            n_adapt=1,
+            n_burnin=1,
+            n_keep=1,
+        )
+        self.assertTrue(mock_warn.called)
+        warned_messages = [str(call.args[0]) for call in mock_warn.call_args_list]
+        self.assertTrue(
+            any(
+                "degenerate fit: singular covariance" in message
+                for message in warned_messages
+            ),
+            f"Expected a warning mentioning the underlying error, got:"
+            f" {warned_messages}",
+        )
+    # Sampling itself must still succeed despite the metrics failure.
+    self.assertIsNone(result)
+    self.mock_log_metric.assert_not_called()
 
   def test_autolog_disabled_after_initially_enabled(self):
     autolog.autolog()
