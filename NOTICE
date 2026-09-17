@@ -185,6 +185,10 @@ Summary of behavioural changes to existing code:
   * Report text values are HTML-escaped, while explicitly rendered fragments
     preserve chart, table and finding markup. Chart JSON uses script-safe
     serialization, and chart lookup handles quoted identifiers.
+  * The generated report prints the media prior the ROI figures rest on, read
+    from the fitted model, and says whether it is the library default. Its
+    uncertainty caveat also records that measured interval coverage degrades
+    under response misspecification and thin geo coverage.
   * Geographic allocation diagnostics consider paid channels only. Sampling
     diagnostics preserve non-finite failure signals, and fixed-truth recovery
     ranks are explicitly distinguished from simulation-based calibration.

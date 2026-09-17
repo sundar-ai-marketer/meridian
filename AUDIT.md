@@ -610,6 +610,12 @@ priors is not supported by the data.
 This measures sensitivity, not accuracy: it does not say which prior is right.
 Run the same sweep on your own data before quoting a number from it.
 
+The generated report now prints the prior beside the ROI figures. It reads the
+distribution out of the fitted model rather than restating a documented
+default, names the parameter, says whether the default was overridden, and
+points at `scripts/prior_sensitivity.py`. A reader handed an ROI number can
+now see what it rests on without opening this document.
+
 ### Coverage beyond one setting
 
 The ten-seed study above measures one shape. `scripts/coverage_grid.py` runs

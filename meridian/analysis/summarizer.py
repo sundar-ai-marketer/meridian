@@ -62,6 +62,84 @@ RESPONSE_CURVES_CARD_SPEC = formatter.CardSpec(
 )
 
 
+def _uniform_scalar(value, np) -> float | None:
+  """Returns the single value behind a prior parameter, or None.
+
+  A channel-ordered prior has a different value per channel and cannot honestly
+  be summarised as one number, so it returns None and the caller says so
+  instead of quoting the first channel's value as though it applied to all.
+  """
+  try:
+    array = np.asarray(value, dtype=float).reshape(-1)
+  except (TypeError, ValueError):
+    return None
+  if array.size == 0 or not np.all(np.isfinite(array)):
+    return None
+  if array.size > 1 and not np.allclose(array, array[0]):
+    return None
+  return float(array[0])
+
+
+def _describe_distribution(distribution, np) -> str | None:
+  """Renders a prior distribution as a phrase a report reader can act on.
+
+  LogNormal is spelled out in terms of its median rather than its log-scale
+  location, because `loc=0.2` means nothing to someone reading an ROI table
+  and "median 1.22" means exactly what they need.
+  """
+  import math  # pylint: disable=g-import-not-at-top
+
+  name = type(distribution).__name__
+
+  if name == 'LogNormal':
+    loc = _uniform_scalar(getattr(distribution, 'loc', None), np)
+    scale = _uniform_scalar(getattr(distribution, 'scale', None), np)
+    if loc is None or scale is None:
+      return 'channel-specific LogNormal prior'
+    return (
+        f'LogNormal prior with median {math.exp(loc):.2f} and log-scale'
+        f' standard deviation {scale:.2f}'
+    )
+
+  if name in ('Normal', 'HalfNormal', 'TruncatedNormal'):
+    scale = _uniform_scalar(getattr(distribution, 'scale', None), np)
+    loc = _uniform_scalar(getattr(distribution, 'loc', None), np)
+    if scale is None:
+      return f'channel-specific {name} prior'
+    if loc is None:
+      return f'{name} prior with standard deviation {scale:.2f}'
+    return f'{name} prior centred on {loc:.2f} with standard deviation {scale:.2f}'
+
+  if name == 'Deterministic':
+    fixed = _uniform_scalar(getattr(distribution, 'loc', None), np)
+    if fixed is None:
+      return 'deterministic prior'
+    return f'deterministic prior fixed at {fixed:.2f}'
+
+  return f'{name} prior'
+
+
+def _distributions_match(first, second, np) -> bool:
+  """Whether two prior distributions are the same family and parameters."""
+  if second is None or type(first) is not type(second):
+    return False
+  for attribute in ('loc', 'scale', 'concentration', 'rate'):
+    left = getattr(first, attribute, None)
+    right = getattr(second, attribute, None)
+    if (left is None) != (right is None):
+      return False
+    if left is None:
+      continue
+    try:
+      if not np.allclose(
+          np.asarray(left, dtype=float), np.asarray(right, dtype=float)
+      ):
+        return False
+    except (TypeError, ValueError):
+      return False
+  return True
+
+
 class Summarizer:
   """Generates HTML summary visualizations from the model fitting."""
 
@@ -88,6 +166,63 @@ class Summarizer:
     )._use_kpi(use_kpi)
     currency_code = getattr(meridian.input_data, 'currency_code', None)
     self._currency = currency_module.get_currency_symbol(currency_code)
+
+  # The prior parameter that carries the paid-media effect, per prior type.
+  # `coefficient` puts it on `beta_m`; the others reparameterise onto the
+  # named quantity.
+  _MEDIA_PRIOR_PARAMETER = {
+      c.TREATMENT_PRIOR_TYPE_ROI: c.ROI_M,
+      c.TREATMENT_PRIOR_TYPE_MROI: c.MROI_M,
+      c.TREATMENT_PRIOR_TYPE_CONTRIBUTION: c.CONTRIBUTION_M,
+      c.TREATMENT_PRIOR_TYPE_COEFFICIENT: c.BETA_M,
+  }
+
+  @functools.cached_property
+  def _media_prior_provenance(self) -> str:
+    """Describes the prior the paid-media figures on this report rest on.
+
+    A reader handed an ROI number cannot tell whether the data produced it or
+    the prior did. This reads the prior actually used out of the fitted model,
+    rather than restating a documented default that the caller may have
+    overridden, and says whether it is the library default.
+
+    Never raises: a report that fails to render is worse than one whose
+    provenance line says the prior could not be summarised.
+    """
+    try:
+      import numpy as np  # pylint: disable=g-import-not-at-top
+
+      from meridian.model import prior_distribution  # pylint: disable=g-import-not-at-top
+
+      prior_type = self._meridian.model_spec.media_prior_type
+      if not prior_type:
+        return summary_text.MEDIA_PRIOR_UNAVAILABLE
+      parameter = self._MEDIA_PRIOR_PARAMETER.get(str(prior_type))
+      if parameter is None:
+        return summary_text.MEDIA_PRIOR_UNAVAILABLE
+
+      distribution = getattr(self._meridian.model_spec.prior, parameter, None)
+      if distribution is None:
+        return summary_text.MEDIA_PRIOR_UNAVAILABLE
+
+      description = _describe_distribution(distribution, np)
+      if description is None:
+        return summary_text.MEDIA_PRIOR_UNAVAILABLE
+
+      default = getattr(prior_distribution.PriorDistribution(), parameter, None)
+      is_default = _distributions_match(distribution, default, np)
+      default_note = (
+          ', the library default'
+          if is_default
+          else ', which overrides the library default'
+      )
+      return summary_text.MEDIA_PRIOR_PROVENANCE_FORMAT.format(
+          prior_description=description,
+          parameter=parameter,
+          default_note=default_note,
+      )
+    except Exception:  # pylint: disable=broad-except
+      return summary_text.MEDIA_PRIOR_UNAVAILABLE
 
   @functools.cached_property
   def _model_fit(self):
@@ -461,7 +596,14 @@ class Summarizer:
         lead_cpik_ratio=cpik_df[c.CPIK][0],
         currency=self._currency,
     )
-    insights = ' '.join([insights, summary_text.UNCERTAINTY_CAVEAT])
+    # The prior travels with the ROI figures rather than living only in the
+    # audit: a reader handed a number cannot otherwise tell whether the data
+    # or the prior produced it.
+    insights = ' '.join([
+        insights,
+        self._media_prior_provenance,
+        summary_text.UNCERTAINTY_CAVEAT,
+    ])
     return formatter.create_card_html(
         template_env,
         PERFORMANCE_BREAKDOWN_CARD_SPEC,

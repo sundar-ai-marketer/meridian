@@ -93,11 +93,32 @@ of all your {outcome}."""
 UNCERTAINTY_CAVEAT = """Credible intervals shown on this page quantify
 parameter uncertainty conditional on the assumed saturation shape (for
 example, Hill curves for media response). They do not cover the risk that
-this shape itself is misspecified. See "Reading ROI intervals honestly" in
-the repository README and TRIAGE.md for evidence of this limitation, and
-consider running `python -m meridian.validation` on data resembling this
+this shape itself is misspecified. Measured coverage of the nominal interval
+degrades where the response shape is wrong or geo coverage is thin, and the
+highest-ROI channel is the one most affected. See "Reading ROI intervals
+honestly" in the repository README and the coverage measurements in AUDIT.md,
+and consider running `python -m meridian.validation` on data resembling this
 model's configuration before treating these intervals as bounds on total
 error."""
+
+# Printed next to the ROI figures so the prior they rest on travels with them.
+# Where spend varies little or channels move together, the prior rather than
+# the data decides a channel's ROI, and a reader given only the number cannot
+# tell which happened. Deliberately carries no fixed percentages -- the actual
+# prior is read from the fitted model, and the size of the effect is
+# configuration-specific -- pointing instead at the script that measures it.
+MEDIA_PRIOR_PROVENANCE_FORMAT = """These figures were produced under a
+{prior_description} on `{parameter}`{default_note}. ROI is weakly identified:
+where spend varies little or channels move together, this prior rather than
+the data determines a channel's figure. Refit under another defensible prior
+before treating a single number as measured; `scripts/prior_sensitivity.py`
+does exactly that and AUDIT.md records what it found."""
+
+# Appended when the model's prior could not be described, so the absence is
+# stated rather than silently leaving the reader to assume defaults.
+MEDIA_PRIOR_UNAVAILABLE = """The prior behind these figures could not be
+summarised automatically for this model configuration. Read it from the
+model's `ModelSpec` before quoting any figure on this page."""
 
 PERFORMANCE_BREAKDOWN_CARD_ID = 'performance-breakdown'
 PERFORMANCE_BREAKDOWN_CARD_TITLE = 'Return on investment'

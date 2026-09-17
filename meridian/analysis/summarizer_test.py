@@ -35,6 +35,8 @@ from meridian.data import input_data
 from meridian.data import test_utils as data_test_utils
 from meridian.data import time_coordinates as tc
 from meridian.model import model
+from meridian.model import prior_distribution
+import numpy as np
 import xarray as xr
 
 _EARLIEST_DATE = dt.datetime(2022, 1, 1)
@@ -1359,6 +1361,126 @@ class SummarizerTest(parameterized.TestCase):
     self.assertIsNotNone(result)
     self.assertEqual(result.coords[c.RF_CHANNEL].item(), 'rf_ch_1')
     self.assertEqual(result.values.item(), 2.0)
+
+
+class MediaPriorProvenanceTest(parameterized.TestCase):
+  """The prior printed beside the ROI figures must describe the real model.
+
+  A provenance line that silently states the library default while the caller
+  overrode it would be worse than printing nothing, so these tests read the
+  prior out of a real `PriorDistribution` rather than a mock.
+  """
+
+  def _provenance(self, prior, prior_type=c.TREATMENT_PRIOR_TYPE_ROI):
+    """Builds the provenance line without running Summarizer.__init__."""
+    instance = object.__new__(summarizer.Summarizer)
+    instance._meridian = mock.Mock()
+    instance._meridian.model_spec.prior = prior
+    instance._meridian.model_spec.media_prior_type = prior_type
+    return instance._media_prior_provenance
+
+  def test_default_prior_is_reported_as_the_default(self):
+    line = self._provenance(prior_distribution.PriorDistribution())
+    self.assertIn('the library default', line)
+    self.assertNotIn('overrides', line)
+    # LogNormal(0.2, 0.9) has median exp(0.2) = 1.22.
+    self.assertIn('median 1.22', line)
+    self.assertIn('roi_m', line)
+
+  def test_an_overridden_prior_is_reported_as_overriding(self):
+    f = backend.np_float_dtype
+    prior = prior_distribution.PriorDistribution(
+        roi_m=backend.tfd.LogNormal(f(np.log(3.0)), f(0.4), name=c.ROI_M)
+    )
+    line = self._provenance(prior)
+    self.assertIn('overrides the library default', line)
+    self.assertIn('median 3.00', line)
+    self.assertIn('standard deviation 0.40', line)
+
+  def test_the_line_names_the_parameter_for_each_prior_type(self):
+    prior = prior_distribution.PriorDistribution()
+    for prior_type, parameter in (
+        (c.TREATMENT_PRIOR_TYPE_ROI, c.ROI_M),
+        (c.TREATMENT_PRIOR_TYPE_MROI, c.MROI_M),
+        (c.TREATMENT_PRIOR_TYPE_CONTRIBUTION, c.CONTRIBUTION_M),
+        (c.TREATMENT_PRIOR_TYPE_COEFFICIENT, c.BETA_M),
+    ):
+      line = self._provenance(prior, prior_type)
+      self.assertIn(parameter, line, f'{prior_type} should name {parameter}')
+
+  def test_the_line_warns_that_the_prior_can_decide_the_answer(self):
+    line = self._provenance(prior_distribution.PriorDistribution())
+    self.assertIn('weakly identified', line)
+    self.assertIn('prior_sensitivity.py', line)
+
+  def test_an_unknown_prior_type_says_so_instead_of_guessing(self):
+    line = self._provenance(
+        prior_distribution.PriorDistribution(), 'something-else'
+    )
+    self.assertEqual(line, summary_text.MEDIA_PRIOR_UNAVAILABLE)
+
+  def test_a_broken_model_spec_does_not_break_the_report(self):
+    # A report that renders with a hedged provenance line beats one that
+    # raises halfway through generation.
+    instance = object.__new__(summarizer.Summarizer)
+    instance._meridian = mock.Mock()
+    type(instance._meridian).model_spec = mock.PropertyMock(
+        side_effect=RuntimeError('boom')
+    )
+    self.assertEqual(
+        instance._media_prior_provenance, summary_text.MEDIA_PRIOR_UNAVAILABLE
+    )
+
+
+class DistributionDescriptionTest(parameterized.TestCase):
+
+  def test_lognormal_is_described_by_its_median_not_its_log_location(self):
+    f = backend.np_float_dtype
+    described = summarizer._describe_distribution(
+        backend.tfd.LogNormal(f(np.log(2.0)), f(0.7)), np
+    )
+    self.assertIn('median 2.00', described)
+    self.assertIn('0.70', described)
+
+  @parameterized.named_parameters(
+      ('normal', 'Normal', 'centred on 0.00'),
+      ('half_normal', 'HalfNormal', 'standard deviation 5.00'),
+  )
+  def test_normal_families_report_their_scale(self, family, expected):
+    f = backend.np_float_dtype
+    distribution = (
+        backend.tfd.Normal(f(0.0), f(5.0))
+        if family == 'Normal'
+        else backend.tfd.HalfNormal(f(5.0))
+    )
+    self.assertIn(expected, summarizer._describe_distribution(distribution, np))
+
+  def test_a_channel_specific_prior_is_not_summarised_as_one_number(self):
+    # Quoting the first channel's value as though it applied to all would be
+    # a silently wrong provenance line.
+    f = backend.np_float_dtype
+    described = summarizer._describe_distribution(
+        backend.tfd.LogNormal(f(np.array([0.1, 0.9])), f(0.7)), np
+    )
+    self.assertEqual(described, 'channel-specific LogNormal prior')
+
+  def test_a_deterministic_prior_reports_its_fixed_value(self):
+    f = backend.np_float_dtype
+    described = summarizer._describe_distribution(
+        backend.tfd.Deterministic(f(1.0)), np
+    )
+    self.assertIn('fixed at 1.00', described)
+
+  def test_matching_compares_family_and_parameters(self):
+    f = backend.np_float_dtype
+    a = backend.tfd.LogNormal(f(0.2), f(0.9))
+    same = backend.tfd.LogNormal(f(0.2), f(0.9))
+    different = backend.tfd.LogNormal(f(0.2), f(0.5))
+    other_family = backend.tfd.Normal(f(0.2), f(0.9))
+    self.assertTrue(summarizer._distributions_match(a, same, np))
+    self.assertFalse(summarizer._distributions_match(a, different, np))
+    self.assertFalse(summarizer._distributions_match(a, other_family, np))
+    self.assertFalse(summarizer._distributions_match(a, None, np))
 
 
 if __name__ == '__main__':
