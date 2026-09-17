@@ -83,6 +83,43 @@ class DuplicateDistributionTest(unittest.TestCase):
       self.assertFalse(_run(verify.check_duplicate_distribution, _REPO_ROOT).failed)
 
 
+class PathIndependentImportTest(unittest.TestCase):
+  """An install that only works from the repo root is not an install.
+
+  The real case: the editable `.pth` in site-packages carried the macOS
+  `hidden` flag, which CPython's `site` module silently skips. Every other
+  check still passed -- `import meridian` succeeded because the repository
+  root was on `sys.path` -- while a notebook in any other directory could not
+  import the package at all.
+  """
+
+  def test_a_successful_import_from_elsewhere_passes(self):
+    report = _run(verify.check_import_is_path_independent, _REPO_ROOT)
+    self.assertFalse(report.failed)
+    self.assertIn("this checkout", report.render())
+
+  def test_a_failing_import_from_elsewhere_fails_with_the_cause(self):
+    completed = mock.Mock(returncode=1, stdout="", stderr="ModuleNotFoundError: No module named 'meridian'")
+    with mock.patch.object(verify.subprocess, "run", return_value=completed):
+      report = _run(verify.check_import_is_path_independent, _REPO_ROOT)
+    self.assertTrue(report.failed)
+    rendered = report.render()
+    self.assertIn("outside the repository", rendered)
+    # The message has to name the macOS cause, or the reader has no next step.
+    self.assertIn("hidden", rendered)
+    self.assertIn("chflags nohidden", rendered)
+
+  def test_an_import_resolving_outside_the_checkout_warns(self):
+    # A PyPI copy winning over the checkout is a different failure, and a
+    # warning rather than an error: the environment works, it is just not
+    # testing this source tree.
+    completed = mock.Mock(returncode=0, stdout="/usr/lib/python3/meridian/__init__.py", stderr="")
+    with mock.patch.object(verify.subprocess, "run", return_value=completed):
+      report = _run(verify.check_import_is_path_independent, _REPO_ROOT)
+    self.assertFalse(report.failed)
+    self.assertIn("outside this checkout", report.render())
+
+
 class AcceleratorTest(unittest.TestCase):
   """What this machine will actually compute on, and what to do about it."""
 

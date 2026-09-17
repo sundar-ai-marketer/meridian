@@ -41,6 +41,8 @@ import importlib.metadata as metadata
 import pathlib
 import platform
 import re
+import subprocess
+import tempfile
 import sys
 import tomllib
 from collections.abc import Sequence
@@ -186,6 +188,61 @@ def check_conflicting_packages(report: Report) -> None:
       f'{metal} installed. It is not compatible with the pinned TensorFlow'
       ' and breaks `import meridian`. Fix: pip uninstall -y tensorflow-metal',
   )
+
+
+def check_import_is_path_independent(
+    report: Report, repo_root: pathlib.Path
+) -> None:
+  """Imports meridian from a directory that is not the repository.
+
+  Running from the repository root puts the source tree on `sys.path`, so
+  `import meridian` succeeds there even when the install is not actually
+  working. Every other consumer -- a notebook elsewhere, a cron job, a
+  different working directory -- gets an ImportError.
+
+  This was a real environment: the editable `.pth` in site-packages carried
+  the macOS `hidden` flag, left over from a manual workaround, and CPython's
+  `site` module silently skips a hidden `.pth`. The finder never installed,
+  every check here still passed, and the package was importable only from one
+  directory.
+  """
+  probe = (
+      "import meridian, pathlib, sys;"
+      "sys.stdout.write(str(pathlib.Path(meridian.__file__).resolve()))"
+  )
+  with tempfile.TemporaryDirectory() as elsewhere:
+    result = subprocess.run(
+        [sys.executable, "-c", probe],
+        cwd=elsewhere,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+  if result.returncode != 0:
+    tail = (result.stderr or "").strip().splitlines()
+    report.add(
+        _RED,
+        "import from elsewhere",
+        f"`import meridian` fails outside the repository: "
+        f"{tail[-1] if tail else 'no detail'}. The package is importable only "
+        "because the repository root is on `sys.path`. On macOS check for a "
+        "hidden `.pth`: "
+        "ls -lO .venv/lib/python*/site-packages/__editable__*.pth, then "
+        "chflags nohidden on it. Otherwise re-run `make setup`.",
+    )
+    return
+
+  resolved = pathlib.Path(result.stdout.strip())
+  try:
+    resolved.relative_to(repo_root.resolve())
+  except ValueError:
+    report.add(
+        _AMBER,
+        "import from elsewhere",
+        f"resolves to {resolved}, which is outside this checkout",
+    )
+    return
+  report.add(_GREEN, "import from elsewhere", "resolves to this checkout")
 
 
 def check_accelerator(report: Report) -> None:
@@ -426,6 +483,7 @@ def main(argv: Sequence[str] | None = None) -> int:
   check_duplicate_distribution(report, repo_root)
   check_stale_egg_info(report, repo_root)
   if imported:
+    check_import_is_path_independent(report, repo_root)
     check_backend(report)
     check_accelerator(report)
     check_core_versions(report)
