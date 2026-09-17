@@ -2,10 +2,10 @@
 
 # Public-release audit
 
-Audit date: 16 September 2026. Target: `sundar-ai-marketer/meridian`.
-Starting revision: `3983667`. Upstream base: Google Meridian v2.0.0,
-`00134ea`. This document distinguishes newly measured results from historical
-results in [TRIAGE.md](TRIAGE.md).
+Audit date: 16 September 2026, with further measurements added 17 September
+2026. Target: `sundar-ai-marketer/meridian`. Starting revision: `3983667`.
+Upstream base: Google Meridian v2.0.0, `00134ea`. This document distinguishes
+newly measured results from historical results in [TRIAGE.md](TRIAGE.md).
 
 ## Release decision
 
@@ -14,6 +14,23 @@ retained explicitly. This release is suitable for public source distribution;
 it is not certification of any dataset's causal validity or ROI accuracy.
 No claim is made that every possible defect or every upstream issue has been
 resolved. The repository's Actions page records the clean-runner CI results.
+
+Two measurements added on 17 September 2026 bear on how output from this
+library should be used, and belong here rather than buried in a subsection.
+
+**A reported ROI can be mostly prior.** Refitting one fixed synthetic dataset
+under five defensible ROI priors moved the posterior median by 93% to 291% of
+the channel's true ROI, on converged fits, with at least one prior's 90%
+interval excluding the truth for every channel. This is the identification
+problem rather than a defect, and it is not specific to this fork, but it means
+a single ROI figure is not a measurement unless the prior it rests on is stated
+alongside it. See "How much of a reported ROI is the prior".
+
+**The shipped default prior cannot be simulated from.** It generates negative
+revenue in 100% of prior draws, and the library's own `InputData` rejects a
+negative KPI. That blocks simulation-based calibration against the defaults
+entirely and is worth knowing before relying on a prior predictive workflow.
+See "The default prior cannot be simulated from".
 
 ## Scope and architecture
 
