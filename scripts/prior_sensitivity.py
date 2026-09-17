@@ -144,6 +144,40 @@ def _fit_under_prior(recovery, frame, config, median: float, sigma: float):
   }
 
 
+def summarize(
+    fits: Sequence[dict[str, Any]],
+    channels: Sequence[str],
+    true_roi: Sequence[float],
+) -> list[dict[str, Any]]:
+  """Collapses the per-prior fits into one record per channel.
+
+  `spread` is the range of the posterior median across priors, and
+  `prior_share_of_true_roi` expresses it as a fraction of the channel's true
+  value, which is what makes it comparable between channels of different size.
+  """
+  per_channel = []
+  for index, name in enumerate(channels):
+    medians = np.array([f["channels"][index]["median"] for f in fits])
+    truth = float(true_roi[index])
+    spread = float(medians.max() - medians.min())
+    per_channel.append({
+        "channel": name,
+        "true_roi": truth,
+        "median_by_prior": {
+            f["label"]: f["channels"][index]["median"] for f in fits
+        },
+        "spread": spread,
+        "prior_share_of_true_roi": spread / truth if truth else float("nan"),
+        "every_interval_covers_truth": all(
+            f["channels"][index]["ci_low"]
+            <= truth
+            <= f["channels"][index]["ci_high"]
+            for f in fits
+        ),
+    })
+  return per_channel
+
+
 def main(argv: Sequence[str] | None = None) -> int:
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument("--output", type=pathlib.Path, default=None)
@@ -202,26 +236,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"   [r-hat {result['max_r_hat']:.3f}]"
     )
 
-  per_channel = []
-  for index, name in enumerate(config.channels):
-    medians = np.array([f["channels"][index]["median"] for f in fits])
-    truth = float(true_roi[index])
-    spread = float(medians.max() - medians.min())
-    per_channel.append({
-        "channel": name,
-        "true_roi": truth,
-        "median_by_prior": {
-            f["label"]: f["channels"][index]["median"] for f in fits
-        },
-        "spread": spread,
-        "prior_share_of_true_roi": spread / truth if truth else float("nan"),
-        "every_interval_covers_truth": all(
-            f["channels"][index]["ci_low"]
-            <= truth
-            <= f["channels"][index]["ci_high"]
-            for f in fits
-        ),
-    })
+  per_channel = summarize(fits, config.channels, true_roi)
 
   print("\nprior-driven movement, as a fraction of true ROI:")
   for entry in per_channel:

@@ -24,7 +24,7 @@
 Why this exists. Meridian scales the KPI to mean 0 and standard deviation 1
 before modelling (`KpiTransformer`), and its default priors are then written on
 that scale: `knot_values`, `tau_g_excl_baseline` and `gamma_c` are
-`Normal(0, 5)`, and `sigma`, `beta_m` and `xi_c` are `HalfNormal(5)`. A prior
+`Normal(0, 5)`, and `sigma` and `xi_c` are `HalfNormal(5)`. A prior
 standard deviation of 5 against data whose standard deviation is 1 by
 construction is a deliberately weak statement, but it has a consequence that is
 easy to miss: the implied baseline swings far enough below zero that the prior
@@ -123,11 +123,15 @@ def _build_model(template, config, priors: dict[str, Any] | None):
     # `eta_m` and `xi_c` sit on `beta_gm` and `gamma_gc`, so leaving them at
     # their defaults keeps the geo-level terms wide however tight the
     # population-level priors are.
+    #
+    # `beta_m` is deliberately NOT overridden. Under `media_prior_type="roi"`
+    # it is derived from `roi_m`, and ModelContext warns that a custom
+    # `beta_m` is ignored. Setting it would look like it mattered and would
+    # not.
     hier_sd = priors.get("hier_sd")
     if hier_sd is not None:
       overrides["eta_m"] = backend.tfd.HalfNormal(f(hier_sd), name=c.ETA_M)
       overrides["xi_c"] = backend.tfd.HalfNormal(f(hier_sd), name=c.XI_C)
-      overrides["beta_m"] = backend.tfd.HalfNormal(f(hier_sd), name=c.BETA_M)
     prior = prior_distribution.PriorDistribution(**overrides)
 
   model_spec = spec.ModelSpec(
@@ -166,15 +170,18 @@ def _measure(mmm, draws: int, seed: int) -> dict[str, Any]:
 
   # `y_scaled ~ Normal(y_pred_scaled, sigma)` is the likelihood; the transform
   # is affine, so forward-then-inverse round trips exactly.
-  predictive = np.stack([
-      np.asarray(
-          transformer.inverse(
-              np.asarray(transformer.forward(flat[i]))
-              + rng.normal(0.0, float(sigma[i]), size=flat[i].shape)
-          )
-      )
-      for i in range(flat.shape[0])
-  ])
+  #
+  # The cast back to the scaled tensor's dtype is required, not cosmetic: the
+  # TensorFlow backend runs float32 while numpy's generator returns float64,
+  # and the upcast sum makes `inverse` fail with a Mul type mismatch. JAX
+  # defaults to float64 and hides the problem.
+  def _one(index: int) -> np.ndarray:
+    scaled = np.asarray(transformer.forward(flat[index]))
+    noise = rng.normal(0.0, float(sigma[index]), size=scaled.shape)
+    noisy = (scaled + noise).astype(scaled.dtype, copy=False)
+    return np.asarray(transformer.inverse(noisy))
+
+  predictive = np.stack([_one(i) for i in range(flat.shape[0])])
 
   kpi = np.asarray(mmm.model_context.kpi)
   mean_negative = (flat < 0).reshape(flat.shape[0], -1)
@@ -304,8 +311,9 @@ def main(argv: Sequence[str] | None = None) -> int:
           "tau_g_excl_baseline": "Normal(0, 5)",
           "gamma_c": "Normal(0, 5)",
           "sigma": "HalfNormal(5)",
-          "beta_m": "HalfNormal(5)",
           "xi_c": "HalfNormal(5)",
+          "eta_m": "HalfNormal(1)",
+          "beta_m": "HalfNormal(5), ignored when media_prior_type is 'roi'",
       },
       "variants": results,
       "conclusion": (
@@ -314,8 +322,8 @@ def main(argv: Sequence[str] | None = None) -> int:
           "from. Tightening the observation-noise prior alone changes almost "
           "nothing. Tightening the population-level baseline terms roughly "
           "halves the rate. Only tightening the hierarchical standard "
-          "deviations as well -- eta_m, xi_c and beta_m, which sit on the "
-          "geo-level terms -- removes it entirely. The hierarchical scales "
+          "deviations as well -- eta_m and xi_c, which sit on the geo-level "
+          "terms -- removes it entirely. The hierarchical scales "
           "are the dominant source of width."
       ),
       "limitations": [

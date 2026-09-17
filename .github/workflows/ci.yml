@@ -137,7 +137,15 @@ jobs:
           ) &
           monitor_pid=$!
           trap 'kill "$monitor_pid" 2>/dev/null || true' EXIT
-          python -m unittest scripts.test_run_tests scripts.test_run_recovery_study
+          python -m unittest \
+            scripts.test_run_tests \
+            scripts.test_run_recovery_study \
+            scripts.test_triage_container_os \
+            scripts.test_container_reachability_probe \
+            scripts.test_gpu_validation \
+            scripts.test_prior_sensitivity \
+            scripts.test_coverage_grid \
+            scripts.test_prior_predictive_audit
           python scripts/run_tests.py
         env:
           MERIDIAN_BACKEND: ${{ matrix.meridian-backend }}

@@ -1,8 +1,9 @@
 {
-  "conclusion": "The default prior places substantial mass on negative revenue, which InputData rejects, so the shipped prior cannot be simulated from. Tightening the observation-noise prior alone changes almost nothing. Tightening the population-level baseline terms roughly halves the rate. Only tightening the hierarchical standard deviations as well -- eta_m, xi_c and beta_m, which sit on the geo-level terms -- removes it entirely. The hierarchical scales are the dominant source of width.",
+  "conclusion": "The default prior places substantial mass on negative revenue, which InputData rejects, so the shipped prior cannot be simulated from. Tightening the observation-noise prior alone changes almost nothing. Tightening the population-level baseline terms roughly halves the rate. Only tightening the hierarchical standard deviations as well -- eta_m and xi_c, which sit on the geo-level terms -- removes it entirely. The hierarchical scales are the dominant source of width.",
   "date": "2026-09-17",
   "library_default_priors_on_the_scaled_kpi": {
-    "beta_m": "HalfNormal(5)",
+    "beta_m": "HalfNormal(5), ignored when media_prior_type is 'roi'",
+    "eta_m": "HalfNormal(1)",
     "gamma_c": "Normal(0, 5)",
     "knot_values": "Normal(0, 5)",
     "sigma": "HalfNormal(5)",

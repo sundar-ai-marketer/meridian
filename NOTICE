@@ -131,6 +131,12 @@ Files added by this fork:
   scripts/gpu_validation.py
   scripts/prior_sensitivity.py
   scripts/coverage_grid.py
+  scripts/test_triage_container_os.py
+  scripts/test_container_reachability_probe.py
+  scripts/test_gpu_validation.py
+  scripts/test_prior_sensitivity.py
+  scripts/test_coverage_grid.py
+  scripts/test_prior_predictive_audit.py
   .github/workflows/container-rescan.yml
   docs/validation/recovery-2026-09-16.json
   docs/validation/strict-sampling-2026-09-16.json

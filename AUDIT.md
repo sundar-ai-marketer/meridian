@@ -514,7 +514,7 @@ because it is a property of the model, not of the attempt.
 Meridian scales the KPI to mean 0 and standard deviation 1 before modelling
 (`KpiTransformer`), and writes its default priors on that scale:
 `knot_values`, `tau_g_excl_baseline` and `gamma_c` are `Normal(0, 5)`;
-`sigma`, `beta_m` and `xi_c` are `HalfNormal(5)`; `eta_m` is `HalfNormal(1)`.
+`sigma` and `xi_c` are `HalfNormal(5)`; `eta_m` is `HalfNormal(1)`.
 A prior standard deviation of 5 against data whose standard deviation is 1 by
 construction implies a baseline that swings far below zero. Separately,
 `InputData._validate_no_negative_values` rejects a negative KPI, with the
@@ -540,8 +540,14 @@ Measured over 300 prior draws on a three-geo, forty-period synthetic dataset
 The observation-noise prior is not the cause: tightening `sigma` alone changes
 almost nothing. Roughly half the effect comes from the population-level
 baseline terms, and the remainder from the hierarchical standard deviations
-`eta_m`, `xi_c` and `beta_m`, which sit on the geo-level coefficients. Only
-when all three groups are tightened does the prior become simulatable.
+`eta_m` and `xi_c`, which sit on the geo-level coefficients `beta_gm` and
+`gamma_gc`. Only when both groups are tightened does the prior become
+simulatable.
+
+`beta_m` is left at its default throughout. Under `media_prior_type="roi"` it
+is derived from `roi_m`, and `ModelContext` warns that a custom `beta_m` is
+ignored, so overriding it would look like it mattered and would not. The sweep
+reaches 0% without touching it.
 
 This is not a claim that the default prior is wrong. Weakly informative priors
 are a deliberate choice and the posterior is usually dominated by the
