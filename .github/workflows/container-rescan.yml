@@ -180,4 +180,7 @@ jobs:
           git add docs/validation
           git commit -m "Refresh the container OS advisory evidence" \
             -m "Weekly clean rebuild and rescan. Advisories without a vendor fix: ${{ steps.gate.outputs.unfixed_total }}. Findings with a vendor fix: ${{ steps.gate.outputs.fixable_high }}."
-          git push
+          # Push explicitly to the branch rather than relying on an upstream:
+          # a scheduled checkout can leave HEAD detached, where a bare push
+          # fails with "You are not currently on a branch".
+          git push origin "HEAD:${GITHUB_REF_NAME}"
