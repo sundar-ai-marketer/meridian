@@ -184,7 +184,7 @@ make test-tf                                             # the other backend
 make test-e2e                                            # small real integration run
 ```
 
-### Things that will bite you otherwise
+### Environment setup notes
 
 *   **`tensorflow-metal`.** If it is present and does not match the installed
     TensorFlow, `import meridian` dies inside `libmetal_plugin.dylib` with a
@@ -211,10 +211,118 @@ make test-e2e                                            # small real integratio
     package anyway. The JAX substrate is present regardless and the full suite
     passes on it. The declaration comes from upstream's `pyproject.toml`; it is
     left as-is rather than diverging for a cosmetic warning.
-*   **No GPU on Apple Silicon.** Fits run on CPU. For scale: 20 geos x 156
-    weeks x 4 channels at the demo's MCMC settings takes about 35 minutes on an
-    M4 Max. Use `python -m meridian.benchmark` to measure your own
-    hardware.
+*   **Accelerators.** `make gpu-check` reports in seconds what this machine's
+    accelerator can do for the model, rather than leaving it to a failed fit an
+    hour later. See "Running on your hardware" below.
+
+## Running on your hardware
+
+The library is pure Python over JAX or TensorFlow, so it runs wherever those
+do. What differs by machine is the accelerator story, and that is measured
+here rather than assumed.
+
+| Platform | Status | Evidence |
+|---|---|---|
+| Linux x86-64 | Tested every push, on Python 3.11, 3.12 and 3.13 across both backends | CI's `pytest` matrix |
+| macOS, Apple Silicon | Full suite, a real fit-to-report run, and the bundled demo all pass natively on arm64 | `make test`, `make test-e2e`, `make demo` |
+| Any Linux host, via container | Image built and exercised as a non-root user every push | CI's `docker` job |
+| Windows, Intel macOS | Use the container path — the required TensorFlow version has no native wheel for either | [TensorFlow's platform support](https://www.tensorflow.org/install/pip) |
+| NVIDIA GPU | Not tested here; no GPU runner. `pip install -e .[and-cuda]` installs the stack, and `python scripts/gpu_validation.py` compares a GPU fit against a CPU fit by Monte Carlo error | run it on your card |
+| Apple Metal GPU | Runs the model through a third-party plugin at float32, and measured ~18x slower than this machine's CPU. Apple's own plugins do not run it at all | `docs/validation/gpu-metal-*.json` |
+
+### Apple Silicon
+
+CPU is the path, and it is a capable one. Run `make quickstart` and everything
+below works natively on arm64; nothing needs Rosetta or a container.
+
+**Neither of Apple's own Metal plugins runs this model.** Both were measured
+on an M4 Max on 17 September 2026 with `scripts/gpu_validation.py
+--capability-only`, which runs each XLA operation the sampler needs and
+records the outcome:
+
+*   With `jax-metal` 0.1.1 on the JAX version this project requires, a Metal
+    device registers and then **all ten** required operations fail. The plugin
+    cannot parse the compiler output modern JAX emits
+    (`StableHLO_v1.13.7`, bytecode version 6).
+    [Evidence](docs/validation/gpu-metal-2026-09-17.json).
+*   Pinning JAX back to 0.4.34, the version the plugin was built against and
+    below this project's floor, does not rescue it: Metal cannot lower
+    `dot_general` (every tensor contraction in the model) or `cholesky` (the
+    hierarchical geo prior).
+    [Evidence](docs/validation/gpu-metal-jax0.4.34-float32-2026-09-17.json).
+    At the float64 precision this project defaults to, nine of ten fail.
+*   `tensorflow-metal` 1.2.0 cannot load into the pinned TensorFlow at all;
+    `import tensorflow` dies in `dlopen` on `libmetal_plugin.dylib`.
+
+So neither is worth installing, and `make verify` names either one if it is
+present. `make gpu-check` reproduces the measurement on your own machine in
+seconds.
+
+**A third-party plugin does run the model, and is still not worth using.**
+[`jax-mps`](https://github.com/tillahoffmann/jax-mps) (Apache-2.0) maps
+StableHLO onto MLX, so unlike Apple's plugins it reads what current JAX
+emits. It needs `jax >= 0.11.0, < 0.12`, which is inside this project's range
+and is what the lock already resolves on Python 3.12 and 3.13. Measured on the
+same M4 Max:
+
+*   All ten required operations run, at float32.
+*   A real NUTS fit completes on the Metal device, and the CPU-versus-Metal
+    comparison returns `max |z| = 1.92`, inside Monte Carlo error.
+*   It took **252 s against the CPU's 14 s** on the same fit — 18x slower.
+    Enabling the plugin's `JAX_MPS_ASYNC_DISPATCH=1` changed that to 228 s,
+    so dispatch mode is not the explanation.
+    [Evidence](docs/validation/gpu-metal-jax-mps-2026-09-17.json),
+    [async](docs/validation/gpu-metal-jax-mps-async-2026-09-17.json).
+
+The slowness is structural rather than a configuration mistake. MMM sampling
+is dispatch-bound: thousands of small operations in a long sequential chain
+over tensors a few hundred elements wide, so per-operation dispatch dominates
+and there is no large matrix multiply to amortise it. That is the opposite of
+the image-model training the plugin reports gains on.
+
+Two things keep this from being a recommendation. MLX has no float64, so the
+model has to run at float32, and this fork's own measurements show a reported
+ROI is already sensitive enough to the prior and to response-shape
+misspecification that changing the arithmetic is not free. And the comparison
+above ran in `--quick` mode: both fits stopped short of convergence (R-hat
+1.32 on CPU, 2.24 on Metal), one channel's posterior mean differed by 36%, and
+`max |z| = 1.92` passes only because short chains have wide Monte Carlo error.
+It establishes that the path runs. It does not establish that the numbers
+agree.
+
+To judge it for your own model, drop `--quick` and give it converged chains:
+
+```sh
+pip install jax-mps                      # into a Python 3.12+ environment
+MERIDIAN_ENABLE_JAX_X64=false python scripts/gpu_validation.py \
+    --geos 5 --times 104 --output docs/validation/gpu-metal-<date>.json
+```
+
+That runs both devices and reports per-channel agreement against Monte Carlo
+error. Read `max_r_hat` on both legs first: a comparison between two
+unconverged fits says nothing.
+
+**Keep the default float64 precision.** Lower precision is usually assumed to
+be faster; on this hardware it is not. Three repetitions per setting at 10
+geos x 104 weeks x 4 channels, 2 chains, 100 adapt/100 burn-in/100 kept:
+
+| Setting | `sample_posterior` median | MCMC draws/sec | Peak memory |
+|---|---|---|---|
+| float64 (default) | 13.65 s | 43.9 | 2.19 GB |
+| float32 | 15.26 s | 39.3 | 2.02 GB |
+
+float32 took 11.8% longer with non-overlapping ranges across repetitions, for
+8% less memory. Reach for `MERIDIAN_ENABLE_JAX_X64=false` only when memory is
+the binding constraint. Reproduce with
+`python scripts/apple_silicon_benchmark.py --reps 3`;
+[evidence](docs/validation/apple-silicon-benchmark-2026-09-17.json). A
+throughput difference here is not purely an arithmetic-speed difference:
+changing precision changes the trajectory NUTS explores, so the two settings
+can do different amounts of work for the same number of kept draws.
+
+For scale on real work: 20 geos x 156 weeks x 4 channels at the demo's MCMC
+settings takes about 35 minutes on an M4 Max. `make bench` measures your own
+machine.
 
 ## Shaping your own data
 
@@ -245,7 +353,7 @@ data = (
 )
 ```
 
-### The one mistake that costs you accuracy silently
+### Zero adstock burn-in from a fully-populated DataFrame
 
 If media comes from the same fully-populated DataFrame as your KPI, you get
 **zero adstock burn-in**. Meridian then adstocks the start of your modelling
@@ -334,9 +442,9 @@ account needed:
 jupyter notebook demo/Meridian_Getting_Started.ipynb
 ```
 
-Note that the Getting Started notebook builds its `InputData` from a fully
-populated DataFrame, which produces **zero adstock burn-in**. Read
-[the one mistake that costs you accuracy silently](#the-one-mistake-that-costs-you-accuracy-silently)
+The Getting Started notebook builds its `InputData` from a fully populated
+DataFrame, which produces **zero adstock burn-in**. Read
+[Zero adstock burn-in from a fully-populated DataFrame](#zero-adstock-burn-in-from-a-fully-populated-dataframe)
 before adapting it to your own data.
 
 To get started with Meridian, you can run the code programmatically using sample
@@ -379,9 +487,9 @@ Changes to the generated HTML report:
     limitation this README documents, which meant the artifact that reaches a
     client contradicted the repository it came from.
 *   Multi-channel charts use an explicit colour-blind-safe categorical range.
-    Every chart needing more than two colours previously fell through to
-    Vega-Lite's default scheme, which fails both a chroma floor and an
-    adjacent-pair separation check, and degrades further as channels are added.
+    Vega-Lite's default scheme fails both a chroma floor and an adjacent-pair
+    separation check for any chart needing more than two colours, and degrades
+    further as channels are added.
 *   Budget allocation is a labelled bar, not a pie. The old pie put its
     percentages in hover tooltips only, in a file whose whole purpose is being
     exported and sent to someone.
@@ -414,7 +522,7 @@ Added modules:
 
 *   `meridian.analysis.sampling_diagnostics` — the two MCMC trust signals the
     library computes but never surfaces: **divergent transitions** (already in
-    `inference_data.sample_stats`, previously unread) and **effective sample
+    `inference_data.sample_stats`, but unexposed) and **effective sample
     size**:
 
     ```python
@@ -532,7 +640,7 @@ docker rm probe
 python scripts/triage_container_os.py --scan /tmp/container-os-full.json \
     --probe docs/validation/container-reachability-latest.json \
     --output docs/validation/os-triage-latest.md \
-    --summary-output docs/validation/container-os-latest.json
+    --summary-output docs/validation/os-triage-summary-latest.json
 
 # Can the prior generate data the model would accept? For the shipped
 # defaults the answer is no, which is why SBC is not run here.
@@ -578,6 +686,11 @@ channels, seed 7 — measured on the library versions recorded at the top of
 | concave | geometric (default, `max_lag=4`) | −43% | yes |
 | **linear** | none (`--max-lag 0`) | **+71%** | **no** |
 | linear | geometric (default) | +39% | yes |
+
+Each row is one hand-run fit, not a committed evidence file like the
+coverage-grid and prior-sensitivity numbers below. Reproduce a row with
+`python -m meridian.validation --response {concave,linear} [--max-lag 0]
+--seed 7`.
 
 All four met the recovery tool's loose R-hat threshold (reported maximum
 R-hat ≤ 1.04) and recovered channel *ordering*. That does not establish that
@@ -684,10 +797,10 @@ these changes and cannot support them. If you believe you have found a defect
 in *upstream* code that is unrelated to this fork's changes, reproduce it
 against a clean `google-meridian` install first, then report it there.
 
-**A caution before you trust a number**: read
-[Reading ROI intervals honestly](#reading-roi-intervals-honestly). On simulated
-data where the answer is known, channel ordering recovered but absolute ROI was
-off by about 40% in both directions.
+**Read ROI intervals against
+[Reading ROI intervals honestly](#reading-roi-intervals-honestly) before citing
+one.** On simulated data where the answer is known, channel ordering recovered
+but absolute ROI was off by about 40% in both directions.
 
 ## Citing Meridian
 

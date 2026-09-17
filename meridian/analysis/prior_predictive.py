@@ -48,11 +48,10 @@ observation noise -- so this module adds sigma noise to
 `analyzer.expected_outcome`'s conditional mean before computing any interval
 or coverage figure below; see `_prior_predictive_noise_sd` for the derivation
 and `analysis/review/checks.py`'s `BayesianPPPCheck._calculate_total_sigma`,
-which this follows, for the upstream precedent. Skipping this step -- as an
-earlier version of this module did -- computes an interval for the *mean
-function*, which is systematically narrower than the true predictive
-interval and biases the check toward false "prior disagrees with data"
-verdicts.
+which this follows, for the upstream precedent. Skipping this step computes an interval
+for the *mean function*, which is systematically narrower than the true
+predictive interval and biases the check toward false "prior disagrees with
+data" verdicts.
 
 `coverage` and the verdict thresholds below are heuristics, not derived
 statistics: with roughly 100 time periods, empirical coverage has real
