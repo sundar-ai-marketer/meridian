@@ -519,14 +519,20 @@ and forgetting it.
 
 ```sh
 # Container OS advisories: which of them the analysis workflow actually loads.
+# The weekly container-rescan workflow runs exactly this.
 docker build --pull -t meridian:triage .
+trivy image --scanners vuln --pkg-types os --ignorefile /dev/null \
+    --format json --output /tmp/container-os-full.json meridian:triage
+# Copy the probe result out rather than writing through a mount: the container
+# runs as uid 1000 and will not own your working tree.
 docker run --name probe --entrypoint python meridian:triage \
     scripts/container_reachability_probe.py --output /tmp/probe.json
 docker cp probe:/tmp/probe.json docs/validation/container-reachability-latest.json
 docker rm probe
-python scripts/triage_container_os.py --scan scan.json \
+python scripts/triage_container_os.py --scan /tmp/container-os-full.json \
     --probe docs/validation/container-reachability-latest.json \
-    --output docs/validation/os-triage-latest.md
+    --output docs/validation/os-triage-latest.md \
+    --summary-output docs/validation/container-os-latest.json
 
 # Can the prior generate data the model would accept? For the shipped
 # defaults the answer is no, which is why SBC is not run here.
