@@ -19,7 +19,7 @@
 #   docker run --rm meridian python scripts/run_tests.py
 #   docker run --rm -it meridian bash               # interactive shell
 
-FROM python:3.11-slim@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534 AS builder
+FROM python:3.11-slim@sha256:da047cb8f9d1d98e5c070f5300ba9f7274e33b8fc0e5be5ed88740aed1b95ba9 AS builder
 
 # Keep the resolver itself stable across rebuilds. The lockfile still records
 # the package artifacts and hashes; this version only controls how that lock
@@ -81,7 +81,7 @@ RUN UV_PROJECT_ENVIRONMENT=/opt/venv uv sync \
 RUN python scripts/compile_report_css.py
 RUN python -m pip check
 
-FROM python:3.11-slim@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534 AS runtime
+FROM python:3.11-slim@sha256:da047cb8f9d1d98e5c070f5300ba9f7274e33b8fc0e5be5ed88740aed1b95ba9 AS runtime
 
 # Keep the runtime on the same pinned base manifest while applying the Debian
 # updates available at build time. Do this before dropping to the non-root
