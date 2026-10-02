@@ -1,1 +1,2 @@
 recursive-include mmm *.proto
+recursive-exclude mmm *_pb2.py

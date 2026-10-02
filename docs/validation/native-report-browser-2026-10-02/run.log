@@ -1,0 +1,30 @@
+Checking jax/geo_nonrevenue_media/summary
+PASS
+Checking jax/national_revenue_media/summary
+PASS
+Checking jax/national_revenue_media/optimization
+PASS
+Checking jax/national_revenue_rf/summary
+PASS
+Checking jax/national_revenue_rf/optimization
+PASS
+Checking jax/geo_revenue_mixed/summary
+PASS
+Checking jax/geo_revenue_mixed/optimization
+PASS
+Checking tensorflow/geo_nonrevenue_media/summary
+PASS
+Checking tensorflow/geo_nonrevenue_media/optimization
+PASS
+Checking tensorflow/national_revenue_media/summary
+PASS
+Checking tensorflow/national_revenue_media/optimization
+PASS
+Checking tensorflow/national_revenue_rf/summary
+PASS
+Checking tensorflow/national_revenue_rf/optimization
+PASS
+Checking tensorflow/geo_revenue_mixed/summary
+PASS
+Checking tensorflow/geo_revenue_mixed/optimization
+PASS

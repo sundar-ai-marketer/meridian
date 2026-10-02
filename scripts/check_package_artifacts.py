@@ -152,6 +152,10 @@ def check_distributions(core_dir: Path, proto_dir: Path) -> list[str]:
               'meridian/templates/style.scss',
               'meridian/templates/assets/manifest.json',
               'meridian/templates/assets/report-charts.js',
+              'scripts/collect_native_browser_evidence.py',
+              'docs/validation/native-report-browser-2026-10-02/raw-results.json',
+              'docs/validation/native-report-browser-2026-10-02/orchestrator.py',
+              'docs/validation/native-report-browser-2026-10-02/run.log',
           ),
           (
               'meridian/analysis/budget_decision_test.py',
@@ -159,6 +163,12 @@ def check_distributions(core_dir: Path, proto_dir: Path) -> list[str]:
               'meridian/templates/formatter_test.py',
           ),
       )
+  )
+  core_sdist_names = _archive_names(core_sdist)
+  errors.extend(
+      f'{core_sdist}: contains self-referential package-audit receipt {name}'
+      for name in core_sdist_names
+      if '/docs/validation/package-audit-' in name
   )
   errors.extend(
       _check_wheel(
@@ -174,12 +184,16 @@ def check_distributions(core_dir: Path, proto_dir: Path) -> list[str]:
           proto_sdist,
           (
               'mmm/v1/model/meridian/meridian_model.proto',
-              'mmm/v1/model/meridian/meridian_model_pb2.py',
               'LICENSE',
               'NOTICE',
           ),
           (),
       )
+  )
+  errors.extend(
+      f'{proto_sdist}: contains generated protobuf module {name}'
+      for name in _archive_names(proto_sdist)
+      if name.endswith('_pb2.py')
   )
   return errors
 
@@ -193,14 +207,16 @@ def _artifact_record(path: Path, *, source_archive: bool) -> dict[str, object]:
           _TEST_MODULE.search(name)
           or (
               source_archive
-              and name.startswith('scripts/')
-              and Path(name).name.startswith('test_')
-              and name.endswith('.py')
+              and _source_relative_name(name).startswith('scripts/')
+              and Path(_source_relative_name(name)).name.startswith('test_')
+              and _source_relative_name(name).endswith('.py')
           )
       )
   )
   return {
       'filename': path.name,
+      'sha256': evidence.sha256(path),
+      'size_bytes': path.stat().st_size,
       'python_file_count': sum(name.endswith('.py') for name in names),
       'test_source_count': len(test_files),
       'test_sources': test_files,
@@ -212,10 +228,12 @@ def _artifact_record(path: Path, *, source_archive: bool) -> dict[str, object]:
 
 
 def _baseline_record(path: Path, *, source_archive: bool) -> dict[str, object]:
-  record = _artifact_record(path, source_archive=source_archive)
-  record['sha256'] = evidence.sha256(path)
-  record['size_bytes'] = path.stat().st_size
-  return record
+  return _artifact_record(path, source_archive=source_archive)
+
+
+def _source_relative_name(name: str) -> str:
+  """Remove a source archive's single top-level distribution directory."""
+  return name.partition('/')[2] or name
 
 
 def build_report(

@@ -10,9 +10,14 @@ include TRIAGE.md
 include AUDIT.md
 recursive-include docs/validation *.json
 include docs/validation/os-triage-latest.md
+include docs/validation/native-report-browser-2026-10-02/orchestrator.py
+include docs/validation/native-report-browser-2026-10-02/run.log
 # Source distributions retain the test suite. The wheel build separately
 # filters `_test.py` modules and package data so tests stay out of runtime
 # installs without being lost from the source archive.
 recursive-include meridian *_test.py
 recursive-include scenarioplanner *_test.py
 recursive-include scripts *.py
+# The receipt inventories the source archive and records its digest. Keeping
+# it inside that archive would make the source-archive digest self-referential.
+exclude docs/validation/package-audit-*.json
