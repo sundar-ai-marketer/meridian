@@ -1,0 +1,2734 @@
+{
+  "status": "PASS",
+  "scope": "offline Chromium; synthetic integration-only fits; native browser SVG/Vega-Lite",
+  "reports": [
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/jax/geo_nonrevenue_media/summary.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 836,
+            "arrow_right": [
+              0,
+              190
+            ],
+            "end": 598,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 836,
+            "arrow_right": [
+              0,
+              246
+            ],
+            "end": 528,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 1202,
+            "minimum_chart_viewport_width": 600
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/jax/geo_nonrevenue_media/optimization.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              131
+            ],
+            "end": 131,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.04",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$4",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              61
+            ],
+            "end": 61,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.04",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$4",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 574,
+            "minimum_chart_viewport_width": 500.0
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.04",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$4",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/jax/national_revenue_media/summary.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 830,
+            "arrow_right": [
+              0,
+              190
+            ],
+            "end": 592,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 830,
+            "arrow_right": [
+              0,
+              246
+            ],
+            "end": 522,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 1202,
+            "minimum_chart_viewport_width": 600
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/jax/national_revenue_media/optimization.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              131
+            ],
+            "end": 131,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.16",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$9",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              61
+            ],
+            "end": 61,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.16",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$9",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 574,
+            "minimum_chart_viewport_width": 500
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.16",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$9",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/jax/national_revenue_rf/summary.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 825,
+            "arrow_right": [
+              0,
+              190
+            ],
+            "end": 587,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 825,
+            "arrow_right": [
+              0,
+              246
+            ],
+            "end": 517,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 1202,
+            "minimum_chart_viewport_width": 600
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/jax/national_revenue_rf/optimization.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              131
+            ],
+            "end": 131,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.76",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$45",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              61
+            ],
+            "end": 61,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.76",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$45",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 567,
+            "minimum_chart_viewport_width": 500
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.76",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$45",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/jax/geo_revenue_mixed/summary.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 832,
+            "arrow_right": [
+              0,
+              190
+            ],
+            "end": 594,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 832,
+            "arrow_right": [
+              0,
+              246
+            ],
+            "end": 524,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 1202,
+            "minimum_chart_viewport_width": 600
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/jax/geo_revenue_mixed/optimization.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              131
+            ],
+            "end": 131,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.89",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$104",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              61
+            ],
+            "end": 61,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.89",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$104",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 567,
+            "minimum_chart_viewport_width": 500
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.89",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$104",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/tensorflow/geo_nonrevenue_media/summary.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 836,
+            "arrow_right": [
+              0,
+              190
+            ],
+            "end": 598,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 836,
+            "arrow_right": [
+              0,
+              246
+            ],
+            "end": 528,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 1202,
+            "minimum_chart_viewport_width": 600
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/tensorflow/geo_nonrevenue_media/optimization.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              131
+            ],
+            "end": 131,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+<0.01",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+<$1",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              61
+            ],
+            "end": 61,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+<0.01",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+<$1",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 574,
+            "minimum_chart_viewport_width": 500
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+<0.01",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+<$1",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/tensorflow/national_revenue_media/summary.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 826,
+            "arrow_right": [
+              0,
+              190
+            ],
+            "end": 588,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 826,
+            "arrow_right": [
+              0,
+              246
+            ],
+            "end": 518,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 11,
+          "rendered_count": 11,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 1202,
+            "minimum_chart_viewport_width": 600
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/tensorflow/national_revenue_media/optimization.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              131
+            ],
+            "end": 131,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.02",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$1",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              61
+            ],
+            "end": 61,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.02",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$1",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 574,
+            "minimum_chart_viewport_width": 500
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.02",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$1",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/tensorflow/national_revenue_rf/summary.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 825,
+            "arrow_right": [
+              0,
+              190
+            ],
+            "end": 587,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 825,
+            "arrow_right": [
+              0,
+              246
+            ],
+            "end": 517,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 1202,
+            "minimum_chart_viewport_width": 600
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/tensorflow/national_revenue_rf/optimization.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              131
+            ],
+            "end": 131,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+2.30",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$136",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              61
+            ],
+            "end": 61,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+2.30",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$136",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 567,
+            "minimum_chart_viewport_width": 500
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+2.30",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$136",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/tensorflow/geo_revenue_mixed/summary.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 830,
+            "arrow_right": [
+              0,
+              190
+            ],
+            "end": 592,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 830,
+            "arrow_right": [
+              0,
+              246
+            ],
+            "end": 522,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 12,
+          "rendered_count": 12,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 1202,
+            "minimum_chart_viewport_width": 600
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 50,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": []
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "network": "disabled",
+      "report": "/private/tmp/meridian-audit-final-e2e/tensorflow/geo_revenue_mixed/optimization.html",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 320,
+            "bodyScrollWidth": 304,
+            "documentScrollWidth": 320,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 238,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              131
+            ],
+            "end": 131,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.92",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$107",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 390,
+            "bodyScrollWidth": 374,
+            "documentScrollWidth": 390,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "PASS",
+            "chart_index": 0,
+            "client_width": 308,
+            "scroll_width": 369,
+            "arrow_right": [
+              0,
+              61
+            ],
+            "end": 61,
+            "home": 0
+          },
+          "desktop": {
+            "status": "SKIP"
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.92",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$107",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "chart_count": 4,
+          "rendered_count": 4,
+          "page_errors": [],
+          "console_errors": [],
+          "external_requests": [],
+          "overflow": {
+            "innerWidth": 1440,
+            "bodyScrollWidth": 1424,
+            "documentScrollWidth": 1440,
+            "bodyOverflow": false,
+            "documentOverflow": false
+          },
+          "keyboard_scroll": {
+            "status": "SKIP",
+            "reason": "No overflowing chart viewport at this width"
+          },
+          "desktop": {
+            "status": "PASS",
+            "first_chart_viewport_width": 567,
+            "minimum_chart_viewport_width": 500
+          },
+          "native_controls": {
+            "status": "PASS",
+            "source_table_rows_on_first_page": 2,
+            "source_semantics": "embedded source rows before plot transforms",
+            "spec_export": "exact native Vega-Lite specification",
+            "svg_export": "native SVG document"
+          },
+          "stat_contrast": [
+            {
+              "text": "$0",
+              "color": "rgb(60, 64, 67)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "neutral-text",
+              "contrast_ratio": 10.466,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+0.92",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            },
+            {
+              "text": "+$107",
+              "color": "rgb(19, 115, 51)",
+              "background": "rgb(255, 255, 255)",
+              "font_size": 18,
+              "font_weight": 500,
+              "semantic_class": "green-text",
+              "contrast_ratio": 5.953,
+              "minimum_ratio": 4.5
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

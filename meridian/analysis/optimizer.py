@@ -420,6 +420,16 @@ class OptimizationGrid:
 
     while True:
       spend_optimal = spend.astype(int)
+      if isinstance(scenario, FixedBudgetScenario):
+        # An unaffordable high-return jump must not hide a smaller feasible
+        # step in another channel. Remaining budget only decreases, so these
+        # points can be removed permanently for this fixed-budget search.
+        proposed_total_spend = (
+            np.sum(spend) + spend_grid_values - spend
+        )
+        iterative_roi_grid[
+            proposed_total_spend > scenario.total_budget
+        ] = np.nan
       # If none of the exit criteria are met roi_grid will eventually be filled
       # with all nans.
       if np.isnan(iterative_roi_grid).all():
@@ -1329,18 +1339,19 @@ class OptimizationResults:
             budget_prefix
             + formatter.format_monetary_num(num=budget_diff, currency=currency)
         ),
+        delta_color='neutral',
     )
 
     if outcome == c.REVENUE:
-      diff = round(
-          float(self.optimized_data.total_roi - self.nonoptimized_data.total_roi),
-          1,
+      diff = float(
+          self.optimized_data.total_roi - self.nonoptimized_data.total_roi
       )
       non_optimized_performance_title = summary_text.NON_OPTIMIZED_ROI_LABEL
-      non_optimized_performance_stat = f'{self.nonoptimized_data.total_roi:.1f}'
+      non_optimized_performance_stat = f'{self.nonoptimized_data.total_roi:.2f}'
       optimized_performance_title = summary_text.OPTIMIZED_ROI_LABEL
-      optimized_performance_stat = f'{self.optimized_data.total_roi:.1f}'
-      optimized_performance_diff = f'+{diff:.1f}' if diff > 0 else f'{diff:.1f}'
+      optimized_performance_stat = f'{self.optimized_data.total_roi:.2f}'
+      optimized_performance_diff = formatter.format_signed_change(diff)
+      improvement = diff > 0
     else:
       diff = self.optimized_data.total_cpik - self.nonoptimized_data.total_cpik
       non_optimized_performance_title = summary_text.NON_OPTIMIZED_CPIK_LABEL
@@ -1351,7 +1362,10 @@ class OptimizationResults:
       optimized_performance_stat = (
           f'{currency}{self.optimized_data.total_cpik:.2f}'
       )
-      optimized_performance_diff = formatter.compact_number(diff, 2, currency)
+      optimized_performance_diff = formatter.format_signed_change(
+          diff, currency=currency
+      )
+      improvement = diff < 0
     non_optimized_performance = formatter.StatsSpec(
         title=non_optimized_performance_title,
         stat=non_optimized_performance_stat,
@@ -1360,13 +1374,15 @@ class OptimizationResults:
         title=optimized_performance_title,
         stat=optimized_performance_stat,
         delta=optimized_performance_diff,
+        delta_color=(
+            'neutral' if diff == 0 else 'positive' if improvement else 'negative'
+        ),
     )
 
     inc_outcome_diff = (
         self.optimized_data.total_incremental_outcome
         - self.nonoptimized_data.total_incremental_outcome
     )
-    inc_outcome_prefix = '+' if inc_outcome_diff > 0 else ''
     currency = currency if outcome == c.REVENUE else ''
     non_optimized_inc_outcome = formatter.StatsSpec(
         title=summary_text.NON_OPTIMIZED_INC_OUTCOME_LABEL.format(
@@ -1385,8 +1401,11 @@ class OptimizationResults:
             precision=0,
             currency=currency,
         ),
-        delta=inc_outcome_prefix
-        + formatter.compact_number(inc_outcome_diff, 0, currency),
+        delta=formatter.format_signed_change(inc_outcome_diff, 0, currency),
+        delta_color=(
+            'neutral' if inc_outcome_diff == 0
+            else 'positive' if inc_outcome_diff > 0 else 'negative'
+        ),
     )
     return [
         non_optimized_budget,
@@ -1413,12 +1432,26 @@ class OptimizationResults:
         id=summary_text.SPEND_ALLOCATION_CHART_ID,
         chart_json=self.plot_budget_allocation().to_json(),
     )
+    outcome_chart = self.plot_incremental_outcome_delta()
+    layers = outcome_chart.to_dict().get('layer', [])
+    axis_domain = (
+        layers[0].get('encoding', {}).get('y', {}).get('scale', {}).get('domain')
+        if layers else None
+    )
+    axis_start = float(axis_domain[0]) if axis_domain else None
+    axis_note = (
+        'The outcome axis starts above zero to show the changes in detail.'
+        if axis_start is not None and axis_start > 0 else
+        'The outcome axis uses a zoomed range to show the changes in detail.'
+    )
     outcome_delta = formatter.ChartSpec(
         id=summary_text.OUTCOME_DELTA_CHART_ID,
-        description=summary_text.OUTCOME_DELTA_CHART_INSIGHTS_FORMAT.format(
-            outcome=outcome
+        description=(
+            summary_text.OUTCOME_DELTA_CHART_INSIGHTS_FORMAT.format(
+                outcome=outcome
+            ) + ' ' + axis_note
         ),
-        chart_json=self.plot_incremental_outcome_delta().to_json(),
+        chart_json=outcome_chart.to_json(),
     )
     spend_allocation_table = formatter.TableSpec(
         id=summary_text.SPEND_ALLOCATION_TABLE_ID,

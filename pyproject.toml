@@ -153,6 +153,11 @@ include-package-data = true
 # data-validation library) for anyone who installs both. The import path here
 # is `meridian.schema`.
 
+# MANIFEST.in keeps `_test.py` sources in sdists; these are not runtime data.
+# setup.py's build_py command separately excludes them as Python modules.
+[tool.setuptools.exclude-package-data]
+"*" = ["*_test.py"]
+
 [tool.setuptools.packages.find]
 include = ["meridian*", "scenarioplanner*"]
 exclude = ["*test"]

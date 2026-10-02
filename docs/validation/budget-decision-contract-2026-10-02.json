@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-02",
+  "decision_status": "requires_fitted_model_and_business_review",
+  "evidence_kind": "exact_arithmetic_contract_fixtures_only",
+  "fitted_model": false,
+  "limitations": [
+    "Arrays are hand-constructed, unfitted, and not posterior samples.",
+    "Fixture fractions demonstrate arithmetic only; they estimate no real campaign risk, prior sensitivity, or scientific reliability.",
+    "No allocation is selected. Tail functional Monte Carlo uncertainty is not assessed by the report."
+  ],
+  "mean_gain_sensitivity_envelope": {
+    "maximum": 1.0,
+    "minimum": -1.0
+  },
+  "provenance": {
+    "architecture": "Darwin-arm64",
+    "git_head": "a3e3cd9efd35364b19455008ba643c3b84dc2ad3",
+    "package_versions": {
+      "arviz": "0.19.0",
+      "google-meridian": null,
+      "jax": "0.10.2",
+      "jaxlib": "0.10.2",
+      "meridian-mmm-fork": "2.0.0",
+      "numpy": "2.3.5",
+      "protobuf": "6.33.6",
+      "tensorflow": "2.21.0",
+      "tensorflow-probability": null,
+      "tfp-nightly": "0.26.0.dev20260130"
+    },
+    "script_sha256": "c94823a692119d109c5ecf8feff2090384d39766b1c88f574f3a286e6ee81ff1"
+  },
+  "recommendation": null,
+  "sampling_ready": false,
+  "scientific_validation": false,
+  "separate_specification_fixtures": {
+    "fixture_a": {
+      "central_interval": {
+        "lower": 1.0,
+        "probability": 0.9,
+        "upper": 1.0
+      },
+      "downside_policy_met_in_draws": true,
+      "expected_downside": 0.0,
+      "lower_quantile": {
+        "probability": 0.05,
+        "value": 1.0
+      },
+      "mean_gain": 1.0,
+      "median_gain": 1.0,
+      "monte_carlo_uncertainty": "not_assessed_for_decision_functionals",
+      "n_loss_draws": 0,
+      "n_posterior_draws": 8,
+      "probability_loss_beyond_tolerance": 0.0
+    },
+    "fixture_b": {
+      "central_interval": {
+        "lower": -1.0,
+        "probability": 0.9,
+        "upper": -1.0
+      },
+      "downside_policy_met_in_draws": false,
+      "expected_downside": 1.0,
+      "lower_quantile": {
+        "probability": 0.05,
+        "value": -1.0
+      },
+      "mean_gain": -1.0,
+      "median_gain": -1.0,
+      "monte_carlo_uncertainty": "not_assessed_for_decision_functionals",
+      "n_loss_draws": 12,
+      "n_posterior_draws": 12,
+      "probability_loss_beyond_tolerance": 1.0
+    }
+  },
+  "summaries": {
+    "correlated_channels": {
+      "central_interval": {
+        "lower": 1.0,
+        "probability": 0.9,
+        "upper": 1.0
+      },
+      "downside_policy_met_in_draws": true,
+      "expected_downside": 0.0,
+      "lower_quantile": {
+        "probability": 0.05,
+        "value": 1.0
+      },
+      "mean_gain": 1.0,
+      "median_gain": 1.0,
+      "monte_carlo_uncertainty": "not_assessed_for_decision_functionals",
+      "n_loss_draws": 0,
+      "n_posterior_draws": 6,
+      "probability_loss_beyond_tolerance": 0.0
+    },
+    "positive_mean_high_downside": {
+      "central_interval": {
+        "lower": -50.0,
+        "probability": 0.9,
+        "upper": 100.0
+      },
+      "downside_policy_met_in_draws": false,
+      "expected_downside": 16.666666666666668,
+      "lower_quantile": {
+        "probability": 0.05,
+        "value": -50.0
+      },
+      "mean_gain": 50.0,
+      "median_gain": 100.0,
+      "monte_carlo_uncertainty": "not_assessed_for_decision_functionals",
+      "n_loss_draws": 2,
+      "n_posterior_draws": 6,
+      "probability_loss_beyond_tolerance": 0.3333333333333333
+    }
+  },
+  "unanimous_positive_mean_gain": false
+}

@@ -82,5 +82,11 @@
     "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
     "mime": "text/plain",
     "license": "Apache-2.0"
+  },
+  "report-charts.js": {
+    "source": "Meridian fork owned report interaction layer",
+    "sha256": "a4cac7b8b7b72a0f85ad195fd74e3008e8d36c09892a4dd0126cbe73819ff226",
+    "mime": "text/javascript",
+    "license": "Apache-2.0"
   }
 }

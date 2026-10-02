@@ -29,6 +29,7 @@ The unit tests generally follow this procedure:
 from collections.abc import Mapping
 import dataclasses
 import datetime
+import itertools
 import math
 import os
 import tempfile
@@ -4544,9 +4545,28 @@ class OptimizerOutputTest(parameterized.TestCase):
 
     stats = self.optimization_results._create_scenario_stats_specs('$')
 
-    self.assertEqual(stats[2].stat, '0.6')
-    self.assertEqual(stats[3].stat, '0.7')
-    self.assertEqual(stats[3].delta, '0.0')
+    self.assertEqual(stats[2].stat, '0.65')
+    self.assertEqual(stats[3].stat, '0.69')
+    self.assertEqual(stats[3].delta, '+0.04')
+
+  @parameterized.named_parameters(
+      ('small_gain', 0.004, '+<0.01', 'positive'),
+      ('small_loss', -0.004, '-<0.01', 'negative'),
+      ('exact_zero', 0.0, '0.00', 'neutral'),
+  )
+  def test_scenario_roi_delta_preserves_nonzero_sign(self, change, text, color):
+    self.optimization_results.nonoptimized_data.attrs['total_roi'] = 1.0
+    self.optimization_results.optimized_data.attrs['total_roi'] = 1.0 + change
+    stats = self.optimization_results._create_scenario_stats_specs('$')
+    self.assertEqual(stats[3].delta, text)
+    self.assertEqual(stats[3].delta_color, color)
+    self.assertEqual(stats[1].delta_color, 'neutral')
+
+  def test_cpik_reduction_has_beneficial_color(self):
+    stats = self.optimization_results_kpi_output._create_scenario_stats_specs('$')
+    self.assertLess(float(self.optimization_results_kpi_output.optimized_data.total_cpik),
+                    float(self.optimization_results_kpi_output.nonoptimized_data.total_cpik))
+    self.assertEqual(stats[3].delta_color, 'positive')
 
   def test_output_scenario_card_use_cpik_no_revenue_per_kpi(self):
     summary_html_dom = self._get_output_summary_html_dom(
@@ -4599,10 +4619,10 @@ class OptimizerOutputTest(parameterized.TestCase):
           'non_optimized_roi',
           2,
           summary_text.NON_OPTIMIZED_ROI_LABEL,
-          '1.3',
+          '1.27',
           None,
       ),
-      ('optimized_roi', 3, summary_text.OPTIMIZED_ROI_LABEL, '1.4', '+0.1'),
+      ('optimized_roi', 3, summary_text.OPTIMIZED_ROI_LABEL, '1.38', '+0.12'),
       (
           'non_optimized_inc_outcome',
           4,
@@ -4822,7 +4842,7 @@ class OptimizerOutputTest(parameterized.TestCase):
         outcome_delta_description_text.strip(),
         summary_text.OUTCOME_DELTA_CHART_INSIGHTS_FORMAT.format(
             outcome=c.REVENUE
-        ),
+        ) + ' The outcome axis uses a zoomed range to show the changes in detail.',
     )
 
   def test_output_budget_allocation_table(self):
@@ -5657,6 +5677,68 @@ class BudgetOptimizerInitTest(parameterized.TestCase):
     )
 
     self.assertIsNone(results.meridian)
+
+
+class FixedBudgetFeasibilityTest(parameterized.TestCase):
+  """Public grid regressions and exhaustive checks for concave small grids."""
+
+  def _grid(self, outcomes):
+    spend = np.tile(np.arange(len(outcomes))[:, None], (1, 2))
+    return optimizer.OptimizationGrid(
+        _grid_dataset=xr.Dataset(
+            coords={c.CHANNEL: ['a', 'b']},
+            data_vars={
+                'spend_grid': (('grid_spend_index', c.CHANNEL), spend),
+                'incremental_outcome_grid': (
+                    ('grid_spend_index', c.CHANNEL), outcomes
+                ),
+            },
+            attrs={c.SPEND_STEP_SIZE: 1},
+        ),
+        historical_spend=np.array([1, 1]), use_kpi=True,
+        use_posterior=True, use_optimal_frequency=False,
+        start_date=None, end_date=None, gtol=0.01, round_factor=0,
+        optimal_frequency=None, selected_geos=None, selected_times=None,
+    )
+
+  def test_unaffordable_high_return_jump_does_not_end_search(self):
+    spend = np.arange(5, dtype=float)
+    outcomes = np.column_stack((spend**3 / (spend**3 + 4**3), 0.1 * spend))
+    allocation = self._grid(outcomes).optimize(
+        optimizer.FixedBudgetScenario(total_budget=2),
+        spend_constraint_lower=1, spend_constraint_upper=3,
+    ).optimized.values
+    np.testing.assert_array_equal(allocation, [0, 2])
+    self.assertAlmostEqual(
+        sum(outcomes[value, channel] for channel, value in enumerate(allocation)),
+        0.2,
+    )
+
+  def test_small_concave_grids_match_exhaustive_feasible_optimum(self):
+    # All nonincreasing triples of nonnegative integer marginal returns.
+    # Greedy resource allocation is exact on these uniform-step separable
+    # concave grids; arbitrary nonconcave response curves are not covered.
+    marginal_returns = list(itertools.combinations_with_replacement(range(3), 3))
+    for first, second in itertools.product(marginal_returns, repeat=2):
+      outcomes = np.vstack((
+          np.zeros(2), np.cumsum(np.array([first[::-1], second[::-1]]).T, axis=0)
+      ))
+      for budget in (2, 4, 6):
+        grid = self._grid(outcomes)
+        allocation = grid.optimize(
+            optimizer.FixedBudgetScenario(total_budget=budget),
+            spend_constraint_lower=1, spend_constraint_upper=6 / budget - 1,
+            pct_of_spend=[0.5, 0.5],
+        ).optimized.values
+        feasible = [
+            outcomes[a, 0] + outcomes[b, 1]
+            for a, b in itertools.product(range(4), repeat=2)
+            if a + b <= budget
+        ]
+        actual = sum(outcomes[value, channel]
+                     for channel, value in enumerate(allocation))
+        self.assertLessEqual(allocation.sum(), budget)
+        self.assertAlmostEqual(actual, max(feasible))
 
 
 if __name__ == '__main__':

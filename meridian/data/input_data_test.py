@@ -2335,5 +2335,85 @@ class NonpaidInputDataTest(parameterized.TestCase):
     self.assertNotIn("ill-defined", message)
 
 
+class FiniteInputDataTest(parameterized.TestCase):
+  """Reject numerical infinities at ingestion, before transformations or fits."""
+
+  def setUp(self):
+    super().setUp()
+    self.data = test_utils.sample_input_data_non_revenue_revenue_per_kpi(
+        n_geos=2,
+        n_times=6,
+        n_media_times=7,
+        n_media_channels=1,
+        n_rf_channels=1,
+        n_organic_media_channels=1,
+        n_organic_rf_channels=1,
+        n_non_media_channels=1,
+        n_controls=1,
+    )
+
+  @parameterized.product(
+      field=(
+          "kpi",
+          "population",
+          "controls",
+          "revenue_per_kpi",
+          "media",
+          "media_spend",
+          "reach",
+          "frequency",
+          "rf_spend",
+          "organic_media",
+          "organic_reach",
+          "organic_frequency",
+          "non_media_treatments",
+      ),
+      value=(np.inf, -np.inf),
+  )
+  def test_rejects_infinite_values_for_each_numerical_input(self, field, value):
+    array = getattr(self.data, field).copy(deep=True)
+    array.values.flat[0] = value
+    with self.assertRaisesRegex(ValueError, f"Non-finite values.*{field}"):
+      dataclasses.replace(self.data, **{field: array})
+
+  @parameterized.parameters("inf", "-inf")
+  def test_object_coercion_cannot_introduce_infinity(self, value):
+    array = self.data.kpi.astype(object)
+    array.values.flat[0] = value
+    with self.assertRaisesRegex(ValueError, "Non-finite values.*kpi"):
+      dataclasses.replace(self.data, kpi=array)
+
+  def test_na_values_keep_the_existing_diagnostic(self):
+    array = self.data.kpi.copy(deep=True)
+    array.values.flat[0] = np.nan
+    with self.assertRaisesRegex(ValueError, "NA values found in the kpi data"):
+      dataclasses.replace(self.data, kpi=array)
+
+  def test_finite_signed_controls_and_treatments_remain_valid(self):
+    controls = self.data.controls.copy(deep=True)
+    controls.values.flat[0] = -1.0
+    treatments = self.data.non_media_treatments.copy(deep=True)
+    treatments.values.flat[0] = -2.0
+    data = dataclasses.replace(
+        self.data, controls=controls, non_media_treatments=treatments
+    )
+    self.assertEqual(data.controls.values.flat[0], -1.0)
+    self.assertEqual(data.non_media_treatments.values.flat[0], -2.0)
+
+  def test_error_locates_the_first_infinite_value(self):
+    array = self.data.media.copy(deep=True)
+    array.values[1, 2, 0] = np.inf
+    with self.assertRaises(ValueError) as error:
+      dataclasses.replace(self.data, media=array)
+    message = str(error.exception)
+    self.assertIn("Found 1", message)
+    for dimension, index in (
+        ("geo", 1),
+        ("media_time", 2),
+        ("media_channel", 0),
+    ):
+      self.assertIn(str(array.coords[dimension].values[index]), message)
+
+
 if __name__ == "__main__":
   absltest.main()

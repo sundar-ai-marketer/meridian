@@ -12,13 +12,16 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+NOTICE: This file was modified from the original google/meridian source.
+See the NOTICE file at the repository root.
 #}
 
 <stats>
   <stats-title>{{ title }}</stats-title>
   <stat>{{ stat }}</stat>
   {% if delta %}
-    <delta class='{{"red-text" if "-" in delta else "green-text"}}'>
+    <delta class="{% if delta_color == 'neutral' %}neutral-text{% elif delta_color == 'positive' %}green-text{% elif delta_color == 'negative' %}red-text{% else %}{{ 'red-text' if '-' in delta else 'green-text' }}{% endif %}">
       {{ delta }}
     </delta>
   {% endif %}

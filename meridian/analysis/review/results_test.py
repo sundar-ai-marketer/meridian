@@ -2137,7 +2137,6 @@ class CalibrationOverviewCardTest(parameterized.TestCase):
           [
               "Calibration overview",
               "ch_0 calibration",
-              "spec_0 = JSON.parse",
               "for 'ch_0'.",
           ],
           [_OVERVIEW_LIMIT_MESSAGE],
@@ -2294,8 +2293,7 @@ class CalibrationDetailsCardTest(parameterized.TestCase):
           expected_in=(
               "Calibration details",
               "calibration-details-chart-0",
-              "spec_0 = JSON.parse",
-              "vegaEmbed('#calibration-details-chart-0'",
+              "MeridianCharts.mount(document.getElementById(\"calibration-details-chart-0\")",
               "These plots display your incrementality experiments",
           ),
           expected_not_in=(_DETAILS_LIMIT_MESSAGE,),
@@ -2389,8 +2387,7 @@ class CalibrationDetailsCardTest(parameterized.TestCase):
     self.assertIn('id="calibration-details"', html)
     self.assertIn('class="channel-recommendation-card"', html)
     self.assertIn("calibration-details-chart-0", html)
-    self.assertIn("spec_0 = JSON.parse", html)
-    self.assertIn("vegaEmbed('#calibration-details-chart-0'", html)
+    self.assertIn("MeridianCharts.mount(document.getElementById(\"calibration-details-chart-0\")", html)
     details_idx = html.find('id="calibration-details"')
     rec_idx = html.find('class="channel-recommendation-card"')
     self.assertNotEqual(details_idx, -1)

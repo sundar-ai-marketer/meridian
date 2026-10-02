@@ -35,11 +35,11 @@ ROI, CPIK and contribution are expressed relative to total outcome, so a
 negative KPI makes them ill-defined. The two facts together mean the default
 prior generates datasets the library itself refuses to load.
 
-That matters in two places. It is the reason simulation-based calibration
-cannot be run against the shipped default prior -- every simulated dataset is
-rejected, so there is nothing to refit. And it is a reason to look at a prior
-predictive check before a long fit, because a prior this wide contributes very
-little information where it is most needed.
+This is an operational obstacle for simulation-based calibration through the
+public loader: simulated datasets with any negative KPI cannot be refitted
+through that route. The frequency is measured below, not known to be exactly
+one. Prior predictive support checks also help inspect a prior before a long
+fit; they do not establish how strongly the prior will influence posterior ROI.
 
 This script quantifies the effect for a given dataset shape rather than
 asserting it. It samples the prior, computes the conditional mean per geo and
@@ -49,8 +49,11 @@ negative.
 
 What it does NOT claim. A wide prior is not by itself an error; weakly
 informative priors are a legitimate choice and the posterior may be perfectly
-well behaved. The finding is narrower and concrete: this prior cannot be
-simulated from without producing data the model rejects.
+well behaved. The finding is narrower: this template produced empirical
+support violations. Observing rejection in every sampled dataset does not prove
+mathematical impossibility of SBC; observing none with narrower priors does
+not guarantee compatible support. Discarding negative draws changes the
+target prior and is not an unmodified SBC experiment.
 """
 
 from __future__ import annotations
@@ -113,7 +116,9 @@ def _build_model(template, config, priors: dict[str, Any] | None):
     f = backend.np_float_dtype
     overrides = dict(
         roi_m=backend.tfd.LogNormal(
-            f(np.log(priors["roi_median"])), f(priors["roi_sigma"]), name=c.ROI_M
+            f(np.log(priors["roi_median"])),
+            f(priors["roi_sigma"]),
+            name=c.ROI_M,
         ),
         sigma=backend.tfd.HalfNormal(f(priors["sigma_scale"]), name=c.SIGMA),
         knot_values=backend.tfd.Normal(
@@ -141,10 +146,12 @@ def _build_model(template, config, priors: dict[str, Any] | None):
       overrides["xi_c"] = backend.tfd.HalfNormal(f(hier_sd), name=c.XI_C)
     prior = prior_distribution.PriorDistribution(**overrides)
 
-  model_spec = spec.ModelSpec(
-      media_prior_type=c.ROI, max_lag=config.max_lag
-  ) if prior is None else spec.ModelSpec(
-      prior=prior, media_prior_type=c.ROI, max_lag=config.max_lag
+  model_spec = (
+      spec.ModelSpec(media_prior_type=c.ROI, max_lag=config.max_lag)
+      if prior is None
+      else spec.ModelSpec(
+          prior=prior, media_prior_type=c.ROI, max_lag=config.max_lag
+      )
   )
   return model.Meridian(input_data=data, model_spec=model_spec)
 
@@ -325,22 +332,21 @@ def main(argv: Sequence[str] | None = None) -> int:
       },
       "variants": results,
       "conclusion": (
-          "The default prior places substantial mass on negative revenue, "
-          "which InputData rejects, so the shipped prior cannot be simulated "
-          "from. Tightening the observation-noise prior alone changes almost "
-          "nothing. Tightening the population-level baseline terms roughly "
-          "halves the rate. Only tightening the hierarchical standard "
-          "deviations as well -- eta_m and xi_c, which sit on the geo-level "
-          "terms -- removes it entirely. The hierarchical scales "
-          "are the dominant source of width."
+          "The empirical draw rates quantify negative-KPI support violations "
+          "for the tested template and priors. InputData rejects any affected "
+          "dataset. Finite sampling cannot prove rejection probability one "
+          "or zero, mathematical impossibility of SBC, or compatible support "
+          "for a narrowed prior. Discarding negative draws changes the target "
+          "prior and is not an unmodified SBC experiment."
       ),
       "limitations": [
           "Measured on one synthetic dataset shape; the exact percentages "
           "depend on the data's scale and the number of geos and periods.",
-          "A weakly informative prior is a legitimate choice. The finding is "
-          "that this one cannot be simulated from, not that it is wrong.",
-          "Says nothing about posterior behaviour, which is usually dominated "
-          "by the likelihood.",
+          "A weakly informative prior is a legitimate choice. This measures "
+          "empirical support violations, not whether the prior is appropriate.",
+          "Zero observed violations does not guarantee nonnegative support, "
+          "and complete observed rejection does not prove probability one.",
+          "Says nothing about posterior behaviour or identifiability.",
       ],
   }
 

@@ -112,7 +112,7 @@ Status values:
 | 1778 | MCMC convergence fails below a specific media channel count | Not reproducible without the reporter's data. Their setup (10 geos, 105 weeks, 22–23 channels, 8 national-constant controls) is severely over-parameterised, but the direction is backwards from what over-parameterisation predicts — *more* channels converge. Note they hit a float32/float64 dtype error when trying 64-bit; the coercion fix here removes that obstacle, so it is worth retrying on this fork. |
 | 1624 | MCMC non-convergence on 1.6.0 with official `tfp-nightly` | Version-specific to 1.6.0. Our demo-grade run on v2.0.0 is recorded below. |
 | 1455 | "x" | Empty placeholder issue with no content. Nothing to action. |
-| — | *(found here, not filed upstream)* | The default prior cannot be simulated from. Priors are written on the scaled KPI, where the data has standard deviation 1 by construction, but `knot_values`, `tau_g_excl_baseline` and `gamma_c` are `Normal(0, 5)` and `sigma`, `beta_m` and `xi_c` are `HalfNormal(5)`. The resulting prior predictive is negative in 100% of draws, and `InputData._validate_no_negative_values` rejects a negative KPI. So the library generates data it will not load, which blocks simulation-based calibration entirely. Measured across five prior variants in [AUDIT.md](AUDIT.md); tightening `sigma` alone changes nothing, and only narrowing the hierarchical scales `eta_m`, `xi_c` and `beta_m` as well removes it. Not filed upstream: Google does not accept external pull requests, and this needs a maintainer decision about intended prior scale rather than a patch. Reproduce with `scripts/prior_predictive_audit.py`. |
+| — | *(found here, not filed upstream)* | Prior predictive support mismatch with the public loader. On the scaled KPI, `knot_values`, `tau_g_excl_baseline` and `gamma_c` are `Normal(0, 5)`, `sigma` and `xi_c` are `HalfNormal(5)`, and `eta_m` is `HalfNormal(1)`. All 300 sampled default-prior datasets at the tested template contained a negative KPI, which `InputData` rejects. That blocked this attempted refit workflow; finite Monte Carlo evidence does not prove mathematical impossibility of SBC. The five-variant sweep in [AUDIT.md](AUDIT.md) reduced observed rejection by narrowing baseline and hierarchical scales, with zero observed violations in the tightest variant; this does not guarantee compatible support. `beta_m` was not overridden: under the ROI prior it is derived from `roi_m`, and a custom `beta_m` prior is ignored. No upstream filing was made; intended prior scale and loader/likelihood support need a maintainer decision. Reproduce with `scripts/prior_predictive_audit.py`. |
 
 ---
 
@@ -171,13 +171,16 @@ figures. Each was measured before being codified:
 ### ROI recovery on synthetic data
 
 `meridian/validation/recovery.py` generates data whose true ROI is known by
-construction and checks whether the posterior recovers it. Priors are
-deliberately uninformative and identical across channels, so separating them is
-the data's work.
+construction and checks whether the posterior recovers it. The shared ROI
+prior is identical across channels, avoiding channel-specific prior rankings;
+it remains informative about levels. The generator's historical `concave`
+label means unbounded square root before adstock. The fitted default uses
+bounded Hill saturation after adstock, so neither response family below is a
+model-matched control.
 
 | Response shape | Carryover | Highest-ROI channel error | All inside 90% CI |
 |---|---|---|---|
-| concave (matches Meridian's assumption) | none | +9.4% | yes |
+| square-root (`concave`) | none | +9.4% | yes |
 | concave | geometric (`max_lag=4`, the CLI default) | −43.1% | yes |
 | linear | none | **+70.9%** | **no** |
 | linear | geometric | +39.3% | yes |
@@ -189,15 +192,14 @@ were re-measured on the environment above; NUTS is not bit-reproducible across
 library versions even at a fixed seed, and the concave figures moved by more
 than the linear ones between runs. Re-measure before quoting any of them.
 
-Two findings, which the carryover column keeps apart. Comparing the two
-no-carryover shapes — the only thing differing is the response — a linear truth
-overstates ROI by about 70% and the interval excludes the true value; eliminating
-noise and eliminating a confound each left that bias intact. That is saturation
-misspecification, not a library defect, and credible intervals do not cover it.
-Separately, turning carryover on costs substantial precision even when the shape
-assumption holds, which is why the default-config numbers look nothing like the
-no-carryover ones. Channel ordering was recovered in every run. See the README
-section "Reading ROI intervals honestly".
+The no-carryover linear fit overstates this channel's ROI by about 70%, with an
+interval excluding the truth. The two historical variants retain positive
+error; these single-fit checks do not isolate a universal bias cause or
+magnitude. Turning on carryover changes both the learning problem and the
+order mismatch between the generator and fitted response; it does not measure
+the precision cost of learning adstock alone. Channel ordering was recovered
+in the recorded runs. See the README section "Reading ROI intervals honestly"
+for conditional uncertainty and repeated stress measurements.
 
 ### Environment
 

@@ -74,6 +74,8 @@ class StatsSpec:
   title: str
   stat: str
   delta: str | None = None
+  # Optional presentation semantics; omitted callers retain sign-based colors.
+  delta_color: str | None = None
 
 
 TEXT_CONFIG = immutabledict.immutabledict(
@@ -185,6 +187,17 @@ def compact_number(n: float, precision: int = 0, currency: str = '') -> str:
   if n < 0:
     return suffixed[0] + currency + suffixed[1:]
   return currency + suffixed
+
+
+def format_signed_change(value: float, precision: int = 2, currency: str = '') -> str:
+  """Format a change without turning a nonzero magnitude into displayed zero."""
+  value = float(value)
+  sign = '+' if value > 0 else '-' if value < 0 else ''
+  magnitude = compact_number(abs(value), precision, currency)
+  if value != 0 and round(abs(value), precision) == 0:
+    resolution = f'{10 ** -precision:.{precision}f}'
+    return f'{sign}<{currency}{resolution}'
+  return sign + magnitude
 
 
 def compact_number_expr(

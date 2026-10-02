@@ -38,7 +38,7 @@ class ReportAssetsTest(absltest.TestCase):
     html = formatter.create_summary_html(
         formatter.create_template_env(), 'Offline', []
     )
-    self.assertEqual(html.count('src="data:text/javascript;base64,'), 3)
+    self.assertEqual(html.count('src="data:text/javascript;base64,'), 4)
     self.assertIn('data:font/otf;base64,', html)
     self.assertNotIn('src="https://', html)
     self.assertNotIn('href="https://fonts.', html)

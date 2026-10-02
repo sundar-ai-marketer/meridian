@@ -6,7 +6,8 @@
 # claim about a scanner database from months ago, and the day Debian ships a
 # fix nobody notices. This job rebuilds the image from a freshly pulled base
 # every week, rescans it, re-measures which packages the analysis workflow
-# actually loads, regenerates the triage document, and commits the result.
+# actually loads, regenerates the triage document, and publishes an evidence
+# branch for maintainer review. Main still requires its configured CI checks.
 #
 # The actionable signal is a HIGH or CRITICAL finding that HAS a vendor fix.
 # The Dockerfile applies available Debian updates during the build, so such a
@@ -24,11 +25,13 @@ on:
     - cron: "0 5 * * 1"
   workflow_dispatch:
 
-# Needs more than the repository default: `contents` to commit refreshed
-# evidence, `issues` to raise the fixable-finding alarm.
+# Needs more than the repository default: `contents` to update the evidence
+# branch, `pull-requests` to open or refresh its review, and `issues` to raise
+# the fixable-finding alarm.
 permissions:
   contents: write
   issues: write
+  pull-requests: write
 
 concurrency:
   group: container-rescan
@@ -45,6 +48,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The evidence PR branch is merged with the latest main before each
+          # update, so it remains eligible under strict branch protection.
+          fetch-depth: 0
 
       # Evidence files are named `<family>-latest.json` (always the current
       # run, overwritten in place, so consumers can link a fixed path) and
@@ -189,21 +196,12 @@ jobs:
             gh issue create --title "$title" --body "$body"
           fi
 
-      - name: Commit refreshed evidence
-        run: |
-          # `git status --porcelain` rather than `git diff`: on the first run
-          # the rolling evidence files are untracked, and a diff would not see
-          # them at all.
-          if [ -z "$(git status --porcelain -- docs/validation)" ]; then
-            echo "No change in the advisory inventory, reachability evidence or triage."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/validation
-          git commit -m "Refresh the container OS advisory evidence" \
-            -m "Weekly clean rebuild and rescan. Advisories without a vendor fix: ${{ steps.gate.outputs.unfixed_total }}. Findings with a vendor fix: ${{ steps.gate.outputs.fixable_high }}."
-          # Push explicitly to the branch rather than relying on an upstream:
-          # a scheduled checkout can leave HEAD detached, where a bare push
-          # fails with "You are not currently on a branch".
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+      # Artifacts above remain available even when repository settings prohibit
+      # Actions-created PRs. The helper publishes only the automation branch,
+      # then leaves a compare link for the maintainer in the step summary.
+      - name: Publish evidence branch and request review when permitted
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIXABLE_COUNT: ${{ steps.gate.outputs.fixable_high }}
+          UNFIXED_COUNT: ${{ steps.gate.outputs.unfixed_total }}
+        run: python3 scripts/publish_container_rescan.py --date "${{ steps.date.outputs.today }}"
