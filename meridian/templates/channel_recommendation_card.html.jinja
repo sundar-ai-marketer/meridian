@@ -116,8 +116,7 @@ and why.
       <chart-embed id="implausible-roi-chart"></chart-embed>
       <script type="text/javascript">
         (() => {
-          const spec = JSON.parse({{ impl_chart|tojson }});
-          vegaEmbed('#implausible-roi-chart', spec).catch(console.error);
+          MeridianCharts.mount(document.getElementById('implausible-roi-chart'), {{ impl_chart|tojson }});
         })();
       </script>
     </chart>
@@ -143,8 +142,7 @@ and why.
       <chart-embed id="high-variance-chart"></chart-embed>
       <script type="text/javascript">
         (() => {
-          const spec = JSON.parse({{ hv_chart|tojson }});
-          vegaEmbed('#high-variance-chart', spec).catch(console.error);
+          MeridianCharts.mount(document.getElementById('high-variance-chart'), {{ hv_chart|tojson }});
         })();
       </script>
     </chart>
@@ -170,8 +168,7 @@ and why.
       <chart-embed id="potential-bias-chart"></chart-embed>
       <script type="text/javascript">
         (() => {
-          const spec = JSON.parse({{ pb_chart|tojson }});
-          vegaEmbed('#potential-bias-chart', spec).catch(console.error);
+          MeridianCharts.mount(document.getElementById('potential-bias-chart'), {{ pb_chart|tojson }});
         })();
       </script>
     </chart>

@@ -267,12 +267,20 @@ jobs:
       - name: Install browser smoke-test dependencies
         if: matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'
         run: |
-          python -m pip install playwright
-          python -m playwright install --with-deps chromium
+          "$RUNNER_TEMP/meridian-ci/bin/python" -m pip install playwright
+          "$RUNNER_TEMP/meridian-ci/bin/python" -m playwright install --with-deps chromium
 
       - name: Run report browser smoke test
         if: matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'
-        run: python scripts/test_report_browser.py "$RUNNER_TEMP/meridian-e2e/summary.html"
+        run: |
+          "$RUNNER_TEMP/meridian-ci/bin/python" \
+            scripts/test_report_browser.py "$RUNNER_TEMP/meridian-e2e/summary.html"
+
+      - name: Run native report interaction tests
+        if: matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'
+        run: |
+          "$RUNNER_TEMP/meridian-ci/bin/python" \
+            scripts/test_native_report_browser.py
 
   # Build the image from the same checkout that passed the Python gates, then
   # exercise the runtime as its non-root user. This catches Docker context,

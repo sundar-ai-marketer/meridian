@@ -41,7 +41,9 @@ import argparse
 import json
 import math
 from pathlib import Path
+import re
 from typing import Any
+import xml.etree.ElementTree as ET
 
 _VIEWPORTS = ((320, 844), (390, 844), (1440, 1000))
 _CHART_READY_TIMEOUT_MS = 60_000
@@ -154,6 +156,98 @@ def _check_keyboard_pan(page: Any, expect: Any) -> dict[str, Any]:
   }
 
 
+def _check_stat_contrast(page: Any) -> list[dict[str, Any]]:
+  """Check computed text contrast for the actually rendered scenario deltas."""
+  colors = page.locator('delta').evaluate_all(
+      """elements => elements.map(element => {
+    const style = getComputedStyle(element);
+    let parent = element;
+    let background = 'rgb(255, 255, 255)';
+    while (parent) {
+      const candidate = getComputedStyle(parent).backgroundColor;
+      if (candidate !== 'rgba(0, 0, 0, 0)' && candidate !== 'transparent') {
+        background = candidate; break;
+      }
+      parent = parent.parentElement;
+    }
+    return {text: element.textContent.trim(), color: style.color, background,
+            font_size: parseFloat(style.fontSize), font_weight: Number(style.fontWeight),
+            semantic_class: element.className};
+  })"""
+  )
+
+  def luminance(css_color):
+    channels = [
+        float(value) / 255 for value in re.findall(r'[\d.]+', css_color)[:3]
+    ]
+    linear = [
+        value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+        for value in channels
+    ]
+    return sum(
+        value * weight
+        for value, weight in zip(linear, (0.2126, 0.7152, 0.0722))
+    )
+
+  for color in colors:
+    levels = sorted((luminance(color['color']), luminance(color['background'])))
+    ratio = (levels[1] + 0.05) / (levels[0] + 0.05)
+    large = color['font_size'] >= 24 or (
+        color['font_size'] >= 18.667 and color['font_weight'] >= 700
+    )
+    minimum = 3.0 if large else 4.5
+    if ratio < minimum:
+      raise AssertionError(
+          f'Scenario delta text contrast {ratio:.3f} < {minimum}: {color}'
+      )
+    if (
+        color['text'] in ('$0', '0.00')
+        and color['semantic_class'] != 'neutral-text'
+    ):
+      raise AssertionError(
+          'An exact-zero scenario delta must have neutral color.'
+      )
+    color.update(contrast_ratio=round(ratio, 3), minimum_ratio=minimum)
+  return colors
+
+
+def _check_native_controls(page: Any, expect: Any) -> dict[str, Any]:
+  """Exercise the real report's source view and both local native exports."""
+  chart = page.locator('chart-embed').first
+  host = chart.locator('..')
+  controls = host.locator('.chart-controls').first
+  show = controls.locator('button').nth(0)
+  show.click()
+  panel = host.locator('.chart-source-panel').first
+  expect(panel).to_be_visible()
+  rows = panel.locator('tbody tr').count()
+  if rows > 50:
+    raise AssertionError('The source table exceeded its 50-row page bound.')
+  expect(panel.get_by_role('heading', name='Chart source data')).to_be_visible()
+  with page.expect_download() as pending_spec:
+    controls.locator('button').nth(2).click()
+  specification = json.loads(Path(pending_spec.value.path()).read_text('utf-8'))
+  source_specification = chart.evaluate(
+      'element => element.__meridianChart.spec'
+  )
+  if specification != source_specification:
+    raise AssertionError('Native spec export changed the chart source.')
+  with page.expect_download() as pending_svg:
+    controls.locator('button').nth(1).click()
+  svg = ET.fromstring(Path(pending_svg.value.path()).read_text('utf-8'))
+  if svg.tag != '{http://www.w3.org/2000/svg}svg':
+    raise AssertionError('The SVG download must be a native SVG document.')
+  # Keep the report screenshot's working comparison in its default state.
+  show.click()
+  return {
+      'status': 'PASS',
+      'source_table_rows_on_first_page': rows,
+      'source_semantics': 'embedded source rows before plot transforms',
+      'spec_export': 'exact native Vega-Lite specification',
+      'svg_export': 'native SVG document',
+  }
+
+
 def run_browser_regression(
     report_html: Path,
     screenshot_dir: Path | None = None,
@@ -231,16 +325,15 @@ def run_browser_regression(
                   document.querySelectorAll('chart-embed')
                 );
                 return charts.length > 0 && charts.every(
-                  (chart) => chart.querySelector('canvas, svg')
+                  (chart) => chart.__meridianChart?.view && chart.querySelector('svg')
                 );
               }""",
               timeout=_CHART_READY_TIMEOUT_MS,
           )
           chart_count = page.locator('.vega-embed').count()
-          rendered_count = page.locator(
-              '.vega-embed canvas, .vega-embed svg'
-          ).count()
-          if chart_count == 0 or rendered_count == 0:
+          rendered_count = page.locator('.vega-embed svg').count()
+          if chart_count == 0 or rendered_count != chart_count:
+
             raise AssertionError(
                 'No rendered Vega chart found '
                 f'({chart_count=}, {rendered_count=}).'
@@ -273,7 +366,15 @@ def run_browser_regression(
                   'minimum_chart_viewport_width': min_desktop_chart_width,
               }
 
+          native = _check_native_controls(page, expect)
+          stat_contrast = _check_stat_contrast(page)
+
           if screenshot_dir is not None:
+            page.evaluate('() => window.scrollTo(0, 0)')
+            page.screenshot(
+                path=str(screenshot_dir / f'first-viewport-{width}.png'),
+                full_page=False,
+            )
             page.screenshot(
                 path=str(screenshot_dir / f'report-{width}.png'),
                 full_page=True,
@@ -292,6 +393,8 @@ def run_browser_regression(
                   'overflow': overflow,
                   'keyboard_scroll': keyboard,
                   'desktop': desktop,
+                  'native_controls': native,
+                  'stat_contrast': stat_contrast,
               }
           )
         finally:

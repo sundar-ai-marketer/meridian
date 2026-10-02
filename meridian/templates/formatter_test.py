@@ -446,5 +446,21 @@ class FormatterTest(parameterized.TestCase):
     )  # pyrefly: ignore[bad-argument-type]
 
 
+class SignedChangeTest(parameterized.TestCase):
+
+  @parameterized.parameters(
+      (0.004, 2, '', '+<0.01'),
+      (-0.004, 2, '', '-<0.01'),
+      (0.0, 2, '', '0.00'),
+      (0.4, 0, '$', '+<$1'),
+      (-0.4, 0, '$', '-<$1'),
+      (0.0, 0, '$', '$0'),
+      (70.0, 0, '$', '+$70'),
+  )
+  def test_small_change_retains_sign_and_resolution(self, value, precision, currency, expected):
+    self.assertEqual(formatter.format_signed_change(value, precision, currency), expected)
+
+
+
 if __name__ == '__main__':
   absltest.main()

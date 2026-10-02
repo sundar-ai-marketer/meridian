@@ -4545,9 +4545,28 @@ class OptimizerOutputTest(parameterized.TestCase):
 
     stats = self.optimization_results._create_scenario_stats_specs('$')
 
-    self.assertEqual(stats[2].stat, '0.6')
-    self.assertEqual(stats[3].stat, '0.7')
-    self.assertEqual(stats[3].delta, '0.0')
+    self.assertEqual(stats[2].stat, '0.65')
+    self.assertEqual(stats[3].stat, '0.69')
+    self.assertEqual(stats[3].delta, '+0.04')
+
+  @parameterized.named_parameters(
+      ('small_gain', 0.004, '+<0.01', 'positive'),
+      ('small_loss', -0.004, '-<0.01', 'negative'),
+      ('exact_zero', 0.0, '0.00', 'neutral'),
+  )
+  def test_scenario_roi_delta_preserves_nonzero_sign(self, change, text, color):
+    self.optimization_results.nonoptimized_data.attrs['total_roi'] = 1.0
+    self.optimization_results.optimized_data.attrs['total_roi'] = 1.0 + change
+    stats = self.optimization_results._create_scenario_stats_specs('$')
+    self.assertEqual(stats[3].delta, text)
+    self.assertEqual(stats[3].delta_color, color)
+    self.assertEqual(stats[1].delta_color, 'neutral')
+
+  def test_cpik_reduction_has_beneficial_color(self):
+    stats = self.optimization_results_kpi_output._create_scenario_stats_specs('$')
+    self.assertLess(float(self.optimization_results_kpi_output.optimized_data.total_cpik),
+                    float(self.optimization_results_kpi_output.nonoptimized_data.total_cpik))
+    self.assertEqual(stats[3].delta_color, 'positive')
 
   def test_output_scenario_card_use_cpik_no_revenue_per_kpi(self):
     summary_html_dom = self._get_output_summary_html_dom(
@@ -4600,10 +4619,10 @@ class OptimizerOutputTest(parameterized.TestCase):
           'non_optimized_roi',
           2,
           summary_text.NON_OPTIMIZED_ROI_LABEL,
-          '1.3',
+          '1.27',
           None,
       ),
-      ('optimized_roi', 3, summary_text.OPTIMIZED_ROI_LABEL, '1.4', '+0.1'),
+      ('optimized_roi', 3, summary_text.OPTIMIZED_ROI_LABEL, '1.38', '+0.12'),
       (
           'non_optimized_inc_outcome',
           4,
@@ -4823,7 +4842,7 @@ class OptimizerOutputTest(parameterized.TestCase):
         outcome_delta_description_text.strip(),
         summary_text.OUTCOME_DELTA_CHART_INSIGHTS_FORMAT.format(
             outcome=c.REVENUE
-        ),
+        ) + ' The outcome axis uses a zoomed range to show the changes in detail.',
     )
 
   def test_output_budget_allocation_table(self):

@@ -34,7 +34,7 @@ and why.
     {% for ch in plotted_channels %}
       <div class="plot-container">
         <h3 class="plot-title">{{ ch.channel_name }} calibration</h3>
-        <div id="calibration-overview-chart-{{ ch.chart_id }}"></div>
+        <chart-embed id="calibration-overview-chart-{{ ch.chart_id }}"></chart-embed>
       </div>
     {% endfor %}
   </div>
@@ -44,8 +44,7 @@ and why.
   (() => {
     {% for ch in plotted_channels %}
       {% if ch.chart_json %}
-        const spec_{{ ch.chart_id }} = JSON.parse({{ ch.chart_json|tojson }});
-        vegaEmbed('#calibration-overview-chart-{{ ch.chart_id }}', spec_{{ ch.chart_id }}).catch(console.error);
+        MeridianCharts.mount(document.getElementById({{ ('calibration-overview-chart-' ~ ch.chart_id)|tojson }}), {{ ch.chart_json|tojson }});
       {% endif %}
     {% endfor %}
   })();

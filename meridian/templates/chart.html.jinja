@@ -20,9 +20,7 @@ and why.
 
 <chart>
   {% include "findings.html.jinja" %}
-  <chart-embed id="{{ id }}" tabindex="0" role="region"
-               aria-label="Scrollable chart. Use left and right arrow keys to pan."
-               aria-keyshortcuts="ArrowLeft ArrowRight Home End"></chart-embed>
+  <chart-embed id="{{ id }}" role="region" aria-label="Chart"></chart-embed>
   {% if description %}
     <chart-description>
       {{ description }}
@@ -31,22 +29,5 @@ and why.
 </chart>
 
 <script type="text/javascript">
-  (() => {
-    const chart = document.getElementById({{ id|tojson }});
-    chart.addEventListener('keydown', (event) => {
-      if (event.target !== chart) return;
-
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-        event.preventDefault();
-        const direction = event.key === 'ArrowRight' ? 1 : -1;
-        chart.scrollLeft += direction * Math.max(80, chart.clientWidth * 0.8);
-      } else if (event.key === 'Home' || event.key === 'End') {
-        event.preventDefault();
-        chart.scrollLeft = event.key === 'End' ? chart.scrollWidth : 0;
-      }
-    });
-
-    const spec = JSON.parse({{ chart_json|tojson }});
-    vegaEmbed(chart, spec).catch(console.error);
-  })();
+  MeridianCharts.mount(document.getElementById({{ id|tojson }}), {{ chart_json|tojson }});
 </script>

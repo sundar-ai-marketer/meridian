@@ -38,7 +38,7 @@ $red_700: #c5221f;
 $green_50: #e6f4ea;
 $green_800: #137333;
 $yellow_50: #fef7e0;
-$yellow_900: #b06000;
+$yellow_900: #8a4b00;
 
 $google_sans: 'Google Sans Display', 'Google Sans', Arial, sans-serif;
 $roboto: Roboto, Arial, sans-serif;
@@ -371,11 +371,15 @@ stats-section {
     }
 
     .green-text {
-      color: $text_green;
+      color: #137333;
     }
 
     .red-text {
-      color: $text_red;
+      color: #b3261e;
+    }
+
+    .neutral-text {
+      color: $text_grey;
     }
   }
 }
@@ -1028,4 +1032,70 @@ chip.calibrated-wide {
     gap: 24px;
     padding: 20px;
   }
+}
+
+// Local native chart exports and a bounded, accessible source-data view.
+.chart-controls, .chart-source-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+  button, select {
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid #b5c0ce;
+    border-radius: 6px;
+    color: #1e4166;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    &:hover:not(:disabled) { background: #edf4fb; }
+    &:focus-visible { outline: 3px solid $chip_blue; outline-offset: 2px; }
+    &:disabled { color: #5f6368; background: #f4f5f7; cursor: default; }
+  }
+}
+.chart-render-status {
+  color: #475569;
+  font-size: 14px;
+  margin: 8px 0;
+}
+.chart-render-ready {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.chart-render-error {
+  padding: 12px;
+  border-left: 3px solid #b3261e;
+  color: #8c1d18;
+  background: #fceeed;
+  overflow-wrap: anywhere;
+}
+.chart-source-panel {
+  margin: 12px 0 20px;
+  padding: 16px;
+  border: 1px solid #d7dfe8;
+  border-radius: 8px;
+  background: #f8fafc;
+  min-width: 0;
+  h4 { color: #23374d; font-size: 16px; margin: 0 0 8px; }
+  select { max-width: 100%; min-height: 44px; margin-bottom: 12px; }
+  .chart-source-description { font-size: 13px; color: #475569; line-height: 1.5; }
+  .chart-source-scroll {
+    overflow: auto;
+    max-height: 420px;
+    max-width: 100%;
+    &:focus-visible { outline: 3px solid $chip_blue; outline-offset: 2px; }
+  }
+  table { border-collapse: collapse; font-size: 13px; width: 100%; }
+  caption { text-align: left; font-weight: 500; padding: 8px 0; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #d7dfe8; max-width: 280px; overflow-wrap: anywhere; }
+  th { position: sticky; top: 0; background: #eaf0f6; color: #23374d; }
 }

@@ -20,12 +20,18 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 from pathlib import Path
 import re
 import sys
 import tarfile
 from zipfile import ZipFile
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+
+from scripts import evidence
 
 _TEST_MODULE = re.compile(r'(?:^|/)[^/]+_test\.py$')
 
@@ -111,7 +117,10 @@ def _check_asset_manifest(
   return [
       f'{path}: manifest asset is missing: {asset_name}'
       for asset_name in manifest
-      if f'meridian/templates/assets/{asset_name}' not in names
+      if not any(
+          name.endswith(f'meridian/templates/assets/{asset_name}')
+          for name in names
+      )
   ]
 
 
@@ -130,6 +139,7 @@ def check_distributions(core_dir: Path, proto_dir: Path) -> list[str]:
           'meridian/templates/report_assets.py',
           'meridian/templates/style.css',
           'meridian/templates/assets/manifest.json',
+          'meridian/templates/assets/report-charts.js',
       ),
   )
   errors.extend(
@@ -141,6 +151,7 @@ def check_distributions(core_dir: Path, proto_dir: Path) -> list[str]:
               'NOTICE',
               'meridian/templates/style.scss',
               'meridian/templates/assets/manifest.json',
+              'meridian/templates/assets/report-charts.js',
           ),
           (
               'meridian/analysis/budget_decision_test.py',
@@ -155,8 +166,6 @@ def check_distributions(core_dir: Path, proto_dir: Path) -> list[str]:
           (
               'mmm/v1/model/meridian/meridian_model.proto',
               'mmm/v1/model/meridian/meridian_model_pb2.py',
-              'LICENSE',
-              'NOTICE',
           ),
       )
   )
@@ -166,6 +175,8 @@ def check_distributions(core_dir: Path, proto_dir: Path) -> list[str]:
           (
               'mmm/v1/model/meridian/meridian_model.proto',
               'mmm/v1/model/meridian/meridian_model_pb2.py',
+              'LICENSE',
+              'NOTICE',
           ),
           (),
       )
@@ -173,10 +184,92 @@ def check_distributions(core_dir: Path, proto_dir: Path) -> list[str]:
   return errors
 
 
+def _artifact_record(path: Path, *, source_archive: bool) -> dict[str, object]:
+  names = _archive_names(path)
+  test_files = sorted(
+      name
+      for name in names
+      if (
+          _TEST_MODULE.search(name)
+          or (
+              source_archive
+              and name.startswith('scripts/')
+              and Path(name).name.startswith('test_')
+              and name.endswith('.py')
+          )
+      )
+  )
+  return {
+      'filename': path.name,
+      'python_file_count': sum(name.endswith('.py') for name in names),
+      'test_source_count': len(test_files),
+      'test_sources': test_files,
+      'contains_native_chart_helper': any(
+          name.endswith('meridian/templates/assets/report-charts.js')
+          for name in names
+      ),
+  }
+
+
+def _baseline_record(path: Path, *, source_archive: bool) -> dict[str, object]:
+  record = _artifact_record(path, source_archive=source_archive)
+  record['sha256'] = evidence.sha256(path)
+  record['size_bytes'] = path.stat().st_size
+  return record
+
+
+def build_report(
+    core_dir: Path,
+    proto_dir: Path,
+    errors: list[str],
+    baseline_core_wheel: Path | None = None,
+    baseline_core_sdist: Path | None = None,
+) -> dict[str, object]:
+  """Build dated, provenance-bearing artifact inventory evidence."""
+  core_wheel = _one_artifact(core_dir, 'meridian_mmm_fork-*.whl')
+  core_sdist = _one_artifact(core_dir, 'meridian_mmm_fork-*.tar.gz')
+  proto_wheel = _one_artifact(proto_dir, 'mmm_proto_schema-*.whl')
+  proto_sdist = _one_artifact(proto_dir, 'mmm_proto_schema-*.tar.gz')
+  artifacts = {
+      'core_wheel': _artifact_record(core_wheel, source_archive=False),
+      'core_sdist': _artifact_record(core_sdist, source_archive=True),
+      'proto_wheel': _artifact_record(proto_wheel, source_archive=False),
+      'proto_sdist': _artifact_record(proto_sdist, source_archive=True),
+  }
+  baseline: dict[str, object] = {}
+  if baseline_core_wheel is not None:
+    baseline['core_wheel_before_filter'] = _baseline_record(
+        baseline_core_wheel, source_archive=False
+    )
+  if baseline_core_sdist is not None:
+    baseline['core_sdist_before_test_retention'] = _baseline_record(
+        baseline_core_sdist, source_archive=True
+    )
+  return {
+      'date': datetime.date.today().isoformat(),
+      'provenance': evidence.provenance(Path(__file__).resolve()),
+      'contract_passed': not errors,
+      'errors': errors,
+      'artifacts': artifacts,
+      'baseline_artifacts': baseline,
+      'scope': (
+          'Archive inventory and packaging boundary checks. This does not '
+          'measure installed dependency resolution or model runtime behavior.'
+      ),
+  }
+
+
 def main(argv: list[str] | None = None) -> int:
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument('--core-dir', type=Path, default=Path('dist'))
   parser.add_argument('--proto-dir', type=Path, default=Path('proto/dist'))
+  parser.add_argument(
+      '--report',
+      type=Path,
+      help='write a dated provenance report to this JSON path',
+  )
+  parser.add_argument('--baseline-core-wheel', type=Path)
+  parser.add_argument('--baseline-core-sdist', type=Path)
   args = parser.parse_args(argv)
 
   try:
@@ -184,6 +277,15 @@ def main(argv: list[str] | None = None) -> int:
   except (OSError, ValueError) as exc:
     print(f'distribution check failed: {exc}', file=sys.stderr)
     return 1
+  if args.report:
+    report = build_report(
+        args.core_dir,
+        args.proto_dir,
+        errors,
+        args.baseline_core_wheel,
+        args.baseline_core_sdist,
+    )
+    evidence.write_evidence(args.report, report)
   if errors:
     print('\n'.join(errors), file=sys.stderr)
     return 1
