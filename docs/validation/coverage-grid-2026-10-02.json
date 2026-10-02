@@ -1,0 +1,365 @@
+{
+  "base_seed": 20261002,
+  "cells": [
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "coverage": 0.9,
+          "coverage_ci_high": 0.9821237869049271,
+          "coverage_ci_low": 0.5958499732047616,
+          "median_ci_width": 2.252887115517013,
+          "median_relative_error": 0.2906860427293675,
+          "n": 10
+        },
+        {
+          "channel": "channel_1",
+          "coverage": 0.9,
+          "coverage_ci_high": 0.9821237869049271,
+          "coverage_ci_low": 0.5958499732047616,
+          "median_ci_width": 1.818252805343375,
+          "median_relative_error": -0.2890691668032418,
+          "n": 10
+        },
+        {
+          "channel": "channel_2",
+          "coverage": 0.8,
+          "coverage_ci_high": 0.9433178485456247,
+          "coverage_ci_low": 0.4901624715366418,
+          "median_ci_width": 3.555294858472993,
+          "median_relative_error": -0.37525063720961765,
+          "n": 10
+        }
+      ],
+      "config": {
+        "alpha": 0.6,
+        "confidence_level": 0.9,
+        "max_lag": 4,
+        "n_adapt": 1000,
+        "n_burnin": 500,
+        "n_chains": 4,
+        "n_geos": 5,
+        "n_keep": 500,
+        "n_times": 104,
+        "noise_fraction": 0.05,
+        "prior_roi_median": 2.0,
+        "prior_roi_sigma": 0.7,
+        "replications": 10,
+        "response": "concave",
+        "seed": 20261002,
+        "spend_scale": [
+          3000.0,
+          6000.0,
+          2000.0
+        ],
+        "true_roi": [
+          1.0,
+          2.0,
+          4.0
+        ]
+      },
+      "elapsed_seconds": 378.8495919704437,
+      "label": "baseline",
+      "max_r_hat": 1.131026755091128,
+      "max_r_hat_status": "finite",
+      "nominal_interval": 0.9,
+      "nonfinite_r_hat_replications": 0,
+      "replications_converged": 10,
+      "replications_total": 10
+    },
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "coverage": 1.0,
+          "coverage_ci_high": 0.9999999999999999,
+          "coverage_ci_low": 0.7224672001371106,
+          "median_ci_width": 2.9131652500912057,
+          "median_relative_error": 0.3803639771806322,
+          "n": 10
+        },
+        {
+          "channel": "channel_1",
+          "coverage": 1.0,
+          "coverage_ci_high": 0.9999999999999999,
+          "coverage_ci_low": 0.7224672001371106,
+          "median_ci_width": 2.6917421947896143,
+          "median_relative_error": -0.2276268800276367,
+          "n": 10
+        },
+        {
+          "channel": "channel_2",
+          "coverage": 0.8,
+          "coverage_ci_high": 0.9433178485456247,
+          "coverage_ci_low": 0.4901624715366418,
+          "median_ci_width": 5.1497767983291345,
+          "median_relative_error": -0.44269835595713536,
+          "n": 10
+        }
+      ],
+      "config": {
+        "alpha": 0.6,
+        "confidence_level": 0.9,
+        "max_lag": 4,
+        "n_adapt": 1000,
+        "n_burnin": 500,
+        "n_chains": 4,
+        "n_geos": 5,
+        "n_keep": 500,
+        "n_times": 40,
+        "noise_fraction": 0.05,
+        "prior_roi_median": 2.0,
+        "prior_roi_sigma": 0.7,
+        "replications": 10,
+        "response": "concave",
+        "seed": 20261002,
+        "spend_scale": [
+          3000.0,
+          6000.0,
+          2000.0
+        ],
+        "true_roi": [
+          1.0,
+          2.0,
+          4.0
+        ]
+      },
+      "elapsed_seconds": 243.30776810646057,
+      "label": "short history",
+      "max_r_hat": 1.5171072617324282,
+      "max_r_hat_status": "finite",
+      "nominal_interval": 0.9,
+      "nonfinite_r_hat_replications": 0,
+      "replications_converged": 8,
+      "replications_total": 10
+    },
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "coverage": 1.0,
+          "coverage_ci_high": 0.9999999999999999,
+          "coverage_ci_low": 0.7224672001371106,
+          "median_ci_width": 2.8098682643923656,
+          "median_relative_error": 0.3960909857186079,
+          "n": 10
+        },
+        {
+          "channel": "channel_1",
+          "coverage": 1.0,
+          "coverage_ci_high": 0.9999999999999999,
+          "coverage_ci_low": 0.7224672001371106,
+          "median_ci_width": 2.691254746359091,
+          "median_relative_error": -0.18956105767199857,
+          "n": 10
+        },
+        {
+          "channel": "channel_2",
+          "coverage": 0.7,
+          "coverage_ci_high": 0.8922087325936988,
+          "coverage_ci_low": 0.3967781474611453,
+          "median_ci_width": 3.9926393077813254,
+          "median_relative_error": -0.5468126205706177,
+          "n": 10
+        }
+      ],
+      "config": {
+        "alpha": 0.6,
+        "confidence_level": 0.9,
+        "max_lag": 4,
+        "n_adapt": 1000,
+        "n_burnin": 500,
+        "n_chains": 4,
+        "n_geos": 2,
+        "n_keep": 500,
+        "n_times": 104,
+        "noise_fraction": 0.05,
+        "prior_roi_median": 2.0,
+        "prior_roi_sigma": 0.7,
+        "replications": 10,
+        "response": "concave",
+        "seed": 20261002,
+        "spend_scale": [
+          3000.0,
+          6000.0,
+          2000.0
+        ],
+        "true_roi": [
+          1.0,
+          2.0,
+          4.0
+        ]
+      },
+      "elapsed_seconds": 317.0816547870636,
+      "label": "few geos",
+      "max_r_hat": 1.1602585151216063,
+      "max_r_hat_status": "finite",
+      "nominal_interval": 0.9,
+      "nonfinite_r_hat_replications": 0,
+      "replications_converged": 10,
+      "replications_total": 10
+    },
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "coverage": 1.0,
+          "coverage_ci_high": 0.9999999999999999,
+          "coverage_ci_low": 0.7224672001371106,
+          "median_ci_width": 3.6643095345100742,
+          "median_relative_error": 0.7238566958499164,
+          "n": 10
+        },
+        {
+          "channel": "channel_1",
+          "coverage": 1.0,
+          "coverage_ci_high": 0.9999999999999999,
+          "coverage_ci_low": 0.7224672001371106,
+          "median_ci_width": 2.7908195060396563,
+          "median_relative_error": -0.2850062125440985,
+          "n": 10
+        },
+        {
+          "channel": "channel_2",
+          "coverage": 1.0,
+          "coverage_ci_high": 0.9999999999999999,
+          "coverage_ci_low": 0.7224672001371106,
+          "median_ci_width": 5.06737334729551,
+          "median_relative_error": -0.49081695043229256,
+          "n": 10
+        }
+      ],
+      "config": {
+        "alpha": 0.6,
+        "confidence_level": 0.9,
+        "max_lag": 4,
+        "n_adapt": 1000,
+        "n_burnin": 500,
+        "n_chains": 4,
+        "n_geos": 5,
+        "n_keep": 500,
+        "n_times": 104,
+        "noise_fraction": 0.2,
+        "prior_roi_median": 2.0,
+        "prior_roi_sigma": 0.7,
+        "replications": 10,
+        "response": "concave",
+        "seed": 20261002,
+        "spend_scale": [
+          3000.0,
+          6000.0,
+          2000.0
+        ],
+        "true_roi": [
+          1.0,
+          2.0,
+          4.0
+        ]
+      },
+      "elapsed_seconds": 347.6208438873291,
+      "label": "high noise",
+      "max_r_hat": 1.0971479520566179,
+      "max_r_hat_status": "finite",
+      "nominal_interval": 0.9,
+      "nonfinite_r_hat_replications": 0,
+      "replications_converged": 10,
+      "replications_total": 10
+    },
+    {
+      "channels": [
+        {
+          "channel": "channel_0",
+          "coverage": 0.9,
+          "coverage_ci_high": 0.9821237869049271,
+          "coverage_ci_low": 0.5958499732047616,
+          "median_ci_width": 2.482514403171346,
+          "median_relative_error": 0.6697320589737779,
+          "n": 10
+        },
+        {
+          "channel": "channel_1",
+          "coverage": 0.9,
+          "coverage_ci_high": 0.9821237869049271,
+          "coverage_ci_low": 0.5958499732047616,
+          "median_ci_width": 2.175046697238748,
+          "median_relative_error": 0.3706630568533881,
+          "n": 10
+        },
+        {
+          "channel": "channel_2",
+          "coverage": 1.0,
+          "coverage_ci_high": 0.9999999999999999,
+          "coverage_ci_low": 0.7224672001371106,
+          "median_ci_width": 4.891860880317028,
+          "median_relative_error": 0.1543573673285339,
+          "n": 10
+        }
+      ],
+      "config": {
+        "alpha": 0.6,
+        "confidence_level": 0.9,
+        "max_lag": 4,
+        "n_adapt": 1000,
+        "n_burnin": 500,
+        "n_chains": 4,
+        "n_geos": 5,
+        "n_keep": 500,
+        "n_times": 104,
+        "noise_fraction": 0.05,
+        "prior_roi_median": 2.0,
+        "prior_roi_sigma": 0.7,
+        "replications": 10,
+        "response": "linear",
+        "seed": 20261002,
+        "spend_scale": [
+          3000.0,
+          6000.0,
+          2000.0
+        ],
+        "true_roi": [
+          1.0,
+          2.0,
+          4.0
+        ]
+      },
+      "elapsed_seconds": 835.2645108699799,
+      "label": "misspecified response",
+      "max_r_hat": 1.212258841924869,
+      "max_r_hat_status": "finite",
+      "nominal_interval": 0.9,
+      "nonfinite_r_hat_replications": 0,
+      "replications_converged": 9,
+      "replications_total": 10
+    }
+  ],
+  "date": "2026-10-02",
+  "interpretation": "Empirical coverage of the nominal interval, per channel, per dataset shape, with a Wilson interval on the coverage estimate itself. All cells are fixed-truth stress tests rather than model-matched generators. The baseline applies unbounded square root before adstock; the fitted default applies bounded Hill after adstock. The 'misspecified response' cell changes the generator to linear, measuring sensitivity to this change.",
+  "limitations": [
+    "Fixed-truth frequentist coverage is not Bayesian calibration.",
+    "Coverage from ten replications is noisy; read the Wilson interval.",
+    "This grid uses max_lag=4; the earlier ten-seed recovery study used max_lag=0, so its baseline is a different experiment.",
+    "Cells with non-converged replications are reported with their R-hat rather than excluded.",
+    "Synthetic data only; says nothing about a real dataset's collinearity."
+  ],
+  "provenance": {
+    "architecture": "Darwin-arm64",
+    "git_head": "a3e3cd9efd35364b19455008ba643c3b84dc2ad3",
+    "package_versions": {
+      "arviz": "0.19.0",
+      "google-meridian": null,
+      "jax": "0.10.2",
+      "jaxlib": "0.10.2",
+      "meridian-mmm-fork": "2.0.0",
+      "numpy": "2.3.5",
+      "protobuf": "6.33.6",
+      "tensorflow": "2.21.0",
+      "tensorflow-probability": null,
+      "tfp-nightly": "0.26.0.dev20260130"
+    },
+    "script_sha256": "15d70d0c2b8b1d120dd2634f0ab1aafc5a678b1466d834a05fc9cf6edcb18145"
+  },
+  "quick_mode": false,
+  "replications_per_cell": 10,
+  "script": "scripts/coverage_grid.py",
+  "total_elapsed_seconds": 2122.2912137508392
+}

@@ -292,6 +292,7 @@ class InputData:
   def __post_init__(self):
     self._coerce_object_arrays_to_float()
     self._validate_nas()
+    self._validate_finite_values()
     self._convert_geos_to_strings()
     self._validate_kpi()
     self._validate_scenarios()
@@ -390,6 +391,35 @@ class InputData:
         and self.organic_frequency.isnull().any(axis=None)
     ):
       raise ValueError("NA values found in the organic frequency data.")
+
+  def _validate_finite_values(self):
+    """Rejects infinities in every numerical array before model transforms.
+
+    Missing values retain the field-specific diagnostics from `_validate_nas`.
+    This runs after object-array coercion, so a numeric string such as "inf"
+    cannot enter the model merely because conversion to float succeeded.
+    """
+    for field in dataclasses.fields(self):
+      array = getattr(self, field.name)
+      if not isinstance(array, xr.DataArray):
+        continue
+      try:
+        nonfinite = ~np.isfinite(array.values)
+      except TypeError as error:
+        raise ValueError(
+            f"Array '{field.name}' must contain finite numeric values."
+        ) from error
+      if not nonfinite.any():
+        continue
+      first = {
+          str(dim): str(array.coords[dim].values[index])
+          for dim, index in zip(array.dims, np.argwhere(nonfinite)[0])
+          if dim in array.coords
+      }
+      raise ValueError(
+          f"Non-finite values found in the {field.name} data. Found"
+          f" {int(nonfinite.sum())} non-finite value(s); the first is at {first}."
+      )
 
   # TODO: Combine with Analyzer._impute_and_aggregate_spend
   @functools.cached_property

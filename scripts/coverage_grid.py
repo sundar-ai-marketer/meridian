@@ -25,12 +25,12 @@
     python scripts/coverage_grid.py --replications 10 \
         --output docs/validation/coverage-grid-<date>.json
 
-Why this exists. AUDIT.md's ten-seed study measures recovery at one fixed
-setting: five geos, 104 periods, 5% noise, a concave response the model expects.
-That is one point. It says nothing about whether the 90% interval still covers
-at 40 periods, or at 20% noise, or when the true response is linear and the
-model's saturation assumption is wrong. Those are the conditions a real dataset
-actually lands in, and coverage is exactly the quantity that degrades there.
+Why this exists. AUDIT.md's earlier ten-seed study measures recovery at one
+fixed setting: five geos, 104 periods, 5% noise, no carryover (max_lag=0).
+This grid's baseline uses max_lag=4, so it is a different experiment. Both use
+the generator's historically named ``concave`` response: unbounded square root
+of spend BEFORE adstock, rather than the fitted default's bounded Hill AFTER
+adstock. Neither provides a model-matched calibration control.
 
 Each grid cell runs `replications` independent simulate-and-fit cycles and
 reports empirical coverage with a Wilson interval, because coverage estimated
@@ -38,10 +38,10 @@ from ten trials is itself noisy: 9/10 is consistent with anything from roughly
 60% to 99% true coverage. The Wilson bound is printed so nobody reads 90% off
 ten trials as a precise number.
 
-The `linear` response cells are deliberate misspecification. Meridian assumes a
-concave saturating response; simulating a linear one and refitting sizes the
-bias from that assumption being wrong. Expect worse coverage there. That is the
-measurement, not a bug.
+The `linear` response cell changes this already mismatched generator to a
+linear response. Differences measure sensitivity to that change, not the
+isolated cost of departing from a correctly specified baseline. Each shape's
+coverage must be read with its sampling quality and finite-replication limits.
 
 What this does NOT establish:
 
@@ -128,7 +128,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     print("\n--dry-run: nothing was fitted.")
     return 0
   if short:
-    print("\n--quick: chains are too short and replications too few to be evidence.")
+    print(
+        "\n--quick: chains are too short and replications too few to be evidence."
+    )
   print()
 
   cells = []
@@ -153,15 +155,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     channels = []
     for summary in result.channel_summaries():
-      channels.append({
-          "channel": summary.channel,
-          "n": summary.n,
-          "coverage": summary.coverage,
-          "coverage_ci_low": summary.coverage_ci_low,
-          "coverage_ci_high": summary.coverage_ci_high,
-          "median_relative_error": summary.median_relative_error,
-          "median_ci_width": summary.median_ci_width,
-      })
+      channels.append(
+          {
+              "channel": summary.channel,
+              "n": summary.n,
+              "coverage": summary.coverage,
+              "coverage_ci_low": summary.coverage_ci_low,
+              "coverage_ci_high": summary.coverage_ci_high,
+              "median_relative_error": summary.median_relative_error,
+              "median_ci_width": summary.median_ci_width,
+          }
+      )
       print(
           f"    {summary.channel:12s} coverage {summary.coverage:5.2f} "
           f"[{summary.coverage_ci_low:.2f}, {summary.coverage_ci_high:.2f}] "
@@ -169,9 +173,17 @@ def main(argv: Sequence[str] | None = None) -> int:
       )
 
     converged = [r.converged for r in result.replications]
-    max_r_hat = max(
-        (r.max_r_hat for r in result.replications if np.isfinite(r.max_r_hat)),
-        default=float("nan"),
+    r_hats = np.asarray([r.max_r_hat for r in result.replications], dtype=float)
+    # Do not discard an infinite or unavailable diagnostic and report only the
+    # healthier finite replications. JSON represents either non-finite maximum
+    # as null; its status and count preserve the reason it is not a number.
+    max_r_hat = float(np.max(r_hats)) if r_hats.size else float("nan")
+    max_r_hat_status = (
+        "finite"
+        if np.isfinite(max_r_hat)
+        else "infinite"
+        if np.isinf(max_r_hat)
+        else "unavailable"
     )
     if not all(converged):
       print(
@@ -180,16 +192,20 @@ def main(argv: Sequence[str] | None = None) -> int:
           "read this cell's coverage with that in mind."
       )
 
-    cells.append({
-        "label": label,
-        "config": dataclasses.asdict(config),
-        "nominal_interval": config.confidence_level,
-        "channels": channels,
-        "replications_converged": sum(converged),
-        "replications_total": len(converged),
-        "max_r_hat": max_r_hat,
-        "elapsed_seconds": elapsed,
-    })
+    cells.append(
+        {
+            "label": label,
+            "config": dataclasses.asdict(config),
+            "nominal_interval": config.confidence_level,
+            "channels": channels,
+            "replications_converged": sum(converged),
+            "replications_total": len(converged),
+            "max_r_hat": max_r_hat,
+            "max_r_hat_status": max_r_hat_status,
+            "nonfinite_r_hat_replications": int(np.sum(~np.isfinite(r_hats))),
+            "elapsed_seconds": elapsed,
+        }
+    )
     print(f"    ({elapsed / 60:.1f} min)\n")
 
   evidence = {
@@ -204,13 +220,17 @@ def main(argv: Sequence[str] | None = None) -> int:
       "interpretation": (
           "Empirical coverage of the nominal interval, per channel, per "
           "dataset shape, with a Wilson interval on the coverage estimate "
-          "itself. The 'misspecified response' cell simulates a linear "
-          "response the model does not assume; worse coverage there sizes "
-          "that assumption's cost."
+          "itself. All cells are fixed-truth stress tests rather than "
+          "model-matched generators. The baseline applies unbounded square "
+          "root before adstock; the fitted default applies bounded Hill after "
+          "adstock. The 'misspecified response' cell changes the generator to "
+          "linear, measuring sensitivity to this change."
       ),
       "limitations": [
           "Fixed-truth frequentist coverage is not Bayesian calibration.",
           "Coverage from ten replications is noisy; read the Wilson interval.",
+          "This grid uses max_lag=4; the earlier ten-seed recovery study used "
+          "max_lag=0, so its baseline is a different experiment.",
           "Cells with non-converged replications are reported with their "
           "R-hat rather than excluded.",
           "Synthetic data only; says nothing about a real dataset's "

@@ -29,6 +29,7 @@ The unit tests generally follow this procedure:
 from collections.abc import Mapping
 import dataclasses
 import datetime
+import itertools
 import math
 import os
 import tempfile
@@ -5657,6 +5658,68 @@ class BudgetOptimizerInitTest(parameterized.TestCase):
     )
 
     self.assertIsNone(results.meridian)
+
+
+class FixedBudgetFeasibilityTest(parameterized.TestCase):
+  """Public grid regressions and exhaustive checks for concave small grids."""
+
+  def _grid(self, outcomes):
+    spend = np.tile(np.arange(len(outcomes))[:, None], (1, 2))
+    return optimizer.OptimizationGrid(
+        _grid_dataset=xr.Dataset(
+            coords={c.CHANNEL: ['a', 'b']},
+            data_vars={
+                'spend_grid': (('grid_spend_index', c.CHANNEL), spend),
+                'incremental_outcome_grid': (
+                    ('grid_spend_index', c.CHANNEL), outcomes
+                ),
+            },
+            attrs={c.SPEND_STEP_SIZE: 1},
+        ),
+        historical_spend=np.array([1, 1]), use_kpi=True,
+        use_posterior=True, use_optimal_frequency=False,
+        start_date=None, end_date=None, gtol=0.01, round_factor=0,
+        optimal_frequency=None, selected_geos=None, selected_times=None,
+    )
+
+  def test_unaffordable_high_return_jump_does_not_end_search(self):
+    spend = np.arange(5, dtype=float)
+    outcomes = np.column_stack((spend**3 / (spend**3 + 4**3), 0.1 * spend))
+    allocation = self._grid(outcomes).optimize(
+        optimizer.FixedBudgetScenario(total_budget=2),
+        spend_constraint_lower=1, spend_constraint_upper=3,
+    ).optimized.values
+    np.testing.assert_array_equal(allocation, [0, 2])
+    self.assertAlmostEqual(
+        sum(outcomes[value, channel] for channel, value in enumerate(allocation)),
+        0.2,
+    )
+
+  def test_small_concave_grids_match_exhaustive_feasible_optimum(self):
+    # All nonincreasing triples of nonnegative integer marginal returns.
+    # Greedy resource allocation is exact on these uniform-step separable
+    # concave grids; arbitrary nonconcave response curves are not covered.
+    marginal_returns = list(itertools.combinations_with_replacement(range(3), 3))
+    for first, second in itertools.product(marginal_returns, repeat=2):
+      outcomes = np.vstack((
+          np.zeros(2), np.cumsum(np.array([first[::-1], second[::-1]]).T, axis=0)
+      ))
+      for budget in (2, 4, 6):
+        grid = self._grid(outcomes)
+        allocation = grid.optimize(
+            optimizer.FixedBudgetScenario(total_budget=budget),
+            spend_constraint_lower=1, spend_constraint_upper=6 / budget - 1,
+            pct_of_spend=[0.5, 0.5],
+        ).optimized.values
+        feasible = [
+            outcomes[a, 0] + outcomes[b, 1]
+            for a, b in itertools.product(range(4), repeat=2)
+            if a + b <= budget
+        ]
+        actual = sum(outcomes[value, channel]
+                     for channel, value in enumerate(allocation))
+        self.assertLessEqual(allocation.sum(), budget)
+        self.assertAlmostEqual(actual, max(feasible))
 
 
 if __name__ == '__main__':

@@ -420,6 +420,16 @@ class OptimizationGrid:
 
     while True:
       spend_optimal = spend.astype(int)
+      if isinstance(scenario, FixedBudgetScenario):
+        # An unaffordable high-return jump must not hide a smaller feasible
+        # step in another channel. Remaining budget only decreases, so these
+        # points can be removed permanently for this fixed-budget search.
+        proposed_total_spend = (
+            np.sum(spend) + spend_grid_values - spend
+        )
+        iterative_roi_grid[
+            proposed_total_spend > scenario.total_budget
+        ] = np.nan
       # If none of the exit criteria are met roi_grid will eventually be filled
       # with all nans.
       if np.isnan(iterative_roi_grid).all():

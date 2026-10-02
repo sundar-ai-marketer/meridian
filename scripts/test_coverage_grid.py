@@ -80,11 +80,12 @@ class GridDefinitionTest(unittest.TestCase):
 class DryRunTest(unittest.TestCase):
 
   def test_dry_run_fits_nothing_and_prints_the_plan(self):
-    with mock.patch.object(
-        coverage_grid, "__name__", coverage_grid.__name__
-    ), mock.patch(
-        "meridian.validation.recovery.run_recovery_replications"
-    ) as run:
+    with (
+        mock.patch.object(coverage_grid, "__name__", coverage_grid.__name__),
+        mock.patch(
+            "meridian.validation.recovery.run_recovery_replications"
+        ) as run,
+    ):
       buffer = io.StringIO()
       with contextlib.redirect_stdout(buffer):
         status = coverage_grid.main(["--dry-run"])
@@ -172,10 +173,39 @@ class CellReportingTest(unittest.TestCase):
     _, _, evidence = self._run(replications)
     self.assertIsNone(evidence["cells"][0]["max_r_hat"])
 
+  def test_infinite_r_hat_is_not_hidden_by_a_finite_replication(self):
+    replications = [
+        _FakeReplication(max_r_hat=1.01),
+        _FakeReplication(converged=False, max_r_hat=float("inf")),
+    ]
+    _, output, evidence = self._run(replications)
+    cell = evidence["cells"][0]
+    self.assertIsNone(cell["max_r_hat"])
+    self.assertEqual(cell["max_r_hat_status"], "infinite")
+    self.assertEqual(cell["nonfinite_r_hat_replications"], 1)
+    self.assertIn("max R-hat inf", output)
+
+  def test_unavailable_r_hat_is_not_hidden_by_a_finite_replication(self):
+    replications = [
+        _FakeReplication(max_r_hat=1.01),
+        _FakeReplication(converged=False, max_r_hat=float("nan")),
+    ]
+    _, output, evidence = self._run(replications)
+    cell = evidence["cells"][0]
+    self.assertIsNone(cell["max_r_hat"])
+    self.assertEqual(cell["max_r_hat_status"], "unavailable")
+    self.assertEqual(cell["nonfinite_r_hat_replications"], 1)
+    self.assertIn("max R-hat nan", output)
+
   def test_evidence_carries_a_complete_provenance_block(self):
     _, _, evidence = self._run([_FakeReplication()] * 3)
     self.assertIn("provenance", evidence)
-    for key in ("git_head", "architecture", "package_versions", "script_sha256"):
+    for key in (
+        "git_head",
+        "architecture",
+        "package_versions",
+        "script_sha256",
+    ):
       self.assertIn(key, evidence["provenance"])
 
 

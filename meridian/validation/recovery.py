@@ -26,9 +26,12 @@ data.
 
 ## The result that motivated this module
 
-Recovery degrades when the simulated response is not the concave shape Meridian
-assumes. At 5 geos, 104 weeks, 3 channels, seed 7, the highest-ROI channel
-(true ROI 4.0, lowest spend) recovers like this:
+Four single-fit sensitivity checks at 5 geos, 104 weeks, 3 channels, seed 7
+gave the following results for the highest-ROI channel (configured ROI 4.0,
+lowest spend). Neither response family is a model-matched control: the
+generator's historical label ``concave`` means an unbounded square-root
+response applied BEFORE geometric adstock. The fitted default applies bounded
+Hill saturation AFTER adstock. The ``linear`` generator also differs from Hill.
 
 | response shape | carryover | ROI error | true value inside 90% CI |
 |---|---|---|---|
@@ -37,23 +40,22 @@ assumes. At 5 geos, 104 weeks, 3 channels, seed 7, the highest-ROI channel
 | linear         | none      | **+71%**  | **no** |
 | linear         | geometric | +39%      | yes |
 
-Read the no-carryover rows against each other: response shape is the only thing
-that differs, and a linear truth overstates ROI by 71% with an interval that
-excludes the true value. That is not a Meridian defect. It is what fitting a
-concave saturation curve to a response that is not concave does, in any MMM
-that assumes saturation. The consequence worth internalising:
+In the no-carryover rows, changing the generator from square-root to linear
+moved the error from +9% to +71%, with the latter interval excluding the true
+value. These are two particular fits under different response-family
+mismatches, not proof of a universal direction or magnitude of bias.
 
 **Meridian's credible intervals quantify parameter uncertainty conditional on
 the assumed saturation shape. They do not cover being wrong about that shape.**
 
-So a channel far from saturation -- typically one at low spend, whose real
-response is still close to linear -- can have its ROI overstated by tens of
-percent with an interval that excludes the truth. Presenting such an interval
-as the total uncertainty overstates what the method can support.
+Presenting such an interval as total uncertainty overstates what the method
+can support. Compare relevant response specifications and priors for the
+dataset rather than generalizing a single seed's error.
 
-The carryover rows carry a second, separate lesson: estimating adstock and
-saturation jointly from 520 geo-weeks costs real precision even when the shape
-assumption holds. Channel ordering survived in all four runs; the level did not.
+The carryover rows combine response-family mismatch, the order of nonlinear
+transformation and adstock, and estimation of carryover. They do not isolate a
+precision cost from learning adstock. Channel ordering survived these four
+runs; the ROI levels differed.
 
 NOTE ON CONFIG: these figures are `max_lag`-specific, and the CLI defaults to
 `max_lag=4`. Pass `--max-lag 0` to reproduce the no-carryover rows.
@@ -207,12 +209,13 @@ class RecoveryConfig:
     true_roi: True ROI per channel, known by construction.
     n_geos: Number of geos.
     n_times: Time periods in the modelling window.
-    max_lag: Carryover length. Media history is extended to cover it, and the
-      decay weights are normalized so total incremental outcome -- and so true
-      ROI -- is unchanged.
+    max_lag: Carryover length. Normalized geometric weights are applied after
+      the generator's response transformation, with extra media history. ROI
+      within the finite analysis window is measured from realized outcomes.
     alpha: Geometric decay rate, used only when `max_lag > 0`.
-    response: `'concave'` matches the saturation Meridian assumes.
-      `'linear'` deliberately violates it, to size the misspecification bias.
+    response: `'concave'` is an unbounded square-root response before adstock;
+      `'linear'` is a linear response before adstock. Neither is a matched
+      generator for the fitted default's bounded Hill response after adstock.
     noise_fraction: Observation noise as a fraction of mean baseline level.
     spend_scale: Mean spend per channel, before the gamma draw.
     confidence_level: Credible interval width.
@@ -420,6 +423,10 @@ def _decay_weights(max_lag: int, alpha: float) -> np.ndarray:
 def simulate(config: RecoveryConfig) -> tuple[pd.DataFrame, np.ndarray]:
   """Generates data whose true ROI is known.
 
+  This is a fixed-truth stress generator, not the fitted generative model.
+  ``concave`` applies square root to raw spend before normalized adstock;
+  the default fitted model applies bounded Hill saturation after adstock.
+
   Args:
     config: Experiment shape.
 
@@ -566,7 +573,6 @@ def _fit_and_recover(
       n_keep=config.n_keep,
       seed=config.seed,
   )
-
 
   max_r_hat = sampling_diagnostics.max_rank_normalized_rhat(
       mmm.inference_data.posterior
