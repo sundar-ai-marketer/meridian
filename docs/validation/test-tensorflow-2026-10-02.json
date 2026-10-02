@@ -1,0 +1,111 @@
+{
+  "all_phases_run": true,
+  "date": "2026-10-02",
+  "elapsed_seconds": 3705.642,
+  "exit_code": 1,
+  "phase_results": [
+    {
+      "elapsed_seconds": 472.898,
+      "exit_code": 0,
+      "name": "analyzer",
+      "status": "passed"
+    },
+    {
+      "elapsed_seconds": 1381.853,
+      "exit_code": 0,
+      "name": "optimizer",
+      "status": "passed"
+    },
+    {
+      "elapsed_seconds": 381.693,
+      "exit_code": 0,
+      "name": "analysis",
+      "status": "passed"
+    },
+    {
+      "elapsed_seconds": 220.928,
+      "exit_code": 0,
+      "name": "model",
+      "status": "passed"
+    },
+    {
+      "elapsed_seconds": 101.749,
+      "exit_code": 0,
+      "name": "remaining",
+      "status": "passed"
+    },
+    {
+      "elapsed_seconds": 45.398,
+      "exit_code": 1,
+      "name": "scripts",
+      "status": "failed"
+    },
+    {
+      "elapsed_seconds": 101.717,
+      "exit_code": 0,
+      "name": "meridian/benchmark",
+      "status": "passed"
+    },
+    {
+      "elapsed_seconds": 157.688,
+      "exit_code": 0,
+      "name": "meridian/validation",
+      "status": "passed"
+    },
+    {
+      "elapsed_seconds": 66.169,
+      "exit_code": 0,
+      "name": "meridian/math_invariants_test.py",
+      "status": "passed"
+    },
+    {
+      "elapsed_seconds": 319.657,
+      "exit_code": 0,
+      "name": "meridian/upstream_issues_test.py",
+      "status": "passed"
+    },
+    {
+      "elapsed_seconds": 455.861,
+      "exit_code": 0,
+      "name": "scripts/test_gpu_validation.py",
+      "status": "passed"
+    }
+  ],
+  "phases_attempted": 11,
+  "provenance": {
+    "architecture": "Darwin-arm64",
+    "git_head": "f7fb93cb3961391518ccb4481d0339a76831bdb1",
+    "package_versions": {
+      "arviz": "0.19.0",
+      "google-meridian": null,
+      "jax": "0.10.2",
+      "jaxlib": "0.10.2",
+      "meridian-mmm-fork": "2.0.0",
+      "numpy": "2.3.5",
+      "protobuf": "6.33.6",
+      "tensorflow": "2.21.0",
+      "tensorflow-probability": null,
+      "tfp-nightly": "0.26.0.dev20260130"
+    },
+    "script_sha256": "3bc27cb279f772446bc88651b93af46608304d078d67fc990f3a7d335367735e"
+  },
+  "scope": {
+    "backend_requested": "tensorflow",
+    "phase_count": 11,
+    "phase_names": [
+      "analyzer",
+      "optimizer",
+      "analysis",
+      "model",
+      "remaining",
+      "scripts",
+      "meridian/benchmark",
+      "meridian/validation",
+      "meridian/math_invariants_test.py",
+      "meridian/upstream_issues_test.py",
+      "scripts/test_gpu_validation.py"
+    ],
+    "workers": 2
+  },
+  "suite_status": "failed"
+}

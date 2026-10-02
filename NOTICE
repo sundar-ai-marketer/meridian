@@ -38,6 +38,7 @@ Files modified from the original google/meridian source:
   meridian/constants.py
   meridian/templates/summary.html.jinja
   meridian/templates/chart.html.jinja
+  meridian/templates/stats.html.jinja
   meridian/templates/calibration_details_card.html.jinja
   meridian/templates/calibration_overview_card.html.jinja
   meridian/templates/channel_recommendation_card.html.jinja
@@ -71,6 +72,8 @@ Files modified from the original google/meridian source:
   CONTRIBUTING.md
   CITATION.cff
   pyproject.toml
+  setup.py
+  proto/MANIFEST.in
   proto/pyproject.toml
   proto/setup.py
   MANIFEST.in
@@ -91,6 +94,8 @@ Files added by this fork:
   proto/NOTICE
   meridian/analysis/geo_diagnostics.py
   meridian/analysis/geo_diagnostics_test.py
+  meridian/analysis/budget_decision.py
+  meridian/analysis/budget_decision_test.py
   meridian/analysis/prior_predictive.py
   meridian/analysis/prior_predictive_test.py
   meridian/analysis/sampling_diagnostics.py
@@ -102,6 +107,7 @@ Files added by this fork:
   meridian/templates/report_assets_test.py
   meridian/templates/assets/manifest.json
   meridian/templates/assets/README.md
+  meridian/templates/assets/report-charts.js
   Makefile
   Dockerfile
   .dockerignore
@@ -118,7 +124,9 @@ Files added by this fork:
   scripts/setup.sh
   scripts/compile_report_css.py
   scripts/test_end_to_end.py
+  scripts/test_end_to_end_reuse.py
   scripts/test_report_browser.py
+  scripts/test_native_report_browser.py
   scripts/test_proto_build.py
   scripts/run_tests.py
   scripts/test_run_tests.py
@@ -132,13 +140,18 @@ Files added by this fork:
   scripts/gpu_validation.py
   scripts/prior_sensitivity.py
   scripts/coverage_grid.py
+  scripts/budget_decision_demo.py
+  scripts/publish_container_rescan.py
   scripts/test_evidence.py
   scripts/test_triage_container_os.py
   scripts/test_container_reachability_probe.py
+  scripts/test_container_rescan_workflow.py
+  scripts/collect_native_browser_evidence.py
   scripts/test_gpu_validation.py
   scripts/test_prior_sensitivity.py
   scripts/test_coverage_grid.py
   scripts/test_prior_predictive_audit.py
+  scripts/check_package_artifacts.py
   .github/workflows/container-rescan.yml
   docs/validation/recovery-2026-09-16.json
   docs/validation/strict-sampling-2026-09-16.json
@@ -149,9 +162,27 @@ Files added by this fork:
   docs/validation/os-triage-summary-2026-09-17.json
   docs/validation/os-triage-summary-latest.json
   docs/validation/os-triage-latest.md
+  docs/validation/container-reachability-2026-10-02.json
+  docs/validation/os-triage-summary-2026-10-02.json
   docs/validation/prior-predictive-audit-2026-09-17.json
+  docs/validation/prior-predictive-audit-2026-10-02.json
   docs/validation/prior-sensitivity-2026-09-17.json
   docs/validation/coverage-grid-2026-09-17.json
+  docs/validation/coverage-grid-2026-10-02.json
+  docs/validation/test-jax-2026-10-02.json
+  docs/validation/test-jax-final-2026-10-02.json
+  docs/validation/test-tensorflow-2026-10-02.json
+  docs/validation/test-tensorflow-final-2026-10-02.json
+  docs/validation/e2e-jax-2026-10-02.json
+  docs/validation/e2e-tensorflow-2026-10-02.json
+  docs/validation/e2e-matrix-jax-2026-10-02.json
+  docs/validation/e2e-matrix-tensorflow-2026-10-02.json
+  docs/validation/package-audit-2026-10-02.json
+  docs/validation/native-report-browser-2026-10-02.json
+  docs/validation/native-report-browser-2026-10-02/raw-results.json
+  docs/validation/native-report-browser-2026-10-02/orchestrator.py
+  docs/validation/native-report-browser-2026-10-02/run.log
+  docs/validation/budget-decision-contract-2026-10-02.json
   docs/validation/gpu-metal-2026-09-17.json
   docs/validation/gpu-metal-jax0.4.34-float32-2026-09-17.json
   docs/validation/gpu-metal-jax0.4.34-float64-2026-09-17.json
@@ -229,6 +260,12 @@ Summary of behavioural changes to existing code:
     parameters. Passing those checks does not establish causal validity.
   * Ordinary sampler-option mappings are normalized before JAX's static JIT
     boundary. Local and CI suites use the same bounded-memory test phases.
+  * `make test` and `make test-tf` can write provenance-bearing test reports
+    with `TEST_REPORT`; the four-case end-to-end matrix writes per-case
+    results, and CI retains test summaries and logs on failure.
+  * The core wheel build filters `*_test.py` modules.
+    `scripts/check_package_artifacts.py` checks wheel payloads, report assets,
+    and licenses, and requires selected test sources in the sdist.
   * The frozen setup uses a dependency lock; schema source dependencies and
     GitHub Actions use full commit pins.
   * `autolog(log_metrics=True)` logs R-squared, MAPE and wMAPE for a model
@@ -246,8 +283,23 @@ Summary of behavioural changes to existing code:
     implementation. It is deliberately distinct from
     `SamplingDiagnostics.rhat_max`, which reports upstream's TFP
     potential-scale-reduction statistic.
-  * Every evidence file under `docs/validation/` records the git revision,
-    host architecture, package versions and producer hash that produced it.
+  * Fixed-budget search continues past unaffordable proposed steps when a
+    smaller feasible improvement remains. `InputData` rejects non-finite
+    numerical arrays before model transformations.
+  * The weekly container rescan publishes scan evidence on a branch and as a
+    workflow artifact, with a compare link. It reports that the repository
+    forbids bot pull-request creation; it does not weaken permissions or
+    merge automatically.
+  * `meridian.analysis.budget_decision` compares a bounded set of equal-budget
+    media allocations using paired posterior draws within each fitted
+    specification, reports specifications separately, and never recommends an
+    allocation. Its expected-outcome comparison scales the full historical
+    media flight, including pre-window adstock history; it excludes future
+    observation noise and is not profit.
+  * Dated validation receipts under `docs/validation/` record the git revision,
+    host architecture, package versions and producer hash. Supporting raw
+    browser results, runner and log are retained unchanged; their hashes and
+    provenance are linked through the collection receipt.
 
 Third-party report assets, unmodified and redistributed with their licenses:
 

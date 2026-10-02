@@ -9,36 +9,46 @@ newly measured results from historical results in [TRIAGE.md](TRIAGE.md).
 
 ## Release decision
 
-The local software release gates pass, with the statistical limits below
-retained explicitly. This release is suitable for public source distribution;
-it is not certification of any dataset's causal validity or ROI accuracy.
-No claim is made that every possible defect or every upstream issue has been
-resolved. The repository's Actions page records the clean-runner CI results.
+For the 16–17 September 2026 audited revision, the local software release
+gates passed with the statistical limits below retained explicitly. That dated
+decision does not cover changes made on 2 October. The September release was
+suitable for public source distribution; this was not certification of any
+dataset's causal validity or ROI accuracy.
+
+### Current status on 2 October 2026
+
+The changes and new evidence from 2 October are assessed in the addendum below.
+The local audit checks recorded there pass on their cited source revisions.
+Merge still requires the protected GitHub checks on the immutable merge tree
+for [pull request #12](https://github.com/sundar-ai-marketer/meridian/pull/12).
+See [current validation status](#validation-status-on-2-october).
 
 Three measurements added on 17 September 2026 bear on how output from this
 library should be used, and belong here rather than buried in a subsection.
 
 **A reported ROI can be mostly prior.** Refitting one fixed synthetic dataset
 under five defensible ROI priors moved the posterior median by 93% to 291% of
-the channel's true ROI, on converged fits, with at least one prior's 90%
+the channel's true ROI, on fits passing the study's loose R-hat screen, with
+at least one prior's 90%
 interval excluding the truth for every channel. This is the identification
 problem rather than a defect, and it is not specific to this fork, but it means
 a single ROI figure is not a measurement unless the prior it rests on is stated
 alongside it. See "How much of a reported ROI is the prior".
 
-**The shipped default prior cannot be simulated from.** It generates negative
-revenue in 100% of prior draws, and the library's own `InputData` rejects a
-negative KPI. That blocks simulation-based calibration against the defaults
-entirely and is worth knowing before relying on a prior predictive workflow.
-See "The default prior cannot be simulated from".
+**Prior predictions violated the loader's KPI support.** All 300 sampled
+default-prior datasets at the measured template contained negative revenue,
+which `InputData` rejects. This blocked that attempted refit workflow; it does
+not prove mathematical impossibility of simulation-based calibration (SBC).
+See "Prior predictive support mismatch".
 
 **A 90% interval does not always cover 90% of the time.** Across ten
-replications at five dataset shapes, three channel-cells under-covered by more
-than sampling noise. At the audit's own baseline setting the highest-ROI
-channel covered 0.70 while understating the level by 45.6%; fitting the concave
-saturation to a linear truth halved one channel's coverage to 0.50 and biased
-it upward by 44.2%. Read an ROI interval as conditional on the response shape
-being right, and treat the top channel's level with particular caution. See
+replications at five dataset shapes, three channel-cells had pointwise Wilson
+upper bounds below the nominal level. In this grid the highest-ROI channel
+covered 0.70 while understating the level by 45.6%; the linear-generator cell
+covered one channel at 0.50 with median error +44.2%. These are exploratory
+stress results: multiple comparisons and failed sampling screens limit
+attribution, and the square-root baseline is also outside the fitted Hill
+family. Read ROI intervals as conditional on the model and prior. See
 "Coverage beyond one setting".
 
 ## Scope and architecture
@@ -167,13 +177,25 @@ Additional verification:
   The matrix now retains independent results when one leg fails. Consult the
   [latest CI run](https://github.com/sundar-ai-marketer/meridian/actions/workflows/ci.yml)
   for verification of the published revision.
-- Core and protobuf wheel/source builds succeeded; `twine check` passed all
-  four artifacts.
-- The core wheel contains compiled report CSS, LICENSE, and NOTICE, and
-  excludes `*_test.py` files.
-- An installed wheel, imported from its installation directory rather than
-  the source checkout, completed a real fit, generated finite ROI, preserved
-  ROI exactly through protobuf save/load, and generated a styled report.
+- The earlier core wheel contained 75 test modules, including
+  `meridian/templates/formatter_test.py`, and its source archive retained zero
+  test sources. The 2 October [package audit
+  receipt](docs/validation/package-audit-2026-10-02.json) now records 126 Python
+  files and zero test modules in the core wheel, plus 240 Python files and 96
+  test sources in the core sdist. The proto sdist contains the `.proto` sources
+  without generated `_pb2.py` modules; the proto wheel contains generated
+  runtime modules. All four final artifacts pass archive checks and
+  `twine check --strict`. The report records exact hashes and sizes.
+- Core and proto wheels built from their source archives passed an isolated
+  `--no-deps` install/import/assets probe outside the checkout. Imports resolve
+  to files in the target wheel. The probe borrowed dependencies from the
+  audited locked environment; it verifies package content and import isolation,
+  not fresh dependency resolution. `make setup` and Docker exercise clean
+  dependency installation separately.
+- An earlier installed wheel, imported from its installation directory rather
+  than the source checkout, completed a real fit, generated finite ROI,
+  preserved ROI exactly through protobuf save/load, and generated a styled
+  report.
 - The new integration check passed on both JAX and TensorFlow. Its deliberately
   small chains test integration, not convergence or recovery accuracy.
 - A fresh fixed-truth recovery run used 5 geographies, 104 periods, three
@@ -499,7 +521,8 @@ reproducibility.
 [Machine-readable measurements](docs/validation/recovery-2026-09-16.json)
 include every seed and channel interval. Each fit used a fresh process: JAX
 float64, 5 geographies, 104 periods, three channels with true ROI 1/2/4,
-concave response, no carryover, four chains, 1,000 adaptation, 500 burn-in and
+square-root response (historical label `concave`), no carryover, four chains,
+1,000 adaptation, 500 burn-in and
 1,000 retained draws. Seeds derive deterministically from base seed 7.
 
 | Channel | True ROI inside 90% interval | 95% Wilson interval for coverage | Median relative ROI error |
@@ -528,11 +551,12 @@ The command records configuration, derived seeds, package versions and source
 hashes. It retains failed subprocess evidence and labels the 1.2 screen and
 fixed-truth coverage limits explicitly.
 
-### The default prior cannot be simulated from
+### Prior predictive support mismatch
 
-Simulation-based calibration was attempted on 17 September 2026 and could not
-be run against the library's shipped prior. The obstruction is worth recording
-because it is a property of the model, not of the attempt.
+The attempted prior-predictive/refit workflow on 17 September 2026 encountered
+negative KPI values incompatible with the public loader. This is an empirical
+support mismatch at one template, not proof that SBC is mathematically
+impossible under every validation route or parameter configuration.
 
 Meridian scales the KPI to mean 0 and standard deviation 1 before modelling
 (`KpiTransformer`), and writes its default priors on that scale:
@@ -544,9 +568,10 @@ construction implies a baseline that swings far below zero. Separately,
 stated reason that ROI, CPIK and contribution are expressed relative to total
 outcome and are ill-defined if outcome can be negative.
 
-Together those mean the default prior generates datasets the library refuses to
-load. SBC requires simulating from the prior and refitting; here every
-simulated dataset is rejected, so there is nothing to refit.
+Together these create a support mismatch between Gaussian prior predictions
+and the public loader. SBC requires a compatible generative and refitting
+workflow. Every sampled default-prior dataset in this experiment contained a
+negative KPI and would be rejected through `InputData`.
 
 Measured over 300 prior draws on a three-geo, forty-period synthetic dataset
 (`scripts/prior_predictive_audit.py`, evidence in
@@ -560,30 +585,31 @@ Measured over 300 prior draws on a three-geo, forty-period synthetic dataset
 | Population-level terms tightened to 0.1 | 47.7% | 48.3% |
 | Hierarchical scales tightened to 0.1 as well | 0.0% | 0.0% |
 
-The observation-noise prior is not the cause: tightening `sigma` alone changes
-almost nothing. Roughly half the effect comes from the population-level
-baseline terms, and the remainder from the hierarchical standard deviations
-`eta_m` and `xi_c`, which sit on the geo-level coefficients `beta_gm` and
-`gamma_gc`. Only when both groups are tightened does the prior become
-simulatable.
+In this sweep tightening `sigma` alone changed the measured rejection rate
+little. Tightening population-level baseline terms reduced it to roughly half;
+tightening hierarchical scales `eta_m` and `xi_c` as well yielded no observed
+negative cells. The variants alter several priors, so this is sensitivity to
+those configurations rather than a unique decomposition of the cause. Zero
+violations in 300 draws does not guarantee nonnegative support; Gaussian
+likelihood predictions remain unbounded.
 
 `beta_m` is left at its default throughout. Under `media_prior_type="roi"` it
 is derived from `roi_m`, and `ModelContext` warns that a custom `beta_m` is
 ignored, so overriding it would look like it mattered and would not. The sweep
 reaches 0% without touching it.
 
-This is not a claim that the default prior is wrong. Weakly informative priors
-are a deliberate choice and the posterior is usually dominated by the
-likelihood. The narrow, measured claim is that this prior cannot be simulated
-from without producing data the model rejects, which has two consequences: SBC
-against the shipped default is not possible, and a prior predictive check is
-worth running before committing to a long fit. Recorded as an upstream
-candidate in [TRIAGE.md](TRIAGE.md).
+Weakly informative priors can be appropriate; this measurement does not assess
+posterior validity or how much the prior influences ROI. The measured result
+is complete observed rejection for the default at this template. It motivates
+support checks before fitting and a compatible simulation/refitting design.
+Recorded as an upstream candidate in [TRIAGE.md](TRIAGE.md).
 
-Running SBC therefore requires a deliberately narrowed prior, and any such
-result would validate the sampler and ROI recovery **under that prior**, not
-the prior Meridian ships. That work is not done here; the fixed-truth
-ten-seed study above remains the only measured recovery evidence.
+Narrowing the prior can reduce rejection frequency, but does not by itself
+make the loader's support consistent. A different supported generative model
+or an explicitly scoped lower-level sampler-validation route would require
+its own design and checks. Discarding negative draws changes the target prior
+and is not unmodified SBC. No SBC result is established here; the fixed-truth
+recovery studies remain stress measurements.
 
 ### How much of a reported ROI is the prior
 
@@ -594,10 +620,11 @@ prior does it quietly.
 
 `scripts/prior_sensitivity.py` holds one simulated dataset fixed, with a known
 true ROI per channel, and refits it under five ROI priors that are all
-defensible before seeing data. Any movement in the posterior is attributable to
-the prior and nothing else. Measured on 17 September 2026, five geos, 104
-periods, four chains, all fits converging (max rank-normalized R-hat 1.019 to
-1.059), evidence in
+plausible alternatives for the sensitivity exercise. Dataset and fitting
+settings are held fixed; posterior movement reflects prior sensitivity plus
+Monte Carlo error. Measured on 17 September 2026, five geos, 104 periods,
+four chains, all fits passing the loose 1.2 R-hat screen (max rank-normalized
+R-hat 1.019 to 1.059, above the stricter 1.01 target), evidence in
 [prior-sensitivity-2026-09-17.json](docs/validation/prior-sensitivity-2026-09-17.json):
 
 | Prior (median, log-sd) | channel_0 | channel_1 | channel_2 |
@@ -613,13 +640,12 @@ The spread of the median across priors, as a fraction of the channel's true
 ROI, is 291%, 103% and 93%. For every channel at least one prior's 90%
 interval excludes the truth.
 
-On this dataset the prior is deciding the answer. That is a property of the
-identification problem, not a defect in the implementation: 104 periods of
-correlated spend does not contain enough information to pin three channels'
-ROI, and no sampler fixes that. The practical consequence is that a single
-Meridian ROI figure should not be presented as a measurement without stating
-the prior it rests on, and a budget decision that flips between two defensible
-priors is not supported by the data.
+On this dataset ROI levels are sensitive to the prior. The generator draws
+channel spend independently from gamma distributions; this experiment does
+not establish correlated spend as the cause. Finite data, response-family
+mismatch and sampling quality also limit attribution. State the prior beside
+each ROI estimate and assess whether proposed allocations remain useful
+across plausible priors and specifications.
 
 This measures sensitivity, not accuracy: it does not say which prior is right.
 Run the same sweep on your own data before quoting a number from it.
@@ -632,12 +658,14 @@ now see what it rests on without opening this document.
 
 ### Coverage beyond one setting
 
-The ten-seed study above measures one shape. `scripts/coverage_grid.py` runs
-the same replication machinery across five shapes -- the baseline, a short
-history, few geos, high noise, and a deliberately misspecified linear response
-against the model's concave assumption -- reporting empirical coverage per
-channel with a Wilson interval, because coverage measured over ten trials is
-itself noisy.
+The ten-seed study above measures one shape without carryover (`max_lag=0`).
+`scripts/coverage_grid.py` uses the same replication machinery but its
+baseline has `max_lag=4`. It varies history, geos, noise and response across
+five shapes. The historical label `concave` denotes an unbounded square-root
+response before adstock; the fitted default applies bounded Hill saturation
+after adstock. All cells are stress tests outside that fitted family, so the
+linear cell does not depart from a correctly specified control. Each channel's
+empirical coverage carries a Wilson interval.
 
 Run on 17 September 2026: fifty simulate-and-fit cycles, 24.7 minutes, ten
 replications per cell, nominal interval 90%. Evidence in
@@ -651,33 +679,36 @@ replications per cell, nominal interval 90%. Evidence in
 | high noise | 1.00 | 1.00 | 1.00 |
 | misspecified response | 0.90 | **0.50** [0.24, 0.76] | 1.00 |
 
-Three cells have a Wilson upper bound below the nominal 90%, so those are
-under-coverage rather than sampling noise:
+Three channel-cells have pointwise Wilson upper bounds below the nominal 90%.
+These are exploratory sensitivity signals with ten replications and multiple
+comparisons, rather than proof that sampling variation is excluded:
 
 - **baseline, channel_2**: 0.70, with a median relative error of **-45.6%**.
-  This is the highest-ROI channel (true ROI 4.0) at the exact setting the
-  ten-seed study used. Its 90% interval covered the truth in seven runs out of
+  This is the highest-ROI channel (configured ROI 4.0), with `max_lag=4`
+  rather than the earlier ten-seed study's `max_lag=0`. Its 90% interval
+  covered the truth in seven runs out of
   ten while understating the level by nearly half.
 - **few geos, channel_2**: 0.70, median relative error -53.9%. Dropping from
   five geos to two leaves coverage unchanged but deepens the understatement,
   from -45.6% to -53.9%.
 - **misspecified response, channel_1**: 0.50, median relative error **+44.2%**.
-  Fitting Meridian's concave saturation to a linear truth biases ROI upward and
-  halves the interval's coverage.
+  This linear-generator cell has upward median error and covers the truth in
+  five of ten fits. Both the linear cell and square-root baseline differ from
+  the fitted default's Hill response.
 
-This replicates, with ten fits per setting rather than one, the direction the
-single-fit table in the README already showed: concave truth with carryover
-understates the top channel (-43% there, -45.6% here), and linear truth
-overstates (+71% there, +44.2% here). The README's anecdote is now a
-measurement.
+The square-root-with-carryover setting has negative top-channel error in both
+the README's single fit (-43%) and this grid (-45.6%). The linear setting has
+positive error in the cited single fit (+71%) and one grid channel (+44.2%).
+Those comparisons involve different channels or configurations and do not
+establish a general causal explanation or bias direction.
 
-High noise did not degrade coverage; misspecification and thin geo coverage
-did. Noise widens intervals along with the error, while a wrong response shape
-moves the estimate without widening anything.
+The high-noise cell covered every truth in this run. Coverage and error changed
+in other cells, but these finite experiments do not establish a universal
+noise effect or uniquely attribute a change to response mismatch or geography.
 
 Caveats that belong with these numbers. Ten replications give wide Wilson
-intervals, which is why only the three cells whose bound clears the nominal
-level are called under-coverage. One replication in each of four cells failed
+intervals, and the pointwise intervals do not adjust for multiple channel-cell
+comparisons. One replication in each of four cells failed
 the 1.2 R-hat screen (cell maxima 1.30 to 1.58) and was not excluded, so part
 of the spread is sampling quality rather than coverage. Fixed-truth frequentist
 coverage is not Bayesian calibration. These are synthetic datasets; a real
@@ -699,13 +730,13 @@ one's identifiability depends on its own spend variation and collinearity.
   observed media periods and models the remaining 148 periods; it does not
   invent historical observations. Historical fit metrics above retain their
   original analysis window and must not be compared as identical experiments.
-- The short synthetic integration fixture is not a recovery study. The
+- The short synthetic integration fixtures are not a recovery study. The
   ten-seed experiment above adds measured recovery evidence at one fixed
   setting. It does not replace simulation-based calibration or validation on
-  a user's own data and modeling assumptions. Simulation-based calibration
-  against the shipped prior is not merely undone but blocked: the default
-  prior generates data `InputData` rejects, measured at 100% of draws. See
-  "The default prior cannot be simulated from" above.
+  a user's own data and modeling assumptions. The tested prior-predictive
+  workflow encountered loader support violations in all sampled default-prior
+  draws; finite sampling does not prove mathematical impossibility of SBC.
+  See "Prior predictive support mismatch" above.
 - Real Google Sheets/Looker writes, authenticated cloud MLflow services,
   GPU/CUDA and hosted Codespaces still require the relevant account, hardware
   and environment. Local tests are not live validation of those boundaries.
@@ -776,3 +807,238 @@ this fork still shares history with `google/meridian` and the documented rebase
 workflow still applies. The CI results recorded above ran against the
 pre-rewrite hashes of the same content; CI after the rewrite runs under new
 hashes.
+
+## 2 October 2026 paired-budget audit addendum
+
+The release decision and test counts above describe the earlier audited tree.
+Use this addendum for the changes made on 2 October. The local gates pass on
+the recorded revisions; merge remains subject to the protected checks on
+[pull request #12](https://github.com/sundar-ai-marketer/meridian/pull/12).
+
+### Scope and findings
+
+This update covers allocation-search correctness, numeric input validation,
+sampling diagnostics, paired budget evidence, synthetic validation, and the
+source/wheel/container workflow. Meridian remains a Python library; there is
+no hosted application or production service to deploy.
+
+- The fixed-budget optimizer could stop when its highest-return next step was
+  unaffordable, even when a smaller positive step remained feasible elsewhere.
+  The search now removes unaffordable points and continues. A public
+  regression and exhaustive small concave-grid checks cover this failure.
+- `InputData` now rejects positive or negative infinity at construction, after
+  missing-value checks and before model transformations. This closes a gap in
+  which infinities could pass the input boundary.
+- Strict recovery diagnostics now preserve missing or non-finite maximum
+  rank-normalized R-hat values as unavailable/failing evidence with counts,
+  rather than dropping them during aggregation. Existing synthetic recovery
+  and coverage studies remain scoped stress evidence; their generators do
+  not all match the fitted Hill-after-adstock model.
+- `meridian.analysis.budget_decision` compares a bounded set of equal-budget
+  user allocations on exactly paired posterior draws within each fit. It
+  keeps fitted specifications separate and includes strict sampling checks.
+  The current contract is paid media without reach/frequency: it scales all
+  historical media, including pre-window adstock history, to represent a
+  constant-cost historical flight. Its output is conditional expected
+  incremental outcome, not realized future outcome or profit. Sampling
+  diagnostics do not establish identification or model adequacy; downside
+  policy flags have no Monte Carlo error assessment and do not authorize a
+  decision. The report never selects an allocation or claims global
+  optimality.
+
+The committed [budget-decision contract fixture](docs/validation/budget-decision-contract-2026-10-02.json)
+uses hand-constructed arrays to verify arithmetic and JSON behavior. It is
+not a fit, posterior sample, campaign-risk estimate, or scientific validation.
+The four-case real-fit integration matrix passes as a separate plumbing check
+on both backends, as recorded in the current validation section. It does not
+establish convergence or scientific validity. The historical prior, recovery,
+and ten-replication coverage measurements above are retained with their
+original dates; do not replace them with values from a later run.
+
+### New synthetic evidence on 2 October 2026
+
+The new [coverage grid](docs/validation/coverage-grid-2026-10-02.json) ran
+ten replications in each of five fixed-truth shapes, for 50 fits total. The
+nominal interval was 90%. `channel_0` through `channel_2` use true ROIs 1, 2,
+and 4. All cells use `max_lag=4`; the baseline generator's historical label
+`concave` means square root before adstock, while the fitted default is bounded
+Hill after adstock. The linear-response cell also differs from the fitted
+family. None is a model-matched coverage experiment.
+
+Coverage and the pointwise 95% Wilson limits below use the producer's printed
+two-decimal precision; the linked JSON retains full precision. The R-hat
+column records the maximum rank-normalized value in each shape and the count
+that did not meet the loose `<1.2` screen.
+
+| Shape | Max R-hat; screen misses | channel_0 coverage [95% Wilson] | channel_1 coverage [95% Wilson] | channel_2 coverage [95% Wilson] |
+|---|---:|---:|---:|---:|
+| baseline (5 geos, 104 periods) | 1.131026755091128; 0/10 | 0.90 [0.60, 0.98] | 0.90 [0.60, 0.98] | 0.80 [0.49, 0.94] |
+| short history (5 geos, 40 periods) | 1.5171072617324282; 2/10 | 1.00 [0.72, 1.00] | 1.00 [0.72, 1.00] | 0.80 [0.49, 0.94] |
+| few geos (2 geos, 104 periods) | 1.1602585151216063; 0/10 | 1.00 [0.72, 1.00] | 1.00 [0.72, 1.00] | 0.70 [0.40, 0.89] |
+| high noise (20% of mean baseline) | 1.0971479520566179; 0/10 | 1.00 [0.72, 1.00] | 1.00 [0.72, 1.00] | 1.00 [0.72, 1.00] |
+| linear response | 1.212258841924869; 1/10 | 0.90 [0.60, 0.98] | 0.90 [0.60, 0.98] | 1.00 [0.72, 1.00] |
+
+Forty-seven of 50 fits met the loose finite rank-normalized R-hat `<1.2`
+screen. This is not a strict sampling gate or proof of convergence. Coverage
+includes the three replications above the screen. The few-geos `channel_2`
+cell's pointwise Wilson upper bound is below the nominal level; ten
+replications, multiple channel-by-shape comparisons, and the screen failures
+make that an exploratory signal, not a calibrated coverage claim. This is a
+new seed and evidence file, not a replacement for the 17 September grid.
+
+The new [prior-predictive audit](docs/validation/prior-predictive-audit-2026-10-02.json)
+uses 300 predictive draws per variant on one synthetic template with three
+geographies and 40 periods. Each count below is how many draws contained at
+least one negative KPI cell, which the public `InputData` loader rejects.
+
+| Prior variant | Draws with a negative KPI cell / 300 |
+|---|---:|
+| Meridian defaults | 300/300 |
+| Observation-noise scale tightened only | 298/300 |
+| Observation-noise and baseline terms tightened | 152/300 |
+| Population-level terms tightened; hierarchical scales left at defaults | 145/300 |
+| Hierarchical scales tightened as well | 0/300 |
+
+The rates describe these finite draws and this template only. The variants
+change prior groups in combination, so the table does not isolate a unique
+cause. No observed negative cells in 300 draws does not guarantee compatible
+support, and complete observed rejection does not prove rejection probability
+one or make SBC mathematically impossible. Discarding invalid draws changes
+the prior and is not unmodified SBC. These results assess prior predictive
+support, not posterior behavior or identifiability.
+
+### Validation status on 2 October
+
+Completed: a fresh `make setup`, including an actual fit and import from
+outside the checkout; the frozen-lock check; `pip check`; strict `pip-audit` of
+locked dependencies with no known advisories; protobuf and version-helper
+gates; and a fresh `make quickstart` through fit, optimization and report.
+
+The pulled-base Docker build and default quickstart command also completed as
+the non-root `meridian` user. Its saved sampling report records a failed strict
+sampling screen; this validates the container workflow, not decision
+readiness. The final Docker build and runtime job passed in [GitHub Actions](https://github.com/sundar-ai-marketer/meridian/actions/runs/37015310676/job/110864611399)
+on source revision `7dd2be9b`. Merge is still governed by the protected checks
+on the final immutable tree for [pull request #12](https://github.com/sundar-ai-marketer/meridian/pull/12).
+The local loopback MLflow integration passed; authenticated and hosted MLflow
+were not exercised.
+
+After the interactive-report changes, focused UI/reuse tests
+([native report browser suite](scripts/test_native_report_browser.py),
+[E2E reuse suite](scripts/test_end_to_end_reuse.py)) passed on the tested JAX
+and TensorFlow configurations. Offline Chromium checks exercised the chart
+source, SVG and specification controls. The retained [browser evidence
+receipt](docs/validation/native-report-browser-2026-10-02.json) records 16
+report variants passing at 320, 390 and 1440 pixels with networking disabled.
+All recorded controls expose embedded source rows, exact Vega-Lite JSON and
+SVG downloads; mobile keyboard panning works where charts overflow, and the
+receipt records no external requests. The collector preserves hashes for its
+raw results, log and orchestrator; it consolidates prior successful checks and
+reuses one representative check rather than rerunning every report. The JAX
+summary and corrected optimization report were also reviewed at mobile and
+desktop sizes. Small signed ROI changes now retain a nonzero display, and the
+deliberately zoomed waterfall axis is labeled. Focused interaction and contrast
+checks pass; this fixes presentation only and changes no model or search
+calculations. Browser checks cover Chromium, not other browsers, and do not
+certify WCAG conformance or dense-data performance.
+
+The [JAX](docs/validation/e2e-jax-2026-10-02.json) and
+[TensorFlow](docs/validation/e2e-tensorflow-2026-10-02.json) end-to-end receipts
+pass their paired-decision smoke checks. The four-case matrices also pass on
+[JAX](docs/validation/e2e-matrix-jax-2026-10-02.json) and
+[TensorFlow](docs/validation/e2e-matrix-tensorflow-2026-10-02.json), covering
+geo and national inputs, revenue and non-revenue outcomes, paid media, and
+reach/frequency model plumbing. The final report refresh reused validated
+saved fits and retained each source-model hash; the eight underlying fits were
+run earlier in this audit. These are integration checks, not convergence or
+recovery evidence: the smoke fits do not pass a decision-readiness screen. The
+paired direct calculation matches in the receipts, and comparison with the
+optimizer stays within the recorded dtype- and scale-aware roundoff bound.
+
+The final [package inventory
+receipt](docs/validation/package-audit-2026-10-02.json) passes its archive
+contract at source revision `45b55c9d`. It records zero test modules in the
+core wheel and 96 test sources retained in its sdist, with exact hashes and
+counts for the core and proto artifacts. The `proto/MANIFEST.in` correction
+produces source-only proto archives from both clean and previously generated
+trees; wheels built from those archives regenerate the runtime modules. All
+four final artifacts passed `twine check --strict`. The isolated core/proto
+wheel install/import/report-assets probe also passed outside the checkout,
+with imports resolving to the installed wheels. That `--no-deps` probe
+borrowed dependencies from the audited locked environment; it verifies package
+content and import isolation, not fresh dependency resolution. The prior
+GitHub package failure exposed the clean proto-archive mismatch; the correction
+is covered by the local archive and build checks.
+
+The final local JAX suite passed all 11 phases
+([receipt](docs/validation/test-jax-final-2026-10-02.json), source revision
+`7dd2be9b`). It began before the last ROI-display formatting correction;
+arithmetic and search logic did not change, and focused report/optimizer tests
+cover that correction. The earlier [JAX
+receipt](docs/validation/test-jax-2026-10-02.json) is retained as historical
+evidence. The final local TensorFlow suite passed all 11 phases
+([receipt](docs/validation/test-tensorflow-final-2026-10-02.json), source
+revision `45b55c9d`). Its initial run completed all phases but failed in the
+scripts phase on new reuse-helper cases; that [failed
+receipt](docs/validation/test-tensorflow-2026-10-02.json) is retained. The
+corrected helpers also pass focused tests on both backends.
+
+`make test` and `make test-tf` accept `TEST_REPORT` for provenance-bearing JSON
+summaries; `make test-e2e-matrix` records all four input cases, and CI on
+JAX/Python 3.11 retains summaries and logs even on failure. The TensorFlow
+backend defaults to float32; the paired-versus-optimizer smoke comparison
+exposed a small reduction-order difference. The comparison now uses a
+same-draw direct reduction and a dtype-aware, scale-aware bound. No model
+invariants or sampling thresholds changed. No runtime comparison is reported
+because these jobs ran under concurrent audit load.
+
+The updated weekly container-rescan workflow completed in [GitHub Actions run
+37011598010](https://github.com/sundar-ai-marketer/meridian/actions/runs/37011598010)
+at source revision `c82e9c18` on Linux x86_64. It published an evidence branch
+and workflow artifact and printed a compare link. Repository settings deny
+bot pull-request creation; the workflow reports that restriction and does not
+weaken permissions or merge to `main`. The accompanying [reachability
+inventory](docs/validation/container-reachability-2026-10-02.json) and [OS
+triage summary](docs/validation/os-triage-summary-2026-10-02.json) record 72
+advisories: 8 HIGH, 30 MEDIUM, 32 LOW, and 2 UNKNOWN, with no vendor fix in
+the scanner database and 32 advisories mapped to packages loaded by the
+default analysis command. A loaded package is not evidence of exploitability;
+an unloaded package is not proof of unreachability. The probe covers the
+default non-interactive workflow, not long-running fit paths. The 17 September
+evidence remains [dated separately](docs/validation/coverage-grid-2026-09-17.json).
+
+The local software gates pass with the scientific and integration limits above.
+Merge requires the protected GitHub checks on the final immutable merge tree
+for [pull request #12](https://github.com/sundar-ai-marketer/meridian/pull/12).
+
+### Existing-tool context checked 2 October 2026
+
+The primary documentation establishes adjacent capabilities. This is a
+feature-level comparison, not a controlled evaluation of complete products;
+silence in a page is not evidence that another capability is absent.
+
+| Tool | Capability described in primary documentation | Relevance to this fork's measured scope |
+|---|---|---|
+| Google Meridian | Scenario planning and budget optimization, including reach/frequency ([docs](https://developers.google.com/meridian/docs/post-modeling/scenario-planning-and-future-budget-optimization)). | Compare future-planning scope with this fork's media-only historical-flight contract. |
+| PyMC-Marketing | Allocation assessment; risk-sensitive utility and CVaR ([assessment](https://www.pymc-marketing.io/en/stable/notebooks/mmm/mmm_allocation_assessment.html), [utility API](https://www.pymc-marketing.io/en/stable/api/generated/pymc_marketing.mmm.utility.html)). | Align the risk functional, budgets, and constraints in any controlled comparison. |
+| Robyn | Calibrated ridge/Nevergrad search, constrained response curves, ROAS/CPA allocation, and refresh ([features](https://facebookexperimental.github.io/Robyn/docs/features/)). | A relevant alternative for a preregistered equal-budget study; this audit measures no relative performance. |
+| This fork, 2 October scope | Paired candidate draws within each fit, separate specification sensitivity, strict sampling evidence, offline chart-source inspection, and SVG/Vega-Lite exports; no recommendation ([contract fixture](docs/validation/budget-decision-contract-2026-10-02.json), [chart notes](meridian/templates/assets/README.md)). | Arithmetic fixtures and focused browser/E2E checks exercise integration; they do not measure scientific decision accuracy or workflow efficiency. |
+
+This addition's value is integration of these evidence views in one bounded
+report. The cited docs establish existing neighboring capabilities, so they
+do not support a first-in-existence claim. No head-to-head decision-regret,
+accuracy, or runtime advantage has been measured; concurrent-job timing is not
+an efficiency benchmark.
+
+### Prioritized evidence improvements
+
+1. Test model-matched synthetic generators with the fitted transformation
+   order; measure ROI coverage and paired decision regret over repeated seeds,
+   with Monte Carlo uncertainty for tail and downside summaries.
+2. Repeat across spend collinearity, low-spend channels, carryover, and
+   response misspecification. Retain strict sampling screens and report
+   non-passing replications alongside coverage and regret.
+3. Before making a comparative claim, preregister common datasets, budgets,
+   constraints, objective functions, and comparable calibration inputs for
+   Meridian, PyMC-Marketing, and Robyn. Measure decision quality and runtime
+   under controlled loads, reporting failures and uncertainty.

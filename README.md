@@ -27,6 +27,9 @@ estimates deserve confidence, plus a one-command local setup and a Docker path.
   mismatch between your priors and observed outcomes.
 * **Inspect uncertainty after fitting:** convergence, effective sample size,
   divergences, and geographic precision diagnostics expose weak estimates.
+* **Explore report charts offline:** keep Vega tooltips and selections, inspect
+  embedded source rows with keyboard access, and download SVG or editable
+  Vega-Lite specifications.
 * **Review the evidence:** [issue triage](TRIAGE.md) records the upstream
   problems addressed; [the release audit](AUDIT.md) records fresh checks,
   fixes, and remaining limitations.
@@ -34,34 +37,6 @@ estimates deserve confidence, plus a one-command local setup and a Docker path.
 This is a Python modeling library, not a hosted application. The included
 sample is simulated data. Software tests cannot establish that a model is
 causally valid for your business.
-
-
-Marketing mix modeling (MMM) is a statistical analysis technique that measures
-the impact of marketing campaigns and activities to guide budget planning
-decisions and improve overall media effectiveness. MMM uses aggregated data to
-measure impact across marketing channels and account for non-marketing factors
-that impact sales and other key performance indicators (KPIs). MMM is
-privacy-safe and does not use any cookie or user-level information.
-
-Meridian is an MMM framework that enables advertisers to set up and run their
-own in-house models. Meridian helps you answer key questions such as:
-
-*   How did the marketing channels drive my revenue or other KPI?
-*   What was my marketing return on investment (ROI)?
-*   How do I optimize my marketing budget allocation for the future?
-
-Meridian is a highly customizable modeling framework that is based on
-[Bayesian causal inference](https://developers.google.com/meridian/docs/causal-inference/bayesian-inference).
-It is capable of handling large scale geo-level data, which is encouraged if
-available, but it can also be used for national-level modeling. Meridian
-provides clear insights and visualizations to inform business decisions around
-marketing budget and planning. Additionally, Meridian provides methodologies to
-support calibration of MMM with experiments and other prior information, and to
-optimize target ad frequency by utilizing reach and frequency data.
-
-If you are using LightweightMMM, see the
-[migration guide](https://developers.google.com/meridian/docs/migrate) to help
-you understand the differences between these MMM projects.
 
 ## Quickstart for this fork
 
@@ -97,8 +72,9 @@ unlocked fallback; it does not reproduce the audited lock.
 | `make quickstart` | setup → stylesheet → verify → demo. The one-command path. |
 | `make setup` | environment only |
 | `make verify` | check an existing environment is usable |
-| `make test` / `make test-tf` | core and Scenario Planner suites, on either backend |
+| `make test` / `make test-tf` | full suites; optional provenance JSON via `TEST_REPORT` |
 | `make test-e2e` | real fit → budget optimization → save/load → styled report |
+| `make test-e2e-matrix` | four serial synthetic fit-to-report cases |
 | `make demo` | the end-to-end example |
 | `make build` | wheel + sdist |
 | `make clean` | build artifacts and generated output. Never touches your venv. |
@@ -140,8 +116,8 @@ guarantee.
     whole environment on container create. Open the repo in a Codespace, or
     "Reopen in Container" locally, and run `make demo`.
 *   **Docker.** The image includes TensorFlow and JAX. A clean Linux arm64 build
-    and real model-to-report smoke test passed during this audit; the measured
-    image size was about 901 MB. Size and build time vary by platform.
+    and real model-to-report smoke test passed in the 17 September 2026 audit;
+    that image measured about 901 MB. Size and build time vary by platform.
 
 Run the container demo and copy its outputs to your computer:
 
@@ -159,6 +135,14 @@ OS fixes are applied; vendor-unfixed findings remain explicitly documented.
 Open `quickstart_output/summary.html` to inspect the report. Review the printed
 sampling diagnostics before interpreting the estimates. For a smaller
 integration check, run `docker run --rm meridian python scripts/test_end_to_end.py`.
+
+Standard generated reports keep chart interactions available offline and offer
+source-data inspection plus local SVG and editable Vega-Lite JSON downloads.
+The source table shows embedded rows before chart filters or aggregates, not
+necessarily the plotted values. These are browser SVG and Vega-Lite files, not
+PowerPoint or Excel chart objects. Caller-supplied specifications that read
+remote data still need a network connection. See the [chart asset notes](meridian/templates/assets/README.md)
+for details.
 
 <details>
 <summary>Manual setup, if you would rather not run a script</summary>
@@ -214,6 +198,35 @@ make test-e2e                                            # small real integratio
 *   **Accelerators.** `make gpu-check` reports in seconds what this machine's
     accelerator can do for the model, rather than leaving it to a failed fit an
     hour later. See "Running on your hardware" below.
+
+## About Meridian
+
+Marketing mix modeling (MMM) is a statistical analysis technique that measures
+the impact of marketing campaigns and activities to guide budget planning
+decisions and improve overall media effectiveness. MMM uses aggregated data to
+measure impact across marketing channels and account for non-marketing factors
+that impact sales and other key performance indicators (KPIs). MMM is
+privacy-safe and does not use any cookie or user-level information.
+
+Meridian is an MMM framework that enables advertisers to set up and run their
+own in-house models. Meridian helps you answer key questions such as:
+
+*   How did the marketing channels drive my revenue or other KPI?
+*   What was my marketing return on investment (ROI)?
+*   How do I optimize my marketing budget allocation for the future?
+
+Meridian is a highly customizable modeling framework that is based on
+[Bayesian causal inference](https://developers.google.com/meridian/docs/causal-inference/bayesian-inference).
+It is capable of handling large scale geo-level data, which is encouraged if
+available, but it can also be used for national-level modeling. Meridian
+provides clear insights and visualizations to inform business decisions around
+marketing budget and planning. Additionally, Meridian provides methodologies to
+support calibration of MMM with experiments and other prior information, and to
+optimize target ad frequency by utilizing reach and frequency data.
+
+If you are using LightweightMMM, see the
+[migration guide](https://developers.google.com/meridian/docs/migrate) to help
+you understand the differences between these MMM projects.
 
 ## Running on your hardware
 
@@ -568,6 +581,79 @@ Added modules:
     number of replications is itself noisy. This quantifies the evidence and
     its uncertainty at the selected synthetic setting.
 
+*   `meridian.analysis.budget_decision` — compare a bounded set of equal-budget
+    paid-media allocations using paired posterior draws, and keep results from
+    different fitted priors or specifications separate. Each Analyzer must be
+    fitted to the same input data and history. Spend is in the model's
+    currency; the downside tolerances are in the declared outcome unit.
+
+    ```python
+    from meridian.analysis import analyzer, budget_decision
+    from meridian.schema.serde import meridian_serde
+
+    # `make demo` writes this fitted model, even when its sampling checks fail.
+    mmm = meridian_serde.load_meridian("quickstart_output/model.binpb")
+    analysis = analyzer.Analyzer(
+        model_context=mmm.model_context,
+        inference_data=mmm.inference_data,
+    )
+    spend = analysis.get_aggregated_spend(
+        include_media=True, include_rf=False
+    )
+    channels = [str(channel) for channel in spend.channel.values]
+    baseline = {
+        channel: float(value)
+        for channel, value in zip(channels, spend.values)
+    }
+    if len(channels) < 2:
+        raise ValueError("The example needs at least two paid media channels.")
+    channel_a, channel_b = channels[:2]
+    transfer = 0.10 * min(baseline[channel_a], baseline[channel_b])
+    candidate = dict(baseline)
+    candidate[channel_a] -= transfer
+    candidate[channel_b] += transfer
+
+    specifications = {"quickstart": analysis}
+    candidates = {"illustrative_transfer": candidate}
+    policy = budget_decision.DownsidePolicy(
+        loss_tolerance=2.0,
+        max_loss_probability=0.10,
+        max_expected_downside=1.0,
+    )  # Demonstration tolerances only; units are KPI units below.
+
+    report = budget_decision.audit_budget_decisions(
+        specifications=specifications,
+        baseline=baseline,
+        candidates=candidates,
+        policy=policy,
+        outcome_unit="KPI units",
+        use_kpi=True,
+    )
+    result = report.to_dict()
+    print(result["sampling_ready"])  # Strict sampling screen only.
+    print(result["fits"]["quickstart"]["candidates"]["illustrative_transfer"])
+    print(result["sensitivity"]["illustrative_transfer"])
+    ```
+
+    This is an equal-budget paid-media comparison; reach/frequency is outside
+    this API. It shifts 10% of the smaller current spend from the first bundled
+    media channel to the second. The downside policy values are demonstrations
+    in KPI units; choose business tolerances for your use case. By default, the
+    audit compares the selected outcome window while scaling all historical
+    media, including pre-window adstock history, at constant cost.
+    Results describe conditional expected incremental outcome, not realized
+    future outcomes or profit. A passing sampling screen does not establish
+    identification or model adequacy. Policy flags describe the supplied
+    draws; the report does not estimate Monte Carlo error for those functionals,
+    select an allocation, or claim a global optimum. See
+    [`AUDIT.md`](AUDIT.md#2-october-2026-paired-budget-audit-addendum) for the
+    validation status and limits.
+
+    For prior sensitivity, add a separately named `Analyzer` fitted to the
+    same `InputData` and history under an independently justified prior to
+    `specifications`. Each fit stays separate; the report gives a sensitivity
+    envelope rather than pooling posterior draws.
+
 Added test modules:
 
 *   `meridian/upstream_issues_test.py` — the code-testable dispositions in
@@ -642,8 +728,8 @@ python scripts/triage_container_os.py --scan /tmp/container-os-full.json \
     --output docs/validation/os-triage-latest.md \
     --summary-output docs/validation/os-triage-summary-latest.json
 
-# Can the prior generate data the model would accept? For the shipped
-# defaults the answer is no, which is why SBC is not run here.
+# Measure how often prior predictions violate the loader's nonnegative KPI
+# requirement. A finite draw count does not establish impossibility of SBC.
 python scripts/prior_predictive_audit.py --draws 400 \
     --output docs/validation/prior-predictive-audit-$(date +%F).json
 
@@ -695,48 +781,46 @@ coverage-grid and prior-sensitivity numbers below. Reproduce a row with
 All four met the recovery tool's loose R-hat threshold (reported maximum
 R-hat ≤ 1.04) and recovered channel *ordering*. That does not establish that
 every fit met the stricter 1.01 target or adequate effective sample size.
-Two separate things are visible here, and they are worth keeping apart:
 
-**1. Saturation misspecification biases the level and the interval misses it.**
-On the no-carryover rows — the paired comparison, where the only thing that
-changes is the response shape — a linear truth overstates ROI by 71% and the
-90% interval excludes the true value. Concave truth lands within 9% and is
-covered. These results illustrate the risk of fitting a concave saturation
-curve to a response that is not concave; a single fit cannot establish the
-size or direction of that effect generally. The reporting consequence:
+The generator's historical label `concave` means an unbounded square-root
+response applied before geometric adstock. The fitted default applies bounded
+Hill saturation after adstock. Neither `concave` nor `linear` is a
+model-matched generator. These fits test sensitivity under different response
+families and transformation orders.
+
+In the no-carryover comparison, changing the generator from square-root to
+linear moved the error from +9% to +71%; the latter 90% interval excluded the
+truth. A single fit cannot establish a general direction or magnitude of bias.
 
 > Meridian's credible intervals quantify parameter uncertainty **conditional on
 > the assumed saturation shape**. They do not cover being wrong about that
 > shape.
 
-A channel far from saturation — typically one at low spend, whose real response
-is still close to linear — can therefore have its ROI overstated substantially
-while its interval looks reassuringly tight.
+With carryover, the square-root generator's fit lands 43% low rather than 9%
+high. The changed experiment also changes response/adstock ordering and
+estimated carryover; it does not isolate the precision cost of learning
+adstock. Review specification and prior sensitivity before using ROI levels or
+budget allocations.
 
-**2. Adding carryover costs a lot of precision on its own.** The same concave
-data with `max_lag=4` lands 43% low rather than 9% high. Estimating adstock and
-saturation jointly from 520 geo-weeks is simply harder than estimating
-saturation alone. Rank channels and allocate on the interval; do not quote a
-median ROI to two decimals off a model this size and call it a measurement.
-
-**3. Repeated fits confirm it, and the top channel is the one that suffers.**
-The table above is one fit per row. `scripts/coverage_grid.py` repeats the
-experiment ten times at each of five dataset shapes. At the same baseline —
-5 geos, 104 weeks — the highest-ROI channel's 90% interval covered the truth in
+The table above is one fit per row. `scripts/coverage_grid.py` ran ten fits at
+each of five dataset shapes. Its baseline uses 5 geos, 104 weeks and
+`max_lag=4`, unlike the earlier ten-seed recovery study's `max_lag=0`.
+In the grid the highest-ROI channel's 90% interval covered the truth in
 **7 runs out of 10** while running **45.6% low**. Against a linear truth, one
 channel's coverage fell to **5 in 10** while running **44.2% high**. Dropping to
-2 geos left coverage at 7 in 10 but deepened the understatement to 53.9%. Each
-of those three has a Wilson upper bound below 90%, so it is under-coverage
-rather than sampling noise. Raising the noise level did *not* degrade coverage:
-noise widens the interval along with the error, while a wrong response shape
-moves the estimate without widening anything. [AUDIT.md](AUDIT.md) has the full
-grid, the convergence caveats, and the evidence file.
+2 geos left coverage at 7 in 10 but deepened the understatement to 53.9%.
+Those three pointwise Wilson upper bounds are below 90%. With only ten
+replications, multiple channel-cells and failed sampling screens in some
+replications, these are exploratory sensitivity signals. They do not isolate
+misspecification from sampling quality or establish a general coverage rate.
+The high-noise cell covered every truth in this measured grid; that does not
+establish a general effect of noise. [AUDIT.md](AUDIT.md) links the full grid,
+sampling limits and evidence.
 
 **Re-measure before citing any of this.** The grid above is ten fits per shape
-on synthetic data at one scale — enough to establish that coverage degrades and
-roughly where, not enough to pin the size precisely, and NUTS is not
-bit-reproducible across library or hardware versions even at a fixed seed. Run
-the same measurement at the shape and scale of *your* data. The module also reports descriptive posterior rank fractions for
+on synthetic data at one scale. It describes recovery in those stress settings,
+and NUTS is not bit-reproducible across library or hardware versions even at a
+fixed seed. The module also reports descriptive posterior rank fractions for
 fixed synthetic truths. Those are not simulation-based calibration (SBC):
 SBC requires drawing the truth from the same prior used to fit the model,
 which this module does not implement. Run it at the shape and scale of *your*
