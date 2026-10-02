@@ -20,19 +20,32 @@
 > issue tracker.
 
 Turn aggregated marketing data into channel ROI estimates, budget scenarios,
-and an HTML report. This fork adds checks that help you judge when those
-estimates deserve confidence, plus a one-command local setup and a Docker path.
+and an HTML report. Google's Meridian supplies the underlying Bayesian
+geo/national MMM, including adstock and Hill response curves, ROI estimation,
+experiment calibration, budget optimization, reach/frequency modeling, and
+interactive charts. This fork adds a ready-to-run workflow with tested fixes,
+diagnostics, and portable reports around that foundation.
 
-* **Check assumptions before fitting:** prior predictive checks can reveal a
-  mismatch between your priors and observed outcomes.
-* **Inspect uncertainty after fitting:** convergence, effective sample size,
-  divergences, and geographic precision diagnostics expose weak estimates.
-* **Explore report charts offline:** keep Vega tooltips and selections, inspect
-  embedded source rows with keyboard access, and download SVG or editable
-  Vega-Lite specifications.
-* **Review the evidence:** [issue triage](TRIAGE.md) records the upstream
-  problems addressed; [the release audit](AUDIT.md) records fresh checks,
-  fixes, and remaining limitations.
+## Why use this fork?
+
+| If you need to… | Google Meridian provides | This fork adds | Practical benefit |
+|---|---|---|---|
+| Get from checkout to a working run | The MMM library and published install path. | A locked `make quickstart` and a Docker workflow that runs a real fit ([quickstart](#quickstart-for-this-fork), [Dockerfile](Dockerfile)). | Start from a repeatable local or container setup. |
+| Check whether assumptions and draws deserve review | Posterior sampling and model-review checks. | Prior predictive checks, a strict sampling gate, surfaced ESS/divergences, and per-geo precision diagnostics ([diagnostics](meridian/analysis), [strict run](#quickstart-for-this-fork)). | Find prior/data mismatches and weak fits before interpreting ROI or allocations. |
+| Diagnose data and budget constraints | Input-data handling and budget optimization. | Coordinate-aware finite-input errors and continued search over feasible fixed-budget moves ([input validation](meridian/data/input_data.py), [optimizer](meridian/analysis/optimizer.py), [issue triage](TRIAGE.md)). | Keep searching affordable moves when the highest-return move exceeds the budget. |
+| Compare candidate budgets cautiously | Future budget optimization, including reach/frequency workflows. | Paired posterior comparisons of equal-budget paid-media scenarios, with separate fits kept separate and no allocation recommendation ([decision audit](meridian/analysis/budget_decision.py)). | Review downside and fit sensitivity with like-for-like historical scenarios. |
+| Inspect or share report charts | Interactive Meridian charts. | Self-contained offline charts, keyboard-accessible source-row inspection, and SVG or editable Vega-Lite exports ([chart notes](meridian/templates/assets/README.md)). | Inspect and share reports without loading chart assets from the network. |
+| Trace claims to checks | Library tests and documentation. | Executable triage regressions, end-to-end workflows, and dated evidence with producer provenance ([triage](TRIAGE.md), [audit](AUDIT.md), [evidence helper](scripts/evidence.py)). | See what was checked, how it was produced, and where evidence stops. |
+
+Scope: fork commit `cb31883d` (2 October 2026), based on Google Meridian
+v2.0.0 at [`00134ea`](https://github.com/google/meridian/tree/00134ea24a0f811a41ee640e89c68ed884fef0ad).
+Upstream main is version 2.1.0 at [`0211153`](https://github.com/google/meridian/tree/02111531f8661373aa7b6ba31c316c67d72d1dd2); this summary is not a feature-by-feature comparison to that later state.
+These are workflow and review additions, not claims of higher predictive
+accuracy or faster sampling. See [technical details](#differences-from-upstream)
+for the full change record. Use this fork for a reproducible local/Docker
+workflow and its additional review tools; use Google's repository for the
+latest upstream releases and support path. Start with
+[`make quickstart`](#quickstart-for-this-fork).
 
 This is a Python modeling library, not a hosted application. The included
 sample is simulated data. Software tests cannot establish that a model is
@@ -472,8 +485,9 @@ significantly reduce training time.
 
 ## Differences from upstream
 
-This is a fork of [google/meridian](https://github.com/google/meridian).
-Upstream does not accept external pull requests, so fixes live here.
+This independent fork keeps its own maintenance path for the changes described
+below. Google welcomes external pull requests but says they can be difficult to
+merge because of internal systems and review ([upstream contribution guidance](https://github.com/google/meridian/blob/02111531f8661373aa7b6ba31c316c67d72d1dd2/README.md#support)).
 
 [`TRIAGE.md`](TRIAGE.md) records a disposition for the 47 issues open on the
 upstream tracker on 15 September 2026: verified already fixed, fixed here, a usage question, an
@@ -673,9 +687,10 @@ Added test modules:
 
 ## Maintaining this fork
 
-Upstream does not accept external pull requests, so these fixes live here
-permanently and the main long-term risk is drift. Upstream moves quickly —
-v1.4 to v2.0 inside nine months.
+Google welcomes external pull requests but says they can be difficult to merge
+because of internal systems and review ([upstream contribution guidance](https://github.com/google/meridian/blob/02111531f8661373aa7b6ba31c316c67d72d1dd2/README.md#support)).
+This fork maintains its own fixes and tracks upstream; the main long-term risk
+is drift.
 
 `main` is this fork's public line of development. A fresh clone only configures
 the fork's `origin` remote. Add Google's repository once, then review upstream

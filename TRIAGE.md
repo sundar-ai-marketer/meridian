@@ -9,10 +9,14 @@ Disposition for every issue open on [google/meridian](https://github.com/google/
 as of 2026-09-15 (47 open issues, 63 open PRs), evaluated against this fork at
 upstream v2.0.0 (`00134ea`).
 
-**Why this file exists.** Google does not accept external pull requests — a
-maintainer declined a community fix for #1502 with "we are currently not
-accepting external pull requests". Fixes therefore live here permanently, and
-each one needs a written reason.
+**Why this file exists.** The 15 September 2026 review recorded a maintainer
+declining a community fix for [#1502](https://github.com/google/meridian/issues/1502).
+Google's current guidance says external pull requests are appreciated but can
+be difficult to merge because of internal systems and review
+([contribution guidance](https://github.com/google/meridian/blob/02111531f8661373aa7b6ba31c316c67d72d1dd2/README.md#support)).
+This fork maintains its own fixes; the historical response is not a claim that
+Google rejects external contributions today. Each disposition below records
+its evidence and rationale.
 
 **Verification environment.** Python 3.11.8, TensorFlow 2.21.0, JAX 0.10.2
 (CPU), NumPy 2.3.5, macOS arm64 (M4 Max). protobuf is transitive and unpinned, so its version varies by install. JAX is the default
