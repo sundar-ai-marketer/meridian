@@ -18,17 +18,21 @@ VENV ?= .venv
 override VENV := $(subst ~,$(HOME),$(VENV))
 VENV_PY := $(VENV)/bin/python
 TEST_WORKERS ?= 2
+RUN_TESTS_REPORT_ARG = $(if $(strip $(TEST_REPORT)),--output "$(TEST_REPORT)")
+E2E_OUTPUT_ARG = $(if $(strip $(E2E_OUTPUT)),--output-dir "$(E2E_OUTPUT)")
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup verify test test-tf test-e2e demo css build clean distclean all quickstart check-venv gpu-check bench lint lint-paths
+.PHONY: help setup verify test test-tf test-e2e test-e2e-matrix demo \
+	css build clean distclean all quickstart check-venv gpu-check bench \
+	lint lint-paths
 
 ## help: Show this list of targets.
 help:
 	@echo "Meridian -- available targets:"
 	@grep -hE '^## [a-zA-Z0-9_-]+:' $(MAKEFILE_LIST) | \
 		awk '{ sub(/^## /, ""); i = index($$0, ":"); \
-		       printf "  %-12s%s\n", substr($$0, 1, i - 1), substr($$0, i + 1) }'
+		       printf "  %-16s%s\n", substr($$0, 1, i - 1), substr($$0, i + 1) }'
 
 # Internal guard: most targets need a working venv. Fails fast with a clear
 # message instead of a confusing "no such file or directory" from python3.
@@ -46,18 +50,23 @@ setup:
 verify: check-venv
 	"$(VENV_PY)" scripts/verify_environment.py
 
-## test: Run the full suite in fresh processes with bounded worker memory.
+## test: Run the full suite in fresh processes; set TEST_REPORT=path.json to save evidence.
 test: check-venv
-	"$(VENV_PY)" scripts/run_tests.py --workers "$(TEST_WORKERS)"
+	"$(VENV_PY)" scripts/run_tests.py --workers "$(TEST_WORKERS)" $(RUN_TESTS_REPORT_ARG)
 
-## test-tf: Run the full test suite with the TensorFlow backend forced.
+## test-tf: Run the full suite with TensorFlow; set TEST_REPORT=path.json to save evidence.
 test-tf: check-venv
-	MERIDIAN_BACKEND=tensorflow "$(VENV_PY)" scripts/run_tests.py --workers "$(TEST_WORKERS)"
+	MERIDIAN_BACKEND=tensorflow "$(VENV_PY)" scripts/run_tests.py --workers "$(TEST_WORKERS)" $(RUN_TESTS_REPORT_ARG)
 
 ## test-e2e: Run the real fit → optimize → serialize → report smoke test.
 test-e2e: check-venv
 	"$(VENV_PY)" scripts/compile_report_css.py
 	"$(VENV_PY)" scripts/test_end_to_end.py
+
+## test-e2e-matrix: Run the four serial synthetic model-to-report cases.
+test-e2e-matrix: check-venv
+	"$(VENV_PY)" scripts/compile_report_css.py
+	"$(VENV_PY)" scripts/test_end_to_end.py --all-cases $(E2E_OUTPUT_ARG)
 
 ## demo: Run the quickstart end-to-end example (examples/quickstart.py).
 demo: check-venv
@@ -77,7 +86,9 @@ bench: check-venv
 # The paths this fork owns. Upstream `meridian` modules are excluded: see the
 # scope note in .pylintrc-gate.
 LINT_PATHS ?= scripts examples meridian/validation meridian/benchmark \
-              meridian/mlflow meridian/analysis/review
+              meridian/mlflow meridian/analysis/review \
+              meridian/analysis/budget_decision.py \
+              meridian/analysis/budget_decision_test.py
 
 ## lint: Gated static analysis: duplicate code and unused names (.pylintrc-gate).
 lint: check-venv

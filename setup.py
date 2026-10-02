@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# NOTICE: This file was modified from the original google/meridian source.
+# See the NOTICE file at the repository root for details.
 
 """The setup.py file for Meridian."""
 
@@ -18,6 +20,7 @@ from pathlib import Path
 import sass
 from setuptools import Command, setup
 from setuptools.command.build import build
+from setuptools.command.build_py import build_py
 
 
 class ScssCompileCommand(Command):
@@ -64,5 +67,19 @@ class CustomBuild(build):
   sub_commands = [('compile_scss', None)] + build.sub_commands
 
 
+class RuntimeBuildPy(build_py):
+  """Exclude repository test modules from the installed runtime package."""
+
+  def find_package_modules(self, package, package_dir):
+    modules = super().find_package_modules(package, package_dir)
+    return [module for module in modules if not module[1].endswith('_test')]
+
+
 if __name__ == '__main__':
-  setup(cmdclass={'build': CustomBuild, 'compile_scss': ScssCompileCommand})
+  setup(
+      cmdclass={
+          'build': CustomBuild,
+          'build_py': RuntimeBuildPy,
+          'compile_scss': ScssCompileCommand,
+      }
+  )

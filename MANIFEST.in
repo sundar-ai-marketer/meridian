@@ -10,7 +10,9 @@ include TRIAGE.md
 include AUDIT.md
 recursive-include docs/validation *.json
 include docs/validation/os-triage-latest.md
-# Must come last. MANIFEST.in directives are applied in order, so an earlier
-# global-exclude is undone by the `include meridian/templates/*` above, which
-# is how meridian/templates/formatter_test.py used to reach the wheel.
-global-exclude *_test.py
+# Source distributions retain the test suite. The wheel build separately
+# filters `_test.py` modules and package data so tests stay out of runtime
+# installs without being lost from the source archive.
+recursive-include meridian *_test.py
+recursive-include scenarioplanner *_test.py
+recursive-include scripts *.py

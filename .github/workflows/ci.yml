@@ -54,6 +54,8 @@ jobs:
           working_directory: ./proto
           output_path: ./proto/dist
           artifact_name: mmm-proto-package-distribution
+      - name: Check distribution contents
+        run: python scripts/check_package_artifacts.py --core-dir dist --proto-dir proto/dist
 
   # Include for sanity checking that version increment parsing and checking logic works.
   check-version:
@@ -241,6 +243,26 @@ jobs:
         run: python scripts/test_end_to_end.py --output-dir "$RUNNER_TEMP/meridian-e2e"
         env:
           MERIDIAN_BACKEND: ${{ matrix.meridian-backend }}
+
+      # This broader synthetic matrix covers different geo, outcome, channel
+      # and reach/frequency shapes in fresh processes, once on the default
+      # JAX/Python lane to bound repeated fit cost. Its reports and per-case
+      # logs remain available even if a later case fails.
+      - name: Run synthetic model-to-report scenario matrix
+        if: matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'
+        run: >-
+          make VENV="$RUNNER_TEMP/meridian-ci" test-e2e-matrix
+          E2E_OUTPUT="$RUNNER_TEMP/meridian-e2e-matrix"
+        env:
+          MERIDIAN_BACKEND: jax
+
+      - name: Retain synthetic scenario matrix reports
+        if: always() && matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: synthetic-e2e-matrix
+          path: ${{ runner.temp }}/meridian-e2e-matrix/
+          if-no-files-found: warn
 
       - name: Install browser smoke-test dependencies
         if: matrix.python-version == '3.11' && matrix.meridian-backend == 'jax'
