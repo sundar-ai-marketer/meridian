@@ -1,9 +1,9 @@
 {
-  "advisories_total": 72,
+  "advisories_total": 73,
   "advisories_with_vendor_fix": 0,
-  "advisories_without_vendor_fix": 72,
+  "advisories_without_vendor_fix": 73,
   "artifact": "meridian:rescan",
-  "date": "2026-10-02",
+  "date": "2026-10-05",
   "image_os": {
     "Family": "debian",
     "Name": "13.7"
@@ -35,7 +35,7 @@
   },
   "provenance": {
     "architecture": "Linux-x86_64",
-    "git_head": "c82e9c189073d9fa38883096e6f466598152866b",
+    "git_head": "4b433aade9cd834f25482328891d7bc4ad67974f",
     "package_versions": {
       "arviz": null,
       "google-meridian": null,
@@ -519,7 +519,7 @@
           "name": "dash"
         }
       ],
-      "severity": "MEDIUM",
+      "severity": "LOW",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-102473"
     },
     {
@@ -1328,6 +1328,30 @@
     },
     {
       "classification": "loaded",
+      "id": "CVE-2026-95619",
+      "loaded_packages": [
+        "libgcc-s1",
+        "libstdc++6"
+      ],
+      "packages": [
+        {
+          "installed_version": "14.2.0-19",
+          "name": "gcc-14-base"
+        },
+        {
+          "installed_version": "14.2.0-19",
+          "name": "libgcc-s1"
+        },
+        {
+          "installed_version": "14.2.0-19",
+          "name": "libstdc++6"
+        }
+      ],
+      "severity": "MEDIUM",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-95619"
+    },
+    {
+      "classification": "loaded",
       "id": "CVE-2026-95818",
       "loaded_packages": [
         "libc-bin",
@@ -1438,10 +1462,10 @@
       "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-1147318-639065"
     }
   ],
-  "unfixed_affecting_a_loaded_package": 32,
+  "unfixed_affecting_a_loaded_package": 33,
   "unfixed_by_severity": {
     "HIGH": 8,
-    "LOW": 32,
+    "LOW": 33,
     "MEDIUM": 30,
     "UNKNOWN": 2
   }

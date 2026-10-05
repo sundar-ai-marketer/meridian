@@ -4,7 +4,7 @@
 
 # Container OS advisory triage
 
-Generated: 2026-10-02. Review by: **2026-12-31**.
+Generated: 2026-10-05. Review by: **2027-01-03**.
 
 Image OS: debian 13.7. Scanned artifact: `meridian:rescan`.
 Sources: a full Trivy OS report of this image, summarised in `os-triage-summary-latest.json`; load evidence `container-reachability-latest.json` (probe ran on x86_64, Python 3.11.16, glibc 2.41).
@@ -31,10 +31,10 @@ Loaded packages: `libbz2-1.0`, `libc-bin`, `libc6`, `libffi8`, `libgcc-s1`, `lib
 | Severity | Affected package loaded | No affected package loaded | Total |
 | --- | ---: | ---: | ---: |
 | HIGH | 4 | 4 | 8 |
-| MEDIUM | 18 | 12 | 30 |
-| LOW | 9 | 23 | 32 |
+| MEDIUM | 19 | 11 | 30 |
+| LOW | 9 | 24 | 33 |
 | UNKNOWN | 1 | 1 | 2 |
-| **Total** | **32** | **40** | **72** |
+| **Total** | **33** | **40** | **73** |
 
 No advisory in this scan has a vendor fix available. CI's gate on fixable high and critical findings is therefore not masking anything in this snapshot.
 
@@ -56,7 +56,6 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | Advisory | Affected packages | Loaded | Vendor tracker |
 | --- | --- | --- | --- |
 | `CVE-2026-102010` | `gcc-14-base`, `libgcc-s1`, `libstdc++6` | `libgcc-s1`, `libstdc++6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-102010) |
-| `CVE-2026-102473` | `dash` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-102473) |
 | `CVE-2026-15059` | `libsystemd0`, `libudev1` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-15059) |
 | `CVE-2026-15534` | `perl-base` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-15534) |
 | `CVE-2026-18374` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-18374) |
@@ -84,6 +83,7 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | `CVE-2026-8674` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-8674) |
 | `CVE-2026-86805` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-86805) |
 | `CVE-2026-89092` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-89092) |
+| `CVE-2026-95619` | `gcc-14-base`, `libgcc-s1`, `libstdc++6` | `libgcc-s1`, `libstdc++6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-95619) |
 | `CVE-2026-95818` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-95818) |
 
 ## LOW
@@ -112,6 +112,7 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | `CVE-2025-5278` | `coreutils` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2025-5278) |
 | `CVE-2025-6141` | `libncursesw6`, `libtinfo6`, `ncurses-base`, `ncurses-bin` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2025-6141) |
 | `CVE-2025-70873` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2025-70873) |
+| `CVE-2026-102473` | `dash` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-102473) |
 | `CVE-2026-102474` | `dash` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-102474) |
 | `CVE-2026-40228` | `libsystemd0`, `libudev1` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-40228) |
 | `CVE-2026-53910` | `diffutils` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-53910) |

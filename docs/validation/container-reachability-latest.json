@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-02",
+  "date": "2026-10-05",
   "installed_package_count": 87,
   "installed_packages": [
     {
@@ -587,7 +587,7 @@
   "probe": "scripts/container_reachability_probe.py",
   "provenance": {
     "architecture": "Linux-x86_64",
-    "git_head": "c82e9c189073d9fa38883096e6f466598152866b",
+    "git_head": "4b433aade9cd834f25482328891d7bc4ad67974f",
     "package_versions": {
       "arviz": "0.19.0",
       "google-meridian": null,
