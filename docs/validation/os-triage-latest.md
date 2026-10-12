@@ -4,7 +4,7 @@
 
 # Container OS advisory triage
 
-Generated: 2026-10-05. Review by: **2027-01-03**.
+Generated: 2026-10-12. Review by: **2027-01-10**.
 
 Image OS: debian 13.7. Scanned artifact: `meridian:rescan`.
 Sources: a full Trivy OS report of this image, summarised in `os-triage-summary-latest.json`; load evidence `container-reachability-latest.json` (probe ran on x86_64, Python 3.11.16, glibc 2.41).
@@ -31,10 +31,10 @@ Loaded packages: `libbz2-1.0`, `libc-bin`, `libc6`, `libffi8`, `libgcc-s1`, `lib
 | Severity | Affected package loaded | No affected package loaded | Total |
 | --- | ---: | ---: | ---: |
 | HIGH | 4 | 4 | 8 |
-| MEDIUM | 19 | 11 | 30 |
+| MEDIUM | 19 | 10 | 29 |
 | LOW | 9 | 24 | 33 |
-| UNKNOWN | 1 | 1 | 2 |
-| **Total** | **33** | **40** | **73** |
+| UNKNOWN | 0 | 1 | 1 |
+| **Total** | **32** | **39** | **71** |
 
 No advisory in this scan has a vendor fix available. CI's gate on fixable high and critical findings is therefore not masking anything in this snapshot.
 
@@ -61,7 +61,6 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | `CVE-2026-18374` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-18374) |
 | `CVE-2026-18477` | `tar` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-18477) |
 | `CVE-2026-18508` | `tar` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-18508) |
-| `CVE-2026-19487` | `perl-base` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-19487) |
 | `CVE-2026-19499` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-19499) |
 | `CVE-2026-19542` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-19542) |
 | `CVE-2026-27171` | `zlib1g` | `zlib1g` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-27171) |
@@ -129,7 +128,6 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | Advisory | Affected packages | Loaded | Vendor tracker |
 | --- | --- | --- | --- |
 | `CVE-2026-82560` | `perl-base` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-82560) |
-| `TEMP-1147318-639065` | `liblzma5` | `liblzma5` | [tracker](https://security-tracker.debian.org/tracker/TEMP-1147318-639065) |
 
 ## Regenerating
 

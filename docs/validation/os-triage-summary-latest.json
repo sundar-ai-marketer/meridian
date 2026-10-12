@@ -1,9 +1,9 @@
 {
-  "advisories_total": 73,
+  "advisories_total": 71,
   "advisories_with_vendor_fix": 0,
-  "advisories_without_vendor_fix": 73,
+  "advisories_without_vendor_fix": 71,
   "artifact": "meridian:rescan",
-  "date": "2026-10-05",
+  "date": "2026-10-12",
   "image_os": {
     "Family": "debian",
     "Name": "13.7"
@@ -627,19 +627,6 @@
       ],
       "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-18508"
-    },
-    {
-      "classification": "not-loaded",
-      "id": "CVE-2026-19487",
-      "loaded_packages": [],
-      "packages": [
-        {
-          "installed_version": "5.40.1-6+deb13u1",
-          "name": "perl-base"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-19487"
     },
     {
       "classification": "loaded",
@@ -1445,28 +1432,13 @@
       ],
       "severity": "LOW",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0841856-B18BAF"
-    },
-    {
-      "classification": "loaded",
-      "id": "TEMP-1147318-639065",
-      "loaded_packages": [
-        "liblzma5"
-      ],
-      "packages": [
-        {
-          "installed_version": "5.8.1-1+deb13u1",
-          "name": "liblzma5"
-        }
-      ],
-      "severity": "UNKNOWN",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-1147318-639065"
     }
   ],
-  "unfixed_affecting_a_loaded_package": 33,
+  "unfixed_affecting_a_loaded_package": 32,
   "unfixed_by_severity": {
     "HIGH": 8,
     "LOW": 33,
-    "MEDIUM": 30,
-    "UNKNOWN": 2
+    "MEDIUM": 29,
+    "UNKNOWN": 1
   }
 }

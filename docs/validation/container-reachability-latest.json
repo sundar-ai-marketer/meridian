@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-05",
+  "date": "2026-10-12",
   "installed_package_count": 87,
   "installed_packages": [
     {
@@ -215,7 +215,7 @@
     {
       "arch": "amd64",
       "name": "liblzma5",
-      "version": "5.8.1-1+deb13u1"
+      "version": "5.8.1-1+deb13u2"
     },
     {
       "arch": "amd64",
