@@ -3,7 +3,7 @@
   "advisories_with_vendor_fix": 0,
   "advisories_without_vendor_fix": 71,
   "artifact": "meridian:rescan",
-  "date": "2026-10-19",
+  "date": "2026-10-26",
   "image_os": {
     "Family": "debian",
     "Name": "13.7"

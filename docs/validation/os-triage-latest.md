@@ -4,7 +4,7 @@
 
 # Container OS advisory triage
 
-Generated: 2026-10-19. Review by: **2027-01-17**.
+Generated: 2026-10-26. Review by: **2027-01-24**.
 
 Image OS: debian 13.7. Scanned artifact: `meridian:rescan`.
 Sources: a full Trivy OS report of this image, summarised in `os-triage-summary-latest.json`; load evidence `container-reachability-latest.json` (probe ran on x86_64, Python 3.11.16, glibc 2.41).

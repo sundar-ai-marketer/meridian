@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-19",
+  "date": "2026-10-26",
   "installed_package_count": 87,
   "installed_packages": [
     {
@@ -35,7 +35,7 @@
     {
       "arch": "all",
       "name": "ca-certificates",
-      "version": "20250419"
+      "version": "20250419+deb13u1"
     },
     {
       "arch": "amd64",
@@ -425,7 +425,7 @@
     {
       "arch": "all",
       "name": "tzdata",
-      "version": "2026c-0+deb13u1"
+      "version": "2026e-0+deb13u1"
     },
     {
       "arch": "amd64",
