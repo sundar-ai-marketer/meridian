@@ -1,9 +1,9 @@
 {
-  "advisories_total": 85,
+  "advisories_total": 84,
   "advisories_with_vendor_fix": 0,
-  "advisories_without_vendor_fix": 85,
+  "advisories_without_vendor_fix": 84,
   "artifact": "meridian:rescan",
-  "date": "2026-11-02",
+  "date": "2026-11-09",
   "image_os": {
     "Family": "debian",
     "Name": "13.7"
@@ -107,11 +107,11 @@
       "loaded_packages": [],
       "packages": [
         {
-          "installed_version": "3.0.3",
+          "installed_version": "3.0.4",
           "name": "apt"
         },
         {
-          "installed_version": "3.0.3",
+          "installed_version": "3.0.4",
           "name": "libapt-pkg7.0"
         }
       ],
@@ -608,6 +608,30 @@
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-115455"
     },
     {
+      "classification": "loaded",
+      "id": "CVE-2026-115456",
+      "loaded_packages": [
+        "libgcc-s1",
+        "libstdc++6"
+      ],
+      "packages": [
+        {
+          "installed_version": "14.2.0-19",
+          "name": "gcc-14-base"
+        },
+        {
+          "installed_version": "14.2.0-19",
+          "name": "libgcc-s1"
+        },
+        {
+          "installed_version": "14.2.0-19",
+          "name": "libstdc++6"
+        }
+      ],
+      "severity": "LOW",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-115456"
+    },
+    {
       "classification": "not-loaded",
       "id": "CVE-2026-119371",
       "loaded_packages": [],
@@ -617,7 +641,7 @@
           "name": "libsqlite3-0"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-119371"
     },
     {
@@ -630,7 +654,7 @@
           "name": "libsqlite3-0"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-119372"
     },
     {
@@ -656,7 +680,7 @@
           "name": "libsqlite3-0"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "HIGH",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-119374"
     },
     {
@@ -669,7 +693,7 @@
           "name": "libsqlite3-0"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-119375"
     },
     {
@@ -682,7 +706,7 @@
           "name": "libsqlite3-0"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-119376"
     },
     {
@@ -695,7 +719,7 @@
           "name": "libsqlite3-0"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "LOW",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-119377"
     },
     {
@@ -721,7 +745,7 @@
           "name": "libsqlite3-0"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "HIGH",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-119379"
     },
     {
@@ -869,21 +893,6 @@
       ],
       "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-19542"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-27171",
-      "loaded_packages": [
-        "zlib1g"
-      ],
-      "packages": [
-        {
-          "installed_version": "1:1.3.dfsg+really1.3.1-1+b1",
-          "name": "zlib1g"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-27171"
     },
     {
       "classification": "loaded",
@@ -1424,7 +1433,7 @@
           "name": "perl-base"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-82560"
     },
     {
@@ -1446,21 +1455,6 @@
       ],
       "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-84243"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-85091",
-      "loaded_packages": [
-        "zlib1g"
-      ],
-      "packages": [
-        {
-          "installed_version": "1:1.3.dfsg+really1.3.1-1+b1",
-          "name": "zlib1g"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-85091"
     },
     {
       "classification": "loaded",
@@ -1656,11 +1650,10 @@
       "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0841856-B18BAF"
     }
   ],
-  "unfixed_affecting_a_loaded_package": 36,
+  "unfixed_affecting_a_loaded_package": 35,
   "unfixed_by_severity": {
-    "HIGH": 9,
-    "LOW": 33,
-    "MEDIUM": 35,
-    "UNKNOWN": 8
+    "HIGH": 11,
+    "LOW": 35,
+    "MEDIUM": 38
   }
 }

@@ -4,7 +4,7 @@
 
 # Container OS advisory triage
 
-Generated: 2026-11-02. Review by: **2027-01-31**.
+Generated: 2026-11-09. Review by: **2027-02-07**.
 
 Image OS: debian 13.7. Scanned artifact: `meridian:rescan`.
 Sources: a full Trivy OS report of this image, summarised in `os-triage-summary-latest.json`; load evidence `container-reachability-latest.json` (probe ran on x86_64, Python 3.11.16, glibc 2.41).
@@ -30,11 +30,10 @@ Loaded packages: `libbz2-1.0`, `libc-bin`, `libc6`, `libffi8`, `libgcc-s1`, `lib
 
 | Severity | Affected package loaded | No affected package loaded | Total |
 | --- | ---: | ---: | ---: |
-| HIGH | 4 | 5 | 9 |
-| MEDIUM | 23 | 12 | 35 |
-| LOW | 9 | 24 | 33 |
-| UNKNOWN | 0 | 8 | 8 |
-| **Total** | **36** | **49** | **85** |
+| HIGH | 4 | 7 | 11 |
+| MEDIUM | 21 | 17 | 38 |
+| LOW | 10 | 25 | 35 |
+| **Total** | **35** | **49** | **84** |
 
 No advisory in this scan has a vendor fix available. CI's gate on fixable high and critical findings is therefore not masking anything in this snapshot.
 
@@ -44,6 +43,8 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | --- | --- | --- | --- |
 | `CVE-2025-69720` | `libncursesw6`, `libtinfo6`, `ncurses-base`, `ncurses-bin` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2025-69720) |
 | `CVE-2026-119373` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119373) |
+| `CVE-2026-119374` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119374) |
+| `CVE-2026-119379` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119379) |
 | `CVE-2026-16742` | `libsystemd0`, `libudev1` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-16742) |
 | `CVE-2026-54369` | `libacl1` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-54369) |
 | `CVE-2026-76642` | `bsdutils`, `libblkid1`, `liblastlog2-2`, `libmount1`, `libsmartcols1`, `libuuid1`, `login`, `mount`, `util-linux` | `libuuid1` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-76642) |
@@ -60,6 +61,10 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | `CVE-2026-114690` | `gcc-14-base`, `libgcc-s1`, `libstdc++6` | `libgcc-s1`, `libstdc++6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-114690) |
 | `CVE-2026-114691` | `gcc-14-base`, `libgcc-s1`, `libstdc++6` | `libgcc-s1`, `libstdc++6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-114691) |
 | `CVE-2026-115455` | `gcc-14-base`, `libgcc-s1`, `libstdc++6` | `libgcc-s1`, `libstdc++6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-115455) |
+| `CVE-2026-119371` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119371) |
+| `CVE-2026-119372` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119372) |
+| `CVE-2026-119375` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119375) |
+| `CVE-2026-119376` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119376) |
 | `CVE-2026-119378` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119378) |
 | `CVE-2026-119591` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119591) |
 | `CVE-2026-15059` | `libsystemd0`, `libudev1` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-15059) |
@@ -69,7 +74,6 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | `CVE-2026-18508` | `tar` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-18508) |
 | `CVE-2026-19499` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-19499) |
 | `CVE-2026-19542` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-19542) |
-| `CVE-2026-27171` | `zlib1g` | `zlib1g` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-27171) |
 | `CVE-2026-3184` | `bsdutils`, `libblkid1`, `liblastlog2-2`, `libmount1`, `libsmartcols1`, `libuuid1`, `login`, `mount`, `util-linux` | `libuuid1` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-3184) |
 | `CVE-2026-42250` | `libbz2-1.0` | `libbz2-1.0` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-42250) |
 | `CVE-2026-50812` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-50812) |
@@ -84,8 +88,8 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | `CVE-2026-6791` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-6791) |
 | `CVE-2026-77117` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-77117) |
 | `CVE-2026-80489` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-80489) |
+| `CVE-2026-82560` | `perl-base` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-82560) |
 | `CVE-2026-84243` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-84243) |
-| `CVE-2026-85091` | `zlib1g` | `zlib1g` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-85091) |
 | `CVE-2026-8674` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-8674) |
 | `CVE-2026-86805` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-86805) |
 | `CVE-2026-89092` | `libc-bin`, `libc6` | `libc-bin`, `libc6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-89092) |
@@ -120,6 +124,8 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | `CVE-2025-70873` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2025-70873) |
 | `CVE-2026-102473` | `dash` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-102473) |
 | `CVE-2026-102474` | `dash` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-102474) |
+| `CVE-2026-115456` | `gcc-14-base`, `libgcc-s1`, `libstdc++6` | `libgcc-s1`, `libstdc++6` | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-115456) |
+| `CVE-2026-119377` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119377) |
 | `CVE-2026-40228` | `libsystemd0`, `libudev1` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-40228) |
 | `CVE-2026-53910` | `diffutils` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-53910) |
 | `CVE-2026-56391` | `coreutils` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-56391) |
@@ -129,19 +135,6 @@ No advisory in this scan has a vendor fix available. CI's gate on fixable high a
 | `TEMP-0517018-A83CE6` | `sysvinit-utils` | none | [tracker](https://security-tracker.debian.org/tracker/TEMP-0517018-A83CE6) |
 | `TEMP-0628843-DBAD28` | `login.defs`, `passwd` | none | [tracker](https://security-tracker.debian.org/tracker/TEMP-0628843-DBAD28) |
 | `TEMP-0841856-B18BAF` | `bash` | none | [tracker](https://security-tracker.debian.org/tracker/TEMP-0841856-B18BAF) |
-
-## UNKNOWN
-
-| Advisory | Affected packages | Loaded | Vendor tracker |
-| --- | --- | --- | --- |
-| `CVE-2026-119371` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119371) |
-| `CVE-2026-119372` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119372) |
-| `CVE-2026-119374` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119374) |
-| `CVE-2026-119375` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119375) |
-| `CVE-2026-119376` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119376) |
-| `CVE-2026-119377` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119377) |
-| `CVE-2026-119379` | `libsqlite3-0` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-119379) |
-| `CVE-2026-82560` | `perl-base` | none | [tracker](https://security-tracker.debian.org/tracker/CVE-2026-82560) |
 
 ## Regenerating
 
