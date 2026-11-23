@@ -1,12 +1,12 @@
 {
-  "advisories_total": 93,
+  "advisories_total": 99,
   "advisories_with_vendor_fix": 0,
-  "advisories_without_vendor_fix": 93,
+  "advisories_without_vendor_fix": 99,
   "artifact": "meridian:rescan",
-  "date": "2026-11-16",
+  "date": "2026-11-23",
   "image_os": {
     "Family": "debian",
-    "Name": "13.7"
+    "Name": "13.8"
   },
   "installed_package_count": 87,
   "limitations": [
@@ -90,11 +90,11 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
@@ -170,11 +170,11 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
@@ -190,11 +190,11 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
@@ -210,11 +210,11 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
@@ -230,11 +230,11 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
@@ -250,11 +250,11 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
@@ -270,11 +270,11 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
@@ -494,15 +494,15 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "LOW",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-100290"
     },
     {
@@ -557,21 +557,67 @@
     },
     {
       "classification": "loaded",
+      "id": "CVE-2026-107493",
+      "loaded_packages": [
+        "libssl3t64"
+      ],
+      "packages": [
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "libssl3t64"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl-provider-legacy"
+        }
+      ],
+      "severity": "LOW",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-107493"
+    },
+    {
+      "classification": "loaded",
+      "id": "CVE-2026-107494",
+      "loaded_packages": [
+        "libssl3t64"
+      ],
+      "packages": [
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "libssl3t64"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl-provider-legacy"
+        }
+      ],
+      "severity": "HIGH",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-107494"
+    },
+    {
+      "classification": "loaded",
       "id": "CVE-2026-107496",
       "loaded_packages": [
         "libssl3t64"
       ],
       "packages": [
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "libssl3t64"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl-provider-legacy"
         }
       ],
@@ -683,15 +729,15 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
-      "severity": "UNKNOWN",
+      "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-115819"
     },
     {
@@ -826,6 +872,135 @@
     },
     {
       "classification": "loaded",
+      "id": "CVE-2026-121481",
+      "loaded_packages": [
+        "libssl3t64"
+      ],
+      "packages": [
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "libssl3t64"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl-provider-legacy"
+        }
+      ],
+      "severity": "LOW",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-121481"
+    },
+    {
+      "classification": "loaded",
+      "id": "CVE-2026-121482",
+      "loaded_packages": [
+        "libssl3t64"
+      ],
+      "packages": [
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "libssl3t64"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl-provider-legacy"
+        }
+      ],
+      "severity": "MEDIUM",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-121482"
+    },
+    {
+      "classification": "loaded",
+      "id": "CVE-2026-121757",
+      "loaded_packages": [
+        "libc-bin",
+        "libc6"
+      ],
+      "packages": [
+        {
+          "installed_version": "2.41-12+deb13u5",
+          "name": "libc-bin"
+        },
+        {
+          "installed_version": "2.41-12+deb13u5",
+          "name": "libc6"
+        }
+      ],
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-121757"
+    },
+    {
+      "classification": "loaded",
+      "id": "CVE-2026-121758",
+      "loaded_packages": [
+        "libc-bin",
+        "libc6"
+      ],
+      "packages": [
+        {
+          "installed_version": "2.41-12+deb13u5",
+          "name": "libc-bin"
+        },
+        {
+          "installed_version": "2.41-12+deb13u5",
+          "name": "libc6"
+        }
+      ],
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-121758"
+    },
+    {
+      "classification": "loaded",
+      "id": "CVE-2026-124024",
+      "loaded_packages": [
+        "libc-bin",
+        "libc6"
+      ],
+      "packages": [
+        {
+          "installed_version": "2.41-12+deb13u5",
+          "name": "libc-bin"
+        },
+        {
+          "installed_version": "2.41-12+deb13u5",
+          "name": "libc6"
+        }
+      ],
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-124024"
+    },
+    {
+      "classification": "loaded",
+      "id": "CVE-2026-124709",
+      "loaded_packages": [
+        "libssl3t64"
+      ],
+      "packages": [
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "libssl3t64"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl-provider-legacy"
+        }
+      ],
+      "severity": "HIGH",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-124709"
+    },
+    {
+      "classification": "loaded",
       "id": "CVE-2026-125709",
       "loaded_packages": [
         "libgcc-s1",
@@ -847,6 +1022,26 @@
       ],
       "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-125709"
+    },
+    {
+      "classification": "loaded",
+      "id": "CVE-2026-126765",
+      "loaded_packages": [
+        "libc-bin",
+        "libc6"
+      ],
+      "packages": [
+        {
+          "installed_version": "2.41-12+deb13u5",
+          "name": "libc-bin"
+        },
+        {
+          "installed_version": "2.41-12+deb13u5",
+          "name": "libc6"
+        }
+      ],
+      "severity": "LOW",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-126765"
     },
     {
       "classification": "not-loaded",
@@ -896,26 +1091,6 @@
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-16742"
     },
     {
-      "classification": "loaded",
-      "id": "CVE-2026-18374",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-18374"
-    },
-    {
       "classification": "not-loaded",
       "id": "CVE-2026-18477",
       "loaded_packages": [],
@@ -940,46 +1115,6 @@
       ],
       "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-18508"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-19499",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-19499"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-19542",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-19542"
     },
     {
       "classification": "loaded",
@@ -1027,6 +1162,29 @@
       ],
       "severity": "MEDIUM",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-3184"
+    },
+    {
+      "classification": "loaded",
+      "id": "CVE-2026-35190",
+      "loaded_packages": [
+        "libssl3t64"
+      ],
+      "packages": [
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "libssl3t64"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl-provider-legacy"
+        }
+      ],
+      "severity": "MEDIUM",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-35190"
     },
     {
       "classification": "not-loaded",
@@ -1098,26 +1256,6 @@
       ],
       "severity": "LOW",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-53910"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-5435",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-5435"
     },
     {
       "classification": "not-loaded",
@@ -1224,66 +1362,6 @@
     },
     {
       "classification": "loaded",
-      "id": "CVE-2026-6238",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-6238"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-6368",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-6368"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-6791",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-6791"
-    },
-    {
-      "classification": "loaded",
       "id": "CVE-2026-76642",
       "loaded_packages": [
         "libuuid1"
@@ -1328,26 +1406,6 @@
       ],
       "severity": "HIGH",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-76642"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-77117",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-77117"
     },
     {
       "classification": "loaded",
@@ -1491,26 +1549,6 @@
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-78410"
     },
     {
-      "classification": "loaded",
-      "id": "CVE-2026-80489",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-80489"
-    },
-    {
       "classification": "not-loaded",
       "id": "CVE-2026-82560",
       "loaded_packages": [],
@@ -1532,11 +1570,11 @@
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc-bin"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
+          "installed_version": "2.41-12+deb13u5",
           "name": "libc6"
         }
       ],
@@ -1545,43 +1583,26 @@
     },
     {
       "classification": "loaded",
-      "id": "CVE-2026-8674",
+      "id": "CVE-2026-84786",
       "loaded_packages": [
-        "libc-bin",
-        "libc6"
+        "libssl3t64"
       ],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "libssl3t64"
         },
         {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl-provider-legacy"
         }
       ],
       "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-8674"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-86805",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-86805"
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-84786"
     },
     {
       "classification": "loaded",
@@ -1591,19 +1612,19 @@
       ],
       "packages": [
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "libssl3t64"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl-provider-legacy"
         }
       ],
-      "severity": "MEDIUM",
+      "severity": "LOW",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-88822"
     },
     {
@@ -1614,40 +1635,20 @@
       ],
       "packages": [
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "libssl3t64"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl-provider-legacy"
         }
       ],
-      "severity": "MEDIUM",
+      "severity": "LOW",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-88823"
-    },
-    {
-      "classification": "loaded",
-      "id": "CVE-2026-89092",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
-      "packages": [
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
-        }
-      ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-89092"
     },
     {
       "classification": "not-loaded",
@@ -1701,21 +1702,44 @@
     },
     {
       "classification": "loaded",
+      "id": "CVE-2026-95690",
+      "loaded_packages": [
+        "libssl3t64"
+      ],
+      "packages": [
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "libssl3t64"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl"
+        },
+        {
+          "installed_version": "3.5.9-1~deb13u1",
+          "name": "openssl-provider-legacy"
+        }
+      ],
+      "severity": "MEDIUM",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-95690"
+    },
+    {
+      "classification": "loaded",
       "id": "CVE-2026-95691",
       "loaded_packages": [
         "libssl3t64"
       ],
       "packages": [
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "libssl3t64"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl-provider-legacy"
         }
       ],
@@ -1730,15 +1754,15 @@
       ],
       "packages": [
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "libssl3t64"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl"
         },
         {
-          "installed_version": "3.5.7-1~deb13u3",
+          "installed_version": "3.5.9-1~deb13u1",
           "name": "openssl-provider-legacy"
         }
       ],
@@ -1746,44 +1770,95 @@
       "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-95692"
     },
     {
-      "classification": "loaded",
-      "id": "CVE-2026-95818",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
+      "classification": "not-loaded",
+      "id": "TEMP-0000000-402D17",
+      "loaded_packages": [],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
+          "installed_version": "2.6.0-2",
+          "name": "libseccomp2"
         }
       ],
-      "severity": "MEDIUM",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-95818"
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0000000-402D17"
     },
     {
-      "classification": "loaded",
-      "id": "CVE-2026-97399",
-      "loaded_packages": [
-        "libc-bin",
-        "libc6"
-      ],
+      "classification": "not-loaded",
+      "id": "TEMP-0000000-414660",
+      "loaded_packages": [],
       "packages": [
         {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc-bin"
-        },
-        {
-          "installed_version": "2.41-12+deb13u4",
-          "name": "libc6"
+          "installed_version": "2.6.0-2",
+          "name": "libseccomp2"
         }
       ],
-      "severity": "LOW",
-      "vendor_tracker": "https://security-tracker.debian.org/tracker/CVE-2026-97399"
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0000000-414660"
+    },
+    {
+      "classification": "not-loaded",
+      "id": "TEMP-0000000-43231F",
+      "loaded_packages": [],
+      "packages": [
+        {
+          "installed_version": "2.6.0-2",
+          "name": "libseccomp2"
+        }
+      ],
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0000000-43231F"
+    },
+    {
+      "classification": "not-loaded",
+      "id": "TEMP-0000000-AE2C66",
+      "loaded_packages": [],
+      "packages": [
+        {
+          "installed_version": "2.6.0-2",
+          "name": "libseccomp2"
+        }
+      ],
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0000000-AE2C66"
+    },
+    {
+      "classification": "not-loaded",
+      "id": "TEMP-0000000-ED49F3",
+      "loaded_packages": [],
+      "packages": [
+        {
+          "installed_version": "2.6.0-2",
+          "name": "libseccomp2"
+        }
+      ],
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0000000-ED49F3"
+    },
+    {
+      "classification": "not-loaded",
+      "id": "TEMP-0000000-F88C7E",
+      "loaded_packages": [],
+      "packages": [
+        {
+          "installed_version": "2.6.0-2",
+          "name": "libseccomp2"
+        }
+      ],
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0000000-F88C7E"
+    },
+    {
+      "classification": "not-loaded",
+      "id": "TEMP-0000000-FCA4C0",
+      "loaded_packages": [],
+      "packages": [
+        {
+          "installed_version": "2.6.0-2",
+          "name": "libseccomp2"
+        }
+      ],
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0000000-FCA4C0"
     },
     {
       "classification": "not-loaded",
@@ -1840,13 +1915,30 @@
       ],
       "severity": "LOW",
       "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-0841856-B18BAF"
+    },
+    {
+      "classification": "not-loaded",
+      "id": "TEMP-1154946-473926",
+      "loaded_packages": [],
+      "packages": [
+        {
+          "installed_version": "1:4.17.4-2",
+          "name": "login.defs"
+        },
+        {
+          "installed_version": "1:4.17.4-2",
+          "name": "passwd"
+        }
+      ],
+      "severity": "UNKNOWN",
+      "vendor_tracker": "https://security-tracker.debian.org/tracker/TEMP-1154946-473926"
     }
   ],
-  "unfixed_affecting_a_loaded_package": 43,
+  "unfixed_affecting_a_loaded_package": 41,
   "unfixed_by_severity": {
-    "HIGH": 11,
-    "LOW": 35,
-    "MEDIUM": 44,
-    "UNKNOWN": 3
+    "HIGH": 13,
+    "LOW": 40,
+    "MEDIUM": 34,
+    "UNKNOWN": 12
   }
 }
